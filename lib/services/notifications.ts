@@ -18,7 +18,7 @@ export async function fetchNotifications(): Promise<NotificationRow[]> {
   const user = await getCurrentUser();
   if (!user) return [];
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('notifications')
     .select('*')
@@ -33,7 +33,7 @@ export async function markNotificationRead(notificationId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: 'Not authenticated' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from('notifications')
     .update({ read: true })
@@ -49,7 +49,7 @@ export async function markAllNotificationsRead() {
   const user = await getCurrentUser();
   if (!user) return { error: 'Not authenticated' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false);
 
   if (error) return { error: error.message } as const;

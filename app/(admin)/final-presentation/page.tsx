@@ -13,7 +13,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Final Presentation' };
 
 export default async function FinalPresentationPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: program } = await supabase
     .from('programs')
     .select('id')

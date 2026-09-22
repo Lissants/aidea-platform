@@ -21,7 +21,7 @@ export async function saveIdeaDraft(programId: string, ideaId: string | null, in
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const basics = {
     program_id: programId,
     team_name: parsed.data.team_name ?? '',
@@ -95,7 +95,7 @@ export async function submitIdea(ideaId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: 'Not authenticated' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc('fn_submit_idea', { p_idea_id: ideaId, p_actor_id: user.id });
 
   if (error) return { error: error.message } as const;

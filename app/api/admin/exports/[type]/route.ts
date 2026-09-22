@@ -26,17 +26,18 @@ type ExportType = (typeof EXPORT_TYPES)[number];
  * There is no participant/mentor export per spec — this route is
  * admin-only end to end.
  */
-export async function GET(request: NextRequest, { params }: { params: { type: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+  const { type: paramType } = await params;
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   }
 
-  if (!EXPORT_TYPES.includes(params.type as ExportType)) {
+  if (!EXPORT_TYPES.includes(paramType as ExportType)) {
     return NextResponse.json({ error: 'Unknown export type' }, { status: 404 });
   }
-  const type = params.type as ExportType;
-  const supabase = createClient();
+  const type = paramType as ExportType;
+  const supabase = await createClient();
 
   switch (type) {
     case 'submissions': {

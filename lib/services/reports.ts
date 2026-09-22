@@ -29,7 +29,7 @@ export interface WinnerCategoryRow {
  * as "how many made it this far", which needs the >= semantics below.
  */
 export async function fetchSubmissionFunnel(programId: string): Promise<FunnelStage[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { count: draftCount } = await supabase
     .from('ideas')
@@ -71,7 +71,7 @@ export async function fetchSubmissionFunnel(programId: string): Promise<FunnelSt
 }
 
 export async function fetchReviewerWorkload(programId: string): Promise<WorkloadRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: mentors } = await supabase.from('mentor_profiles').select('id, max_capacity, profiles(full_name)');
   if (!mentors) return [];
 
@@ -97,7 +97,7 @@ export async function fetchReviewerWorkload(programId: string): Promise<Workload
 /** Latest voting period's per-idea turnout — admin-only via fn_vote_tallies'
  * is_admin bypass (0010_fn_vote_tallies_admin_bypass.sql). */
 export async function fetchVotingTurnout(programId: string): Promise<TurnoutPoint[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: period } = await supabase
     .from('voting_periods')
     .select('id')
@@ -113,7 +113,7 @@ export async function fetchVotingTurnout(programId: string): Promise<TurnoutPoin
 }
 
 export async function fetchWinnerCategories(programId: string): Promise<WinnerCategoryRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('final_presentation_assessments')
     .select('winner_decision, winner_category')

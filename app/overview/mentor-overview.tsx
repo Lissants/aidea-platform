@@ -6,7 +6,7 @@ import type { SessionUser } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 
 export async function MentorOverview({ user }: { user: SessionUser }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: mentorProfile } = await supabase
     .from('mentor_profiles')

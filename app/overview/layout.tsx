@@ -5,7 +5,7 @@ import { getCurrentUser, getActiveRole } from '@/lib/auth/session';
 export default async function NotificationsLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
-  const activeRole = getActiveRole(user);
+  const activeRole = await getActiveRole(user);
   if (!activeRole) redirect('/access-denied');
 
   return (

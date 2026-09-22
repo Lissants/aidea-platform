@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Mentor Directory' };
 
 export default async function MentorDirectoryPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: program } = await supabase
     .from('programs')
     .select('id')

@@ -20,7 +20,7 @@ export async function castVote(input: unknown) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc('fn_submit_vote', {
     p_voting_period_id: parsed.data.voting_period_id,
     p_voter_id: user.id,

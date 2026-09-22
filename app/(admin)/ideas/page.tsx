@@ -14,7 +14,7 @@ const PAGE_SIZE = 20;
 const IMPACT_TYPES = ['revenue_growth', 'time_efficiency', 'cost_efficiency', 'governance_improvement'];
 
 export default async function IdeaManagementPage({ searchParams }: { searchParams: Record<string, string | undefined> }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: program } = await supabase
     .from('programs')
     .select('id')

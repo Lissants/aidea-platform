@@ -17,7 +17,7 @@ export interface ShowcaseQueueRow {
 
 /** Build-decision ideas — eligible for showcase curation. */
 export async function fetchShowcaseQueue(programId: string): Promise<ShowcaseQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('ideas')
@@ -68,7 +68,7 @@ export async function saveShowcaseContent(
     return { error: 'Image URL must point to the showcase-images storage bucket' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (input.image_url) {
     const marker = '/showcase-images/';
@@ -104,7 +104,7 @@ export async function publishShowcaseProjects(programId: string) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('fn_publish_batch', {
     p_program_id: programId,
     p_entity_type: 'showcase_project',

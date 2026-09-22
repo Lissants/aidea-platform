@@ -17,7 +17,7 @@ export default async function OverviewPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
 
-  const activeRole = getActiveRole(user);
+  const activeRole = await getActiveRole(user);
 
   if (activeRole === 'admin') return <AdminOverview />;
   if (activeRole === 'mentor') return <MentorOverview user={user} />;

@@ -36,7 +36,7 @@ export interface AuditLogRow {
  * rows back, this never needs its own additional authorization check.
  */
 export async function fetchAuditLogs(filters: AuditFilters): Promise<{ rows: AuditLogRow[]; total: number }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const page = Math.max(1, filters.page ?? 1);
   const pageSize = filters.pageSize ?? 25;
   const from = (page - 1) * pageSize;
@@ -84,7 +84,7 @@ export async function fetchAuditLogs(filters: AuditFilters): Promise<{ rows: Aud
 
 /** Distinct entity_type / action values currently in the log, for filter dropdowns. */
 export async function fetchAuditFacets(): Promise<{ entityTypes: string[]; actions: string[] }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('audit_logs').select('entity_type, action').limit(2000);
   const entityTypes = Array.from(new Set((data ?? []).map((r) => r.entity_type))).sort();
   const actions = Array.from(new Set((data ?? []).map((r) => r.action))).sort();

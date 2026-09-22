@@ -25,7 +25,7 @@ export interface TurnoutRow {
 }
 
 export async function fetchVotingPeriods(programId: string): Promise<VotingPeriodRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('voting_periods')
     .select('*')
@@ -45,7 +45,7 @@ export async function fetchLiveTurnout(votingPeriodId: string): Promise<TurnoutR
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return [];
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.rpc('fn_vote_tallies', { p_voting_period_id: votingPeriodId });
   return (data ?? []).map((t: any) => ({
     idea_id: t.idea_id,
@@ -67,7 +67,7 @@ export async function saveVotingPeriod(
   const parsed = votingPeriodSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (input.id) {
     const { data: existing } = await supabase.from('voting_periods').select('results_published').eq('id', input.id).maybeSingle();
@@ -106,7 +106,7 @@ export async function publishVotingResults(votingPeriodId: string, programId: st
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: period } = await supabase.from('voting_periods').select('*').eq('id', votingPeriodId).maybeSingle();
   if (!period) return { error: 'Voting period not found' } as const;

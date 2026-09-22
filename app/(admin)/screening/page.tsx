@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Screening Decision' };
 
 export default async function ScreeningPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: program } = await supabase
     .from('programs')
     .select('id')

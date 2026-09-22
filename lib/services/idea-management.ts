@@ -46,7 +46,7 @@ function deriveStage(idea: any): DerivedStage {
  * derived `stage` as SQL across five joined tables.
  */
 export async function fetchIdeaList(programId: string, filters: IdeaListFilters): Promise<{ rows: IdeaListRow[]; total: number }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from('ideas')
@@ -113,7 +113,7 @@ export interface IdeaFullDetail {
  * edit UI for participant-owned fields here; decisions happen on the
  * dedicated screening/qualifier/mentor/final-presentation pages. */
 export async function fetchIdeaDetail(ideaId: string): Promise<IdeaFullDetail | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: idea } = await supabase
     .from('ideas')
@@ -165,7 +165,7 @@ export async function reopenReview(reviewId: string, ideaId: string, reason: str
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
   if (!reason.trim()) return { error: 'A reason is required to reopen a review' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc('fn_reopen_review', {
     p_review_id: reviewId,
     p_reason: reason,

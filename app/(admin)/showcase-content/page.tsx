@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Showcase Content' };
 
 export default async function ShowcaseContentPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: program } = await supabase
     .from('programs')
     .select('id')

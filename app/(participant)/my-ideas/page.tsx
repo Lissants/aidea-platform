@@ -14,7 +14,7 @@ export const metadata = { title: 'My Ideas' };
 
 export default async function MyIdeasPage() {
   const user = await getCurrentUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: ideas } = user
     ? await supabase

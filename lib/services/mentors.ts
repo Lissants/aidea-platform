@@ -18,7 +18,7 @@ export interface MentorDirectoryRow {
 }
 
 export async function fetchMentorDirectory(programId: string): Promise<MentorDirectoryRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: mentors } = await supabase.from('mentor_profiles').select('id, profile_id, expertise, bio, max_capacity, profiles(full_name, email)');
   if (!mentors) return [];
@@ -54,7 +54,7 @@ export async function updateMentorCapacity(mentorProfileId: string, newCapacity:
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
   if (!Number.isFinite(newCapacity) || newCapacity < 1) return { error: 'Capacity must be at least 1' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: before } = await supabase.from('mentor_profiles').select('max_capacity').eq('id', mentorProfileId).maybeSingle();
   if (!before) return { error: 'Mentor not found' } as const;
 

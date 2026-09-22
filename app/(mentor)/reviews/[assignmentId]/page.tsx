@@ -6,15 +6,16 @@ import { createClient } from '@/lib/supabase/server';
 
 export const metadata = { title: 'Review' };
 
-export default async function ReviewDetailPage({ params }: { params: { assignmentId: string } }) {
-  const supabase = createClient();
+export default async function ReviewDetailPage({ params }: { params: Promise<{ assignmentId: string }> }) {
+  const { assignmentId } = await params;
+  const supabase = await createClient();
 
   // RLS (review_assignments_mentor_select) already scopes this to the
   // assigned mentor or an admin — a mismatched mentor gets no row back.
   const { data: assignment } = await supabase
     .from('review_assignments')
     .select('id, idea_id, status')
-    .eq('id', params.assignmentId)
+    .eq('id', assignmentId)
     .maybeSingle();
 
   if (!assignment) notFound();

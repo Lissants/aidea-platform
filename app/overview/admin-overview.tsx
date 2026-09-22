@@ -30,7 +30,7 @@ function StatCard({
 }
 
 export async function AdminOverview() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: program } = await supabase
     .from('programs')

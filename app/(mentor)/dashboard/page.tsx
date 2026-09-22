@@ -43,7 +43,7 @@ export default async function MentorDashboardPage({
 }: {
   searchParams: { q?: string; impact?: string; status?: string; page?: string };
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: program } = await supabase
     .from('programs')
     .select('id')

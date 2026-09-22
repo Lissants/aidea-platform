@@ -20,7 +20,7 @@ export interface FinalPresentationQueueRow {
 
 /** Build-decision ideas — the pool eligible for final presentation. */
 export async function fetchFinalPresentationQueue(programId: string): Promise<FinalPresentationQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('ideas')
@@ -54,7 +54,7 @@ export async function fetchFinalPresentationQueue(programId: string): Promise<Fi
 /** Which winner_category values are already taken program-wide, and by
  * which idea — used to disable the taken option everywhere else in the UI. */
 export async function fetchTakenCategories(programId: string): Promise<Record<WinnerCategory, string | null>> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('final_presentation_assessments')
     .select('idea_id, winner_category')
@@ -72,7 +72,7 @@ export async function fetchTakenCategories(programId: string): Promise<Record<Wi
 }
 
 async function assertEditable(ideaId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('final_presentation_assessments').select('published').eq('idea_id', ideaId).maybeSingle();
   if (data?.published) return 'This assessment has already been published and can no longer be edited.';
   return null;
@@ -97,7 +97,7 @@ export async function saveFinalPresentationDraft(
   const lockError = await assertEditable(ideaId);
   if (lockError) return { error: lockError } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('final_presentation_assessments').upsert(
     {
       idea_id: ideaId,
@@ -147,7 +147,7 @@ export async function finalizeFinalPresentation(
   const lockError = await assertEditable(ideaId);
   if (lockError) return { error: lockError } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('final_presentation_assessments').upsert(
     {
       idea_id: ideaId,
@@ -179,7 +179,7 @@ export async function publishFinalPresentationResults(programId: string) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('fn_publish_batch', {
     p_program_id: programId,
     p_entity_type: 'final_presentation_assessment',

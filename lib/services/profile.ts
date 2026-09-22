@@ -16,7 +16,7 @@ export async function updateProfile(input: unknown) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from('profiles')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })

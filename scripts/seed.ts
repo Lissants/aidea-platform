@@ -11,8 +11,13 @@
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { loadEnvConfig } from '@next/env';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/database';
+
+// `tsx` does not load Next.js environment files itself. Match Next's
+// `.env.local` / `.env` loading behavior before reading the credentials.
+loadEnvConfig(process.cwd());
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -30,7 +30,7 @@ interface DashboardFilters {
  * rule is that mentors only see the actual decision once it's published.
  */
 export async function fetchMentorDashboard(programId: string, filters: DashboardFilters = {}) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 10;
 

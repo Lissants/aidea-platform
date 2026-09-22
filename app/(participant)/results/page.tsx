@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Results' };
 
 export default async function ResultsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: period } = await supabase
     .from('voting_periods')

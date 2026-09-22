@@ -15,7 +15,7 @@ export interface ReviewQueueRow {
 
 /** My Reviews queue for the signed-in mentor: pending + completed assignments. */
 export async function fetchMyReviewQueue(mentorProfileId: string): Promise<ReviewQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('review_assignments')

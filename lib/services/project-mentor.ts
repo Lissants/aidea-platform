@@ -23,7 +23,7 @@ export interface MentorOption {
 /** Ideas that reached a qualifier decision — Build ideas need a project
  * mentor; No Build ideas show as Not Applicable. */
 export async function fetchProjectMentorQueue(programId: string): Promise<ProjectMentorQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('ideas')
@@ -53,7 +53,7 @@ export async function fetchProjectMentorQueue(programId: string): Promise<Projec
 }
 
 export async function fetchAllMentorOptions(): Promise<MentorOption[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('mentor_profiles').select('id, profiles(full_name)');
   return (data ?? []).map((m: any) => ({ mentor_profile_id: m.id, full_name: m.profiles?.full_name ?? 'Mentor' }));
 }
@@ -67,7 +67,7 @@ export async function saveProjectMentorAssignment(ideaId: string, mentorProfileI
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: existing } = await supabase
     .from('project_mentor_assignments')
     .select('published')
@@ -99,7 +99,7 @@ export async function publishProjectMentorAssignments(programId: string) {
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
   const callStartedAt = new Date().toISOString();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('fn_publish_batch', {
     p_program_id: programId,
     p_entity_type: 'project_mentor_assignment',

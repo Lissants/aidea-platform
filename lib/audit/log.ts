@@ -27,7 +27,7 @@ export interface AuditLogInput {
  * this helper only for actions decided in application code.
  */
 export async function logAudit(input: AuditLogInput) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase.from('audit_logs').insert({
     program_id: input.programId ?? null,

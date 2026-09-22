@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Project Showcase' };
 
 export default async function ShowcasePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: projects } = await supabase
     .from('showcase_projects')

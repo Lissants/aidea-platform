@@ -16,7 +16,7 @@ export interface UserRoleRow {
 }
 
 export async function fetchUsersWithRoles(search?: string): Promise<UserRoleRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   let query = supabase.from('profiles').select('id, full_name, email, user_roles(roles(name))').order('full_name').limit(200);
   if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
@@ -30,7 +30,7 @@ export async function fetchUsersWithRoles(search?: string): Promise<UserRoleRow[
   }));
 }
 
-async function countAdmins(supabase: ReturnType<typeof createClient>): Promise<number> {
+async function countAdmins(supabase: Awaited<ReturnType<typeof createClient>>): Promise<number> {
   const { count } = await supabase
     .from('user_roles')
     .select('id, roles!inner(name)', { count: 'exact', head: true })
@@ -44,7 +44,7 @@ export async function addUserRole(userId: string, roleName: RoleName) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: role } = await supabase.from('roles').select('id').eq('name', roleName).maybeSingle();
   if (!role) return { error: 'Unknown role' } as const;
 
@@ -72,7 +72,7 @@ export async function removeUserRole(userId: string, roleName: RoleName) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (roleName === 'admin') {
     const adminCount = await countAdmins(supabase);

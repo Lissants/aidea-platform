@@ -10,7 +10,7 @@ export const metadata = { title: 'Voting' };
 
 export default async function VotingPage() {
   const user = await getCurrentUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const now = new Date().toISOString();
   const { data: period } = await supabase

@@ -8,8 +8,8 @@ import type { Database } from '@/types/database';
  * therefore still subject to RLS — safe to use anywhere a signed-in user's
  * own permissions should apply.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

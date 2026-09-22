@@ -19,7 +19,7 @@ export interface QualifierQueueRow {
 
 /** Ideas that passed screening — eligible for qualifier assessment. */
 export async function fetchQualifierQueue(programId: string): Promise<QualifierQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('ideas')
@@ -49,7 +49,7 @@ export async function fetchQualifierQueue(programId: string): Promise<QualifierQ
 }
 
 async function assertEditable(ideaId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('qualifier_assessments').select('published').eq('idea_id', ideaId).maybeSingle();
   if (data?.published) return 'This assessment has already been published and can no longer be edited.';
   return null;
@@ -65,7 +65,7 @@ export async function saveQualifierDraft(
   const lockError = await assertEditable(ideaId);
   if (lockError) return { error: lockError } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('qualifier_assessments').upsert(
     {
       idea_id: ideaId,
@@ -103,7 +103,7 @@ export async function finalizeQualifier(
   const lockError = await assertEditable(ideaId);
   if (lockError) return { error: lockError } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('qualifier_assessments').upsert(
     {
       idea_id: ideaId,
@@ -126,7 +126,7 @@ export async function publishQualifierResults(programId: string) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('fn_publish_batch', {
     p_program_id: programId,
     p_entity_type: 'qualifier_assessment',

@@ -24,7 +24,7 @@ const SHARED_PROTECTED_PREFIXES = ['/showcase', '/voting', '/results', '/notific
 
 const PUBLIC_PREFIXES = ['/sign-in', '/auth/callback', '/access-denied', '/session-error'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(

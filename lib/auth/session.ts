@@ -21,7 +21,7 @@ export interface SessionUser {
  * throws for "not signed in".
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: authData, error: authError } = await supabase.auth.getUser();
 
   if (authError || !authData?.user) {
@@ -58,8 +58,8 @@ const ACTIVE_ROLE_COOKIE = 'aidea_active_role';
  * "acting as" choice if it's still a role the user holds, otherwise the
  * highest-privilege role (Admin > Mentor > Participant > Employee Voter).
  */
-export function getActiveRole(user: SessionUser): AppRole | null {
-  const cookieRole = cookies().get(ACTIVE_ROLE_COOKIE)?.value as AppRole | undefined;
+export async function getActiveRole(user: SessionUser): Promise<AppRole | null> {
+  const cookieRole = (await cookies()).get(ACTIVE_ROLE_COOKIE)?.value as AppRole | undefined;
   if (cookieRole && user.roles.includes(cookieRole)) {
     return cookieRole;
   }

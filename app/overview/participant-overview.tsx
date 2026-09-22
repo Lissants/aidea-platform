@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { SessionUser } from '@/lib/auth/session';
 
 export async function ParticipantOverview({ user }: { user: SessionUser }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: program } = await supabase
     .from('programs')

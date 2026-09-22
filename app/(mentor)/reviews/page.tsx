@@ -26,9 +26,10 @@ const REVIEW_STATUS_LABEL: Record<ReviewQueueRow['review_status'], string> = {
   reopened: 'Reopened',
 };
 
-export default async function MyReviewsPage({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function MyReviewsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab: searchTab } = await searchParams;
   const user = await getCurrentUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: mentorProfile } = user
     ? await supabase.from('mentor_profiles').select('id').eq('profile_id', user.id).maybeSingle()
@@ -43,7 +44,7 @@ export default async function MyReviewsPage({ searchParams }: { searchParams: { 
     );
   }
 
-  const tab = (searchParams.tab as ReviewQueueTab) ?? 'all';
+  const tab = (searchTab as ReviewQueueTab) ?? 'all';
   const allRows = await fetchMyReviewQueue(mentorProfile.id);
   const rows = filterQueueByTab(allRows, tab);
 

@@ -10,8 +10,9 @@ import { fetchIdeaDetail } from '@/lib/services/idea-management';
 
 export const metadata = { title: 'Idea Detail' };
 
-export default async function IdeaDetailPage({ params }: { params: { ideaId: string } }) {
-  const idea = await fetchIdeaDetail(params.ideaId);
+export default async function IdeaDetailPage({ params }: { params: Promise<{ ideaId: string }> }) {
+  const { ideaId } = await params;
+  const idea = await fetchIdeaDetail(ideaId);
   if (!idea) notFound();
 
   return (

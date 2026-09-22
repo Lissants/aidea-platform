@@ -25,7 +25,7 @@ export interface EmailAdapter {
  */
 class DevOutboxEmailAdapter implements EmailAdapter {
   async send(email: OutgoingEmail): Promise<void> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.from('email_outbox').insert({
       to_email: email.to,
       subject: email.subject,

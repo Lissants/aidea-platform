@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Role not held by this user' }, { status: 403 });
   }
 
-  cookies().set(ACTIVE_ROLE_COOKIE, role, {
+  (await cookies()).set(ACTIVE_ROLE_COOKIE, role, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

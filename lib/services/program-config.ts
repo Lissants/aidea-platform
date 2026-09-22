@@ -34,7 +34,7 @@ const DATE_FIELDS = [
 export type DateField = (typeof DATE_FIELDS)[number];
 
 export async function fetchActiveProgram(): Promise<ProgramRow | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('programs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
   return (data as ProgramRow) ?? null;
 }
@@ -48,7 +48,7 @@ export async function saveProgramConfig(
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: before } = await supabase.from('programs').select('*').eq('id', programId).maybeSingle();
   if (!before) return { error: 'Program not found' } as const;
 
@@ -80,7 +80,7 @@ export async function setStageTimestampNow(programId: string, field: DateField) 
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: before } = await supabase.from('programs').select(field).eq('id', programId).maybeSingle();
   const now = new Date().toISOString();
 
@@ -111,7 +111,7 @@ export interface ProgramContentRow {
 /** program_content doubles as eligibility/team-rule text (key='eligibility')
  * and FAQ entries (key='faq_<n>'). */
 export async function fetchProgramContent(programId: string): Promise<ProgramContentRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('program_content').select('*').eq('program_id', programId).order('key');
   return (data ?? []) as ProgramContentRow[];
 }
@@ -120,7 +120,7 @@ export async function saveProgramContent(programId: string, key: string, title: 
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from('program_content')
     .upsert({ program_id: programId, key, title, body, updated_at: new Date().toISOString() }, { onConflict: 'program_id,key' });
@@ -134,7 +134,7 @@ export async function deleteProgramContent(contentId: string) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('program_content').delete().eq('id', contentId);
   if (error) return { error: error.message } as const;
   revalidatePath('/program');
@@ -150,7 +150,7 @@ export interface ProgramResourceRow {
 }
 
 export async function fetchProgramResources(programId: string): Promise<ProgramResourceRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.from('program_resources').select('*').eq('program_id', programId).order('created_at', { ascending: false });
   return (data ?? []) as ProgramResourceRow[];
 }
@@ -163,7 +163,7 @@ export async function addProgramResource(programId: string, title: string, fileU
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
   if (!fileUrl.includes('/program-resources/')) return { error: 'File URL must point to the program-resources storage bucket' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('program_resources').insert({ program_id: programId, title, file_url: fileUrl, file_type: fileType });
   if (error) return { error: error.message } as const;
   revalidatePath('/program');
@@ -174,7 +174,7 @@ export async function deleteProgramResource(resourceId: string) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from('program_resources').delete().eq('id', resourceId);
   if (error) return { error: error.message } as const;
   revalidatePath('/program');

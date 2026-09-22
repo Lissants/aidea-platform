@@ -13,7 +13,7 @@ export default async function ParticipantLayout({ children }: { children: React.
   if (!user) redirect('/sign-in');
   if (user.roles.length === 0) redirect('/access-denied');
 
-  const activeRole = getActiveRole(user) ?? user.roles[0];
+  const activeRole = (await getActiveRole(user)) ?? user.roles[0];
 
   return (
     <AppShell

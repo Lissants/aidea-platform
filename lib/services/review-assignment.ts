@@ -27,7 +27,7 @@ export interface MentorCapacityRow {
 /** Every idea currently needing review-assignment attention (routing
  * required or already assigned), with each idea's Preferred Mentor 1 & 2. */
 export async function fetchRoutingQueue(programId: string): Promise<RoutingQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('review_assignments')
@@ -64,7 +64,7 @@ export async function fetchRoutingQueue(programId: string): Promise<RoutingQueue
 
 /** Mentor capacity snapshot ("7 of 10") for the assignment picker. */
 export async function fetchMentorCapacities(programId: string): Promise<MentorCapacityRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: mentors } = await supabase.from('mentor_profiles').select('id, max_capacity, profiles(full_name)');
   if (!mentors) return [];
@@ -112,7 +112,7 @@ export async function assignReviewer(
     return { error: 'A reason is required when changing an already-assigned reviewer' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from('review_assignments')
     .update({ mentor_profile_id: newMentorProfileId, status: 'pending', assigned_at: new Date().toISOString() })

@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Lightbulb } from 'lucide-react';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';

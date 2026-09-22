@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ profiles: [] });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, email')

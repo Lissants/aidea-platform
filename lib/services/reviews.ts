@@ -28,7 +28,7 @@ export async function saveReviewDraft(
   const user = await getCurrentUser();
   if (!user) return { error: 'Not authenticated' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from('reviews')
     .upsert(
@@ -73,7 +73,7 @@ export async function submitReview(
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: saved, error: saveError } = await supabase
     .from('reviews')

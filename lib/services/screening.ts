@@ -24,7 +24,7 @@ export interface ScreeningQueueRow {
 
 /** Ideas with a completed mentor review, ready for a screening decision. */
 export async function fetchScreeningQueue(programId: string): Promise<ScreeningQueueRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('ideas')
@@ -82,7 +82,7 @@ export async function saveScreeningDecision(
     return { error: 'A reason is required when your decision differs from the mentor recommendation' } as const;
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: existing } = await supabase.from('screening_decisions').select('id, published, decision').eq('idea_id', ideaId).maybeSingle();
   if (existing?.published) {
@@ -126,7 +126,7 @@ export async function publishScreeningDecisions(programId: string) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('fn_publish_batch', {
     p_program_id: programId,
     p_entity_type: 'screening_decision',

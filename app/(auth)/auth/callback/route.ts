@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const redirectTo = searchParams.get('redirect_to') ?? '/';
 
   if (code) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       return NextResponse.redirect(`${origin}/session-error`);

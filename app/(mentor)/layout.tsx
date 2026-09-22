@@ -8,7 +8,7 @@ export default async function MentorLayout({ children }: { children: React.React
   if (!user) redirect('/sign-in');
   if (!hasAnyRole(user.roles, ['mentor', 'admin'])) redirect('/access-denied');
 
-  const activeRole = getActiveRole(user) ?? 'mentor';
+  const activeRole = (await getActiveRole(user)) ?? 'mentor';
 
   return (
     <AppShell

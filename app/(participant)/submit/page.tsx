@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 export const metadata = { title: 'Submit New Idea' };
 
 export default async function SubmitIdeaPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: program } = await supabase
     .from('programs')
