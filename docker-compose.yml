@@ -1,0 +1,74 @@
+# Example compose file for a company-server deployment. SQL Server itself is
+# NOT run here — the app connects to an existing SQL Server 2019 instance
+# (on the Docker host or a DB server) over TCP with a SQL login, using the
+# `tedious` driver. See COMPANY_SERVER_DEPLOYMENT.md for the full guide.
+#
+# Usage:
+#   cp .env.example .env   # fill in real values (MSSQL_*, SESSION_SECRET, ...)
+#   docker compose up -d --build
+#   docker compose run --rm migrate     # apply db/migrations (first deploy + upgrades)
+
+x-app-env: &app-env
+  NODE_ENV: production
+  NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+  MSSQL_DRIVER: tedious
+  # host.docker.internal reaches a SQL Server running on the Docker host.
+  MSSQL_SERVER: ${MSSQL_SERVER:-host.docker.internal}
+  MSSQL_PORT: ${MSSQL_PORT:-1433}
+  MSSQL_DATABASE: ${MSSQL_DATABASE:-aidea}
+  MSSQL_USER: ${MSSQL_USER}
+  MSSQL_PASSWORD: ${MSSQL_PASSWORD}
+  MSSQL_ENCRYPT: ${MSSQL_ENCRYPT:-true}
+  MSSQL_TRUST_CERT: ${MSSQL_TRUST_CERT:-true}
+  SESSION_SECRET: ${SESSION_SECRET}
+  ALLOWED_EMAIL_DOMAIN: ${ALLOWED_EMAIL_DOMAIN}
+  EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+  EMAIL_FROM: ${EMAIL_FROM}
+  CRON_SECRET: ${CRON_SECRET}
+  MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID}
+  MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
+  MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
+  SSO_DEFAULT_ROLES: ${SSO_DEFAULT_ROLES:-participant,employee_voter}
+  UPLOAD_DIR: /app/uploads
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    image: aidea-platform:latest
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment: *app-env
+    volumes:
+      # Uploaded showcase images + program resources. Back this up together
+      # with the database.
+      - uploads:/app/uploads
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # One-off migration runner: `docker compose run --rm migrate`
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    profiles: ['tools']
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment: *app-env
+    command: ['npx', 'tsx', 'scripts/migrate.ts']
+
+volumes:
+  uploads:
