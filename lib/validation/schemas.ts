@@ -31,7 +31,8 @@ export const ideaTeamMemberSchema = z.object({
 });
 
 export const ideaTeamSchema = z.object({
-  team_members: z.array(ideaTeamMemberSchema).max(10),
+  team_leader_id: z.string().uuid('Team leader is required'),
+  team_members: z.array(ideaTeamMemberSchema).max(5, 'A team can have at most 5 members'),
 });
 
 export const impactTypeEnum = z.enum([
@@ -44,7 +45,7 @@ export const impactTypeEnum = z.enum([
 export const ideaImpactSchema = z.object({
   impact_kind: z.enum(['primary', 'secondary']),
   impact_type: impactTypeEnum,
-  explanation: z.string().min(10).max(2000),
+  explanation: z.string().min(10, 'Impact explanation must be at least 10 characters (remove the secondary impact if unused)').max(2000),
   measurable_result: z.string().max(1000).optional().nullable(),
 });
 
@@ -85,6 +86,27 @@ export const ideaDraftSchema = ideaBasicsSchema
   .merge(ideaMentorPreferencesSchema);
 export type IdeaDraftInput = z.infer<typeof ideaDraftSchema>;
 
+/**
+ * Save-draft schema — same shape as ideaDraftSchema but with no required
+ * fields or minimum lengths, so a participant can save partway through the
+ * wizard with other sections still empty. Only structural limits (max
+ * lengths, enums, ids) are kept; completeness is enforced by ideaDraftSchema
+ * and usp_submit_idea at submit time.
+ */
+export const ideaDraftSaveSchema = z.object({
+  team_name: z.string().max(150).optional(),
+  idea_title: z.string().max(200).optional(),
+  problem_opportunity: z.string().max(4000).optional(),
+  proposed_solution: z.string().max(4000).optional(),
+  target_users: z.string().max(2000).optional().nullable(),
+  team_leader_id: z.string().uuid().optional(),
+  team_members: ideaTeamSchema.shape.team_members.optional(),
+  impacts: z.array(ideaImpactSchema.extend({ explanation: z.string().max(2000).optional().nullable() })).max(4).optional(),
+  support_requests: ideaSupportRequestsSchema.shape.support_requests.optional(),
+  mentor_preferences: ideaMentorPreferencesSchema.shape.mentor_preferences.optional(),
+});
+export type IdeaDraftSaveInput = z.infer<typeof ideaDraftSaveSchema>;
+
 // --- Review ---------------------------------------------------------------
 
 export const reviewSchema = z.object({
@@ -112,7 +134,7 @@ export type ScreeningDecisionInput = z.infer<typeof screeningDecisionSchema>;
 
 export const qualifierAssessmentSchema = z.object({
   final_score: z.number().min(0).max(100),
-  overall_comment: z.string().min(10).max(4000),
+  overall_comment: z.string().min(10, 'Overall comment must be at least 10 characters').max(4000),
   build_decision: z.enum(['build', 'no_build']),
 });
 export type QualifierAssessmentInput = z.infer<typeof qualifierAssessmentSchema>;
@@ -121,7 +143,7 @@ export type QualifierAssessmentInput = z.infer<typeof qualifierAssessmentSchema>
 
 export const finalPresentationAssessmentSchema = z.object({
   final_score: z.number().min(0).max(100),
-  overall_comment: z.string().min(10).max(4000),
+  overall_comment: z.string().min(10, 'Overall comment must be at least 10 characters').max(4000),
   winner_decision: z.enum(['winner', 'no_winner']),
   winner_category: z.enum(['grand_winner', 'runner_up']).optional().nullable(),
 });

@@ -37,8 +37,11 @@ describe('ideaBasicsSchema', () => {
 });
 
 describe('ideaTeamSchema', () => {
-  it('accepts up to 10 team members', () => {
+  const leader = '33333333-3333-3333-3333-333333333333';
+
+  it('accepts up to 5 team members', () => {
     const result = ideaTeamSchema.safeParse({
+      team_leader_id: leader,
       team_members: [
         { profile_id: '11111111-1111-1111-1111-111111111111', member_order: 1 },
         { profile_id: '22222222-2222-2222-2222-222222222222', member_order: 2 },
@@ -47,13 +50,17 @@ describe('ideaTeamSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects more than 10 team members', () => {
-    const team_members = Array.from({ length: 11 }, (_, i) => ({
+  it('rejects more than 5 team members', () => {
+    const team_members = Array.from({ length: 6 }, (_, i) => ({
       profile_id: '11111111-1111-1111-1111-111111111111',
       member_order: i + 1,
     }));
-    const result = ideaTeamSchema.safeParse({ team_members });
+    const result = ideaTeamSchema.safeParse({ team_leader_id: leader, team_members });
     expect(result.success).toBe(false);
+  });
+
+  it('requires a team leader', () => {
+    expect(ideaTeamSchema.safeParse({ team_members: [] }).success).toBe(false);
   });
 });
 

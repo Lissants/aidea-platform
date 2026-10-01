@@ -3,7 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { attempt, db, DbError, newId } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
-import { ideaDraftSchema, type IdeaDraftInput } from '@/lib/validation/schemas';
+import {
+  ideaDraftSaveSchema,
+  ideaDraftSchema,
+  type IdeaDraftInput,
+  type IdeaDraftSaveInput,
+} from '@/lib/validation/schemas';
+
+type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
 /**
  * Creates or updates the participant's idea draft (basics + team + impacts +
@@ -12,28 +19,60 @@ import { ideaDraftSchema, type IdeaDraftInput } from '@/lib/validation/schemas';
  * existing draft is only editable by its creator while status='draft', and
  * that is verified (with an update lock) before any child rows are replaced,
  * so nothing is written for someone else's or an already-submitted idea.
+ *
+ * Validation is lenient (ideaDraftSaveSchema): a draft can be saved with
+ * sections still empty. Completeness is only checked on submit.
  */
-export async function saveIdeaDraft(programId: string, ideaId: string | null, input: IdeaDraftInput) {
+export async function saveIdeaDraft(programId: string, ideaId: string | null, input: IdeaDraftSaveInput) {
   const user = await getCurrentUser();
   if (!user) return { error: 'Not authenticated' } as const;
 
-  const parsed = ideaDraftSchema.partial().safeParse(input);
+  const parsed = ideaDraftSaveSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
   }
 
-  const data = parsed.data;
+  const result = await writeDraft(user, programId, ideaId, parsed.data);
+  if (result.error) return { error: result.error } as const;
+
+  revalidatePath('/my-ideas');
+  return { ok: true, ideaId: result.data } as const;
+}
+
+/**
+ * Final submit from the wizard: validates every section against the full
+ * ideaDraftSchema, saves the latest values, then runs usp_submit_idea.
+ */
+export async function submitIdeaDraft(programId: string, ideaId: string | null, input: IdeaDraftInput) {
+  const user = await getCurrentUser();
+  if (!user) return { error: 'Not authenticated' } as const;
+
+  const parsed = ideaDraftSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
+  }
+
+  const saved = await writeDraft(user, programId, ideaId, parsed.data);
+  if (saved.data === null) return { error: saved.error } as const;
+
+  const submitted = await submitIdea(saved.data);
+  if ('error' in submitted) return { error: submitted.error, ideaId: saved.data } as const;
+  return { ok: true, ideaId: saved.data } as const;
+}
+
+async function writeDraft(user: SessionUser, programId: string, ideaId: string | null, data: IdeaDraftSaveInput) {
   const basics = {
     program_id: programId,
     team_name: data.team_name ?? '',
-    team_leader_id: user.id,
+    // Column is NOT NULL, so a draft saved before a leader is picked falls back to the creator.
+    team_leader_id: data.team_leader_id ?? user.id,
     idea_title: data.idea_title ?? '',
     problem_opportunity: data.problem_opportunity ?? '',
     proposed_solution: data.proposed_solution ?? '',
-    target_users: data.target_users ?? null,
+    target_users: data.target_users || null,
   };
 
-  const result = await attempt(() =>
+  return attempt(() =>
     db.transaction(async (tx) => {
       let currentIdeaId: string;
 
@@ -73,7 +112,7 @@ export async function saveIdeaDraft(programId: string, ideaId: string | null, in
             idea_id: currentIdeaId,
             impact_kind: i.impact_kind,
             impact_type: i.impact_type,
-            explanation: i.explanation,
+            explanation: i.explanation || null,
             measurable_result: i.measurable_result ?? null,
           }))
         );
@@ -108,11 +147,6 @@ export async function saveIdeaDraft(programId: string, ideaId: string | null, in
       return currentIdeaId;
     })
   );
-
-  if (result.error) return { error: result.error } as const;
-
-  revalidatePath('/my-ideas');
-  return { ok: true, ideaId: result.data } as const;
 }
 
 /**
