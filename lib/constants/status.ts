@@ -17,6 +17,8 @@ import {
   Trophy,
   Award,
   Medal,
+  XCircle,
+  Minus,
 } from 'lucide-react';
 
 /**
@@ -39,6 +41,9 @@ export const STATUS_KEYS = [
   'voting_closed',
   'build',
   'no_build',
+  'pass',
+  'not_pass',
+  'not_applicable',
   'winner',
   'no_winner',
   'grand_winner',
@@ -69,7 +74,10 @@ export const STATUS_META: Record<StatusKey, StatusMeta> = {
   voting_open: { label: 'Voting Open', icon: Vote, tone: 'success' },
   voting_closed: { label: 'Voting Closed', icon: Lock, tone: 'neutral' },
   build: { label: 'Build', icon: Hammer, tone: 'success' },
-  no_build: { label: 'No Build', icon: Ban, tone: 'destructive' },
+  no_build: { label: 'Not Build', icon: Ban, tone: 'destructive' },
+  pass: { label: 'Pass', icon: CheckCircle2, tone: 'success' },
+  not_pass: { label: 'Not Pass', icon: XCircle, tone: 'destructive' },
+  not_applicable: { label: 'N/A', icon: Minus, tone: 'neutral' },
   winner: { label: 'Winner', icon: Trophy, tone: 'success' },
   no_winner: { label: 'No Winner', icon: Ban, tone: 'neutral' },
   grand_winner: { label: 'Grand Winner', icon: Award, tone: 'success' },

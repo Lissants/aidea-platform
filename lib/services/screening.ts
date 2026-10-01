@@ -133,5 +133,6 @@ export async function publishScreeningDecisions(programId: string) {
 
   revalidatePath('/screening');
   revalidatePath('/dashboard');
+  revalidatePath('/my-ideas');
   return { ok: true, count: data?.[0]?.published_count ?? 0 } as const;
 }

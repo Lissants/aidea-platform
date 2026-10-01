@@ -149,5 +149,6 @@ export async function publishQualifierResults(programId: string) {
   if (error) return { error } as const;
   revalidatePath('/qualifier');
   revalidatePath('/dashboard');
+  revalidatePath('/my-ideas');
   return { ok: true, count: data?.[0]?.published_count ?? 0 } as const;
 }

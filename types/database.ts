@@ -155,6 +155,13 @@ export interface Idea {
   created_by: string;
 }
 
+/** My Ideas row: published-only results; null means N/A (or not yet published). */
+export interface MyIdeaRow extends Idea {
+  screening: ScreeningDecisionValue | null;
+  qualifier: BuildDecision | null;
+  mentor_name: string | null;
+}
+
 export interface IdeaTeamMember {
   id: string;
   idea_id: string;
