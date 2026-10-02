@@ -102,6 +102,5 @@ export async function publishShowcaseProjects(programId: string) {
 
   if (error) return { error } as const;
   revalidatePath('/showcase-content');
-  revalidatePath('/showcase');
   return { ok: true, count: data?.[0]?.published_count ?? 0 } as const;
 }

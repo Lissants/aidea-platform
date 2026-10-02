@@ -209,6 +209,5 @@ export async function publishFinalPresentationResults(programId: string) {
 
   if (error) return { error } as const;
   revalidatePath('/final-presentation');
-  revalidatePath('/results');
   return { ok: true, count: data?.[0]?.published_count ?? 0 } as const;
 }

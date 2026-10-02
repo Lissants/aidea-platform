@@ -24,5 +24,5 @@ export default async function OverviewPage() {
   if (activeRole === 'participant') return <ParticipantOverview user={user} />;
 
   // Employee voters have no dedicated overview — send them to their home page.
-  redirect('/showcase');
+  redirect('/voting');
 }

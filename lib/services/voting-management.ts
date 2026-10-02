@@ -140,7 +140,7 @@ export async function publishVotingResults(votingPeriodId: string, programId: st
       const count = await tx.execute(
         `INSERT INTO notifications (user_id, type, title, body, link)
          SELECT DISTINCT v.voter_id, 'voting_result_published', 'Favorite Project results are published',
-                'The Favorite Project voting results are now live.', '/results'
+                'The Favorite Project voting results are now live.', '/voting'
            FROM votes v
           WHERE v.voting_period_id = @votingPeriodId`,
         { votingPeriodId }
@@ -162,6 +162,5 @@ export async function publishVotingResults(votingPeriodId: string, programId: st
   });
 
   revalidatePath('/voting-management');
-  revalidatePath('/results');
   return { ok: true, count: result.data.count } as const;
 }

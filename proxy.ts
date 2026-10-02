@@ -26,7 +26,7 @@ const ADMIN_PREFIXES = [
   '/showcase-content',
 ];
 // Shared across roles, only requires *some* authenticated role:
-const SHARED_PROTECTED_PREFIXES = ['/showcase', '/voting', '/results', '/notifications', '/profile'];
+const SHARED_PROTECTED_PREFIXES = ['/voting', '/notifications', '/profile'];
 
 const PUBLIC_PREFIXES = ['/sign-in', '/auth/microsoft', '/auth/callback', '/access-denied', '/session-error'];
 
