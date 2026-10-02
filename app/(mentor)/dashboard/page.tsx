@@ -13,6 +13,7 @@ import {
   PaginationLink,
 } from '@/components/ui/pagination';
 import { db } from '@/lib/db';
+import { resultColumns } from '@/components/ideas/result-columns';
 import { fetchMentorDashboard, type DashboardIdeaRow } from '@/lib/services/mentor-dashboard';
 import { formatDate } from '@/lib/utils';
 import type { StatusKey } from '@/lib/constants/status';
@@ -70,6 +71,7 @@ export default async function MentorDashboardPage(props: {
     { key: 'team_name', header: 'Team', cell: (r) => r.team_name },
     { key: 'submitted_at', header: 'Submitted', cell: (r) => formatDate(r.submitted_at) },
     { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.workflow_status} /> },
+    ...resultColumns<DashboardIdeaRow>(),
   ];
 
   function buildHref(overrides: Record<string, string>) {

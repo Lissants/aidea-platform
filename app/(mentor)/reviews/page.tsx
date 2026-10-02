@@ -7,6 +7,7 @@ import { ResponsiveTable, type ResponsiveTableColumn } from '@/components/ui/res
 import { cn, formatDate } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth/session';
 import { mentorProfileIdFor } from '@/lib/permissions/scopes';
+import { resultColumns } from '@/components/ideas/result-columns';
 import { fetchMyReviewQueue, filterQueueByTab, type ReviewQueueRow, type ReviewQueueTab } from '@/lib/services/my-reviews';
 
 export const metadata = { title: 'My Reviews' };
@@ -57,6 +58,7 @@ export default async function MyReviewsPage(props: { searchParams: Promise<{ tab
         </Badge>
       ),
     },
+    ...resultColumns<ReviewQueueRow>(),
     {
       key: 'action',
       header: '',
