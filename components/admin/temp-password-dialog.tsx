@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { copyText } from '@/lib/clipboard';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -16,14 +17,12 @@ export function TempPasswordDialog({
   email: string;
   onClose: () => void;
 }) {
+  const bodyRef = React.useRef<HTMLDivElement>(null);
+
   async function copy() {
     if (!password) return;
-    try {
-      await navigator.clipboard.writeText(password);
-      toast.success('Copied');
-    } catch {
-      toast.error('Copy failed: select the password and copy it manually');
-    }
+    if (await copyText(password, bodyRef.current)) toast.success('Copied');
+    else toast.error('Copy failed: select the password and copy it manually');
   }
 
   return (
@@ -35,7 +34,7 @@ export function TempPasswordDialog({
             Share this with {email} securely. It is shown only once, and they must choose a new password when they sign in.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center gap-2">
+        <div ref={bodyRef} className="flex items-center gap-2">
           <code className="flex-1 select-all rounded-md border bg-muted px-3 py-2 font-mono text-sm">{password}</code>
           <Button type="button" variant="outline" size="icon" aria-label="Copy password" onClick={copy}>
             <Copy className="h-4 w-4" />
