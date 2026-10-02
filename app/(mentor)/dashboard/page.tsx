@@ -18,15 +18,13 @@ import { fetchMentorDashboard, type DashboardIdeaRow } from '@/lib/services/ment
 import { formatDate } from '@/lib/utils';
 import type { StatusKey } from '@/lib/constants/status';
 import type { ImpactType } from '@/types/database';
+import { IMPACT_TYPE_OPTIONS } from '@/lib/constants/impact';
 
 export const metadata = { title: 'Idea Dashboard' };
 
 const IMPACT_OPTIONS: { value: ImpactType | 'all'; label: string }[] = [
   { value: 'all', label: 'All impact types' },
-  { value: 'revenue_growth', label: 'Revenue growth' },
-  { value: 'time_efficiency', label: 'Time efficiency' },
-  { value: 'cost_efficiency', label: 'Cost efficiency' },
-  { value: 'governance_improvement', label: 'Governance improvement' },
+  ...IMPACT_TYPE_OPTIONS,
 ];
 
 const STATUS_OPTIONS: { value: StatusKey | 'all'; label: string }[] = [

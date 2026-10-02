@@ -27,8 +27,8 @@ export default async function SubmitIdeaPage() {
   // name follows the same profile visibility rule as everywhere else.
   const user = await getCurrentUser();
   const profileScope = user ? profileReadFilter(user, 'p') : { sql: '1 = 0', params: {} };
-  const mentorRows = await db.query<{ id: string; expertise: string | null; full_name: string | null }>(
-    `SELECT mp.id, mp.expertise, p.full_name
+  const mentorRows = await db.query<{ id: string; expertise: string | null; full_name: string | null; job_title: string | null }>(
+    `SELECT mp.id, mp.expertise, p.full_name, p.job_title
        FROM mentor_profiles mp
        LEFT JOIN profiles p ON p.id = mp.profile_id AND ${profileScope.sql}`,
     profileScope.params
@@ -37,6 +37,7 @@ export default async function SubmitIdeaPage() {
   const mentors = mentorRows.map((m) => ({
     mentor_profile_id: m.id,
     full_name: m.full_name ?? 'Mentor',
+    job_title: m.job_title,
     expertise: m.expertise,
   }));
 

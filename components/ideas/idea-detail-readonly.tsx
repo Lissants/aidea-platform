@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { impactTypeLabel } from '@/lib/constants/impact';
 
 interface IdeaDetailData {
   idea_title: string;
@@ -9,16 +10,9 @@ interface IdeaDetailData {
   target_users: string | null;
   team_members: { full_name: string }[];
   impacts: { impact_kind: string; impact_type: string; explanation: string | null; measurable_result: string | null }[];
-  support_requests: { support_area: string; details: string | null; estimate: string | null }[];
+  support_requests: { support_area: string; details: string | null; reason?: string | null; estimate: string | null }[];
   mentor_preferences: { priority: number; mentor_name: string }[];
 }
-
-const IMPACT_TYPE_LABEL: Record<string, string> = {
-  revenue_growth: 'Revenue growth',
-  time_efficiency: 'Time efficiency',
-  cost_efficiency: 'Cost efficiency',
-  governance_improvement: 'Governance improvement',
-};
 
 const SUPPORT_AREA_LABEL: Record<string, string> = {
   tools: 'Tools',
@@ -71,7 +65,7 @@ export function IdeaDetailReadonly({ idea }: { idea: IdeaDetailData }) {
                 <Badge variant={impact.impact_kind === 'primary' ? 'default' : 'secondary'}>
                   {impact.impact_kind === 'primary' ? 'Primary' : 'Secondary'}
                 </Badge>
-                <span className="font-medium">{IMPACT_TYPE_LABEL[impact.impact_type] ?? impact.impact_type}</span>
+                <span className="font-medium">{impactTypeLabel(impact.impact_type)}</span>
               </div>
               <p className="text-muted-foreground">{impact.explanation}</p>
               {impact.measurable_result && (
@@ -90,10 +84,23 @@ export function IdeaDetailReadonly({ idea }: { idea: IdeaDetailData }) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {idea.support_requests.map((s, idx) => (
-              <div key={idx}>
-                <span className="font-medium">{SUPPORT_AREA_LABEL[s.support_area] ?? s.support_area}: </span>
-                <span className="text-muted-foreground">{s.details}</span>
-                {s.estimate && <span className="text-xs text-muted-foreground"> (est. {s.estimate})</span>}
+              <div key={idx} className="space-y-0.5">
+                <p className="font-medium">{SUPPORT_AREA_LABEL[s.support_area] ?? s.support_area}</p>
+                {s.details && <p className="whitespace-pre-wrap text-muted-foreground">{s.details}</p>}
+                {s.reason && (
+                  <p className="whitespace-pre-wrap text-muted-foreground">
+                    <span className="font-medium text-foreground">Why: </span>
+                    {s.reason}
+                  </p>
+                )}
+                {s.estimate && (
+                  <p className="text-muted-foreground">
+                    Estimated amount:{' '}
+                    <span className="tabular-nums">
+                      {/^\d+$/.test(s.estimate) ? `IDR ${Number(s.estimate).toLocaleString('en-US')}` : s.estimate}
+                    </span>
+                  </p>
+                )}
               </div>
             ))}
           </CardContent>

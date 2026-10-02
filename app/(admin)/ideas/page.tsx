@@ -7,11 +7,11 @@ import { ExportButton } from '@/components/admin/export-button';
 import { fetchIdeaList } from '@/lib/services/idea-management';
 import { STAGE_LABEL } from '@/lib/ideas/stage';
 import { db } from '@/lib/db';
+import { IMPACT_TYPE_OPTIONS, impactTypeLabel } from '@/lib/constants/impact';
 
 export const metadata = { title: 'Idea Management' };
 
 const PAGE_SIZE = 20;
-const IMPACT_TYPES = ['revenue_growth', 'time_efficiency', 'cost_efficiency', 'governance_improvement'];
 
 export default async function IdeaManagementPage(props: { searchParams: Promise<Record<string, string | undefined>> }) {
   const searchParams = await props.searchParams;
@@ -64,9 +64,9 @@ export default async function IdeaManagementPage(props: { searchParams: Promise<
         />
         <select name="impact" defaultValue={searchParams.impact ?? ''} className="h-9 rounded-md border bg-background px-2 text-sm">
           <option value="">All impact types</option>
-          {IMPACT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t.replace(/_/g, ' ')}
+          {IMPACT_TYPE_OPTIONS.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
             </option>
           ))}
         </select>
@@ -106,7 +106,7 @@ export default async function IdeaManagementPage(props: { searchParams: Promise<
                     <p className="text-xs text-muted-foreground">{r.team_name}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                    {r.impact_type && <span>{r.impact_type.replace(/_/g, ' ')}</span>}
+                    {r.impact_type && <span>{impactTypeLabel(r.impact_type)}</span>}
                     {r.reviewer_name && <span>Reviewer: {r.reviewer_name}</span>}
                     <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground">{STAGE_LABEL[r.stage]}</span>
                   </div>

@@ -32,8 +32,8 @@ export type ImpactKind = 'primary' | 'secondary';
 export type ImpactType =
   | 'revenue_growth'
   | 'time_efficiency'
-  | 'cost_efficiency'
-  | 'governance_improvement';
+  | 'cost_optimization'
+  | 'governance_excellence';
 
 export type SupportArea = 'tools' | 'budget' | 'data_access';
 

@@ -134,10 +134,10 @@ WHEN NOT MATCHED THEN INSERT (id, program_id, team_name, team_leader_id, idea_ti
 INSERT INTO idea_impacts (idea_id, impact_kind, impact_type, explanation, measurable_result)
 SELECT s.idea_id, 'primary', s.impact_type, s.explanation, s.measurable_result
   FROM (VALUES
-    ('77777777-7777-7777-7777-777777777002', 'cost_efficiency', 'Reduces manual audit hours.', '30% reduction in audit time'),
+    ('77777777-7777-7777-7777-777777777002', 'cost_optimization', 'Reduces manual audit hours.', '30% reduction in audit time'),
     ('77777777-7777-7777-7777-777777777003', 'time_efficiency', 'Cuts onboarding query resolution time.', '50% faster response'),
     ('77777777-7777-7777-7777-777777777004', 'revenue_growth', 'Improves forecast accuracy, reducing stockouts.', '12% forecast accuracy gain'),
-    ('77777777-7777-7777-7777-777777777005', 'governance_improvement', 'More consistent QC decisions.', '95% inspection consistency')
+    ('77777777-7777-7777-7777-777777777005', 'governance_excellence', 'More consistent QC decisions.', '95% inspection consistency')
   ) AS s (idea_id, impact_type, explanation, measurable_result)
  WHERE NOT EXISTS (SELECT 1 FROM idea_impacts x WHERE x.idea_id = s.idea_id);
 

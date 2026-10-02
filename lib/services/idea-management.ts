@@ -134,7 +134,7 @@ export interface IdeaFullDetail {
   status: string;
   team_members: { full_name: string }[];
   impacts: { impact_kind: string; impact_type: string; explanation: string | null; measurable_result: string | null }[];
-  support_requests: { support_area: string; details: string | null; estimate: string | null }[];
+  support_requests: { support_area: string; details: string | null; reason: string | null; estimate: string | null }[];
   mentor_preferences: { priority: number; mentor_name: string }[];
   review: { id: string; status: string; reviewer_name: string | null } | null;
 }
@@ -173,7 +173,7 @@ export async function fetchIdeaDetail(ideaId: string): Promise<IdeaFullDetail | 
       { ideaId }
     ),
     db.query<IdeaFullDetail['support_requests'][number]>(
-      'SELECT support_area, details, estimate FROM idea_support_requests WHERE idea_id = @ideaId',
+      'SELECT support_area, details, reason, estimate FROM idea_support_requests WHERE idea_id = @ideaId',
       { ideaId }
     ),
     db.query<{ priority: number; full_name: string | null }>(

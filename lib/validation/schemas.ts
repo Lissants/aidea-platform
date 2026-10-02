@@ -56,8 +56,8 @@ export const ideaTeamSchema = z.object({
 export const impactTypeEnum = z.enum([
   'revenue_growth',
   'time_efficiency',
-  'cost_efficiency',
-  'governance_improvement',
+  'cost_optimization',
+  'governance_excellence',
 ]);
 
 export const ideaImpactSchema = z.object({
@@ -75,7 +75,12 @@ export const ideaSupportRequestSchema = z.object({
   support_area: z.enum(['tools', 'budget', 'data_access']),
   details: z.string().max(2000).optional().nullable(),
   reason: z.string().max(2000).optional().nullable(),
-  estimate: z.string().max(500).optional().nullable(),
+  estimate: z
+    .string()
+    .regex(/^\d{1,15}$/, 'Estimated amount must be a number')
+    .or(z.literal(''))
+    .optional()
+    .nullable(),
 });
 
 export const ideaSupportRequestsSchema = z.object({

@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { IMPACT_TYPE_OPTIONS } from '@/lib/constants/impact';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/layout/confirm-dialog';
 import { saveIdeaDraft, submitIdeaDraft } from '@/lib/services/ideas';
@@ -34,15 +36,9 @@ interface TeamMemberEntry {
 interface MentorOption {
   mentor_profile_id: string;
   full_name: string;
+  job_title: string | null;
   expertise: string | null;
 }
-
-const IMPACT_TYPE_OPTIONS: { value: ImpactType; label: string }[] = [
-  { value: 'revenue_growth', label: 'Revenue growth' },
-  { value: 'time_efficiency', label: 'Time efficiency' },
-  { value: 'cost_efficiency', label: 'Cost efficiency' },
-  { value: 'governance_improvement', label: 'Governance improvement' },
-];
 
 const SUPPORT_AREA_OPTIONS: { value: SupportArea; label: string }[] = [
   { value: 'tools', label: 'Tools' },
@@ -50,22 +46,19 @@ const SUPPORT_AREA_OPTIONS: { value: SupportArea; label: string }[] = [
   { value: 'data_access', label: 'Data access' },
 ];
 
-/** Label + placeholder for the two support fields (details, estimate), per support area. */
-const SUPPORT_FIELD_COPY: Record<
-  SupportArea,
-  { details: { label: string; placeholder: string }; estimate: { label: string; placeholder: string } }
-> = {
+/** Placeholders for the support details and "why" textareas, per support area. */
+const SUPPORT_FIELD_COPY: Record<SupportArea, { details: string; reason: string }> = {
   tools: {
-    details: { label: 'Support Details', placeholder: 'Tools, licenses, or technology' },
-    estimate: { label: 'Why is this support needed?', placeholder: 'Explain how it supports project development' },
+    details: 'Tools, licenses, or technology',
+    reason: 'Explain how it supports project development',
   },
   budget: {
-    details: { label: 'Estimated Amount', placeholder: 'IDR' },
-    estimate: { label: 'Support Details', placeholder: 'Provide the main cost assumptions' },
+    details: 'Provide the main cost assumptions',
+    reason: 'Explain how the budget supports project development',
   },
   data_access: {
-    details: { label: 'Support Details', placeholder: 'Required data and level of access' },
-    estimate: { label: 'Why is this support needed?', placeholder: 'Explain how the data will be used' },
+    details: 'Required data and level of access',
+    reason: 'Explain how the data will be used',
   },
 };
 
@@ -438,7 +431,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
               onClick={() =>
                 setImpacts((prev) => [
                   ...prev,
-                  { impact_kind: 'secondary', impact_type: 'cost_efficiency', explanation: '', measurable_result: '' },
+                  { impact_kind: 'secondary', impact_type: 'cost_optimization', explanation: '', measurable_result: '' },
                 ])
               }
             >
@@ -460,7 +453,11 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                     value={req.support_area}
                     onValueChange={(v) =>
                       setSupportRequests((prev) =>
-                        prev.map((it, i) => (i === idx ? { ...it, support_area: v as SupportArea } : it))
+                        prev.map((it, i) =>
+                          i === idx
+                            ? { ...it, support_area: v as SupportArea, estimate: v === 'budget' ? it.estimate : '' }
+                            : it
+                        )
                       )
                     }
                   >
@@ -485,9 +482,10 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                   </Button>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{copy.details.label}</Label>
+                  <Label htmlFor={`support-details-${idx}`}>Support Details</Label>
                   <Textarea
-                    placeholder={copy.details.placeholder}
+                    id={`support-details-${idx}`}
+                    placeholder={copy.details}
                     value={req.details}
                     onChange={(e) =>
                       setSupportRequests((prev) =>
@@ -497,17 +495,33 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{copy.estimate.label}</Label>
-                  <Input
-                    placeholder={copy.estimate.placeholder}
-                    value={req.estimate}
+                  <Label htmlFor={`support-reason-${idx}`}>Why is this support needed?</Label>
+                  <Textarea
+                    id={`support-reason-${idx}`}
+                    placeholder={copy.reason}
+                    value={req.reason}
                     onChange={(e) =>
                       setSupportRequests((prev) =>
-                        prev.map((it, i) => (i === idx ? { ...it, estimate: e.target.value } : it))
+                        prev.map((it, i) => (i === idx ? { ...it, reason: e.target.value } : it))
                       )
                     }
                   />
                 </div>
+                {req.support_area === 'budget' && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`support-amount-${idx}`}>Estimated Amount</Label>
+                    <CurrencyInput
+                      id={`support-amount-${idx}`}
+                      placeholder="0"
+                      value={req.estimate}
+                      onValueChange={(digits) =>
+                        setSupportRequests((prev) =>
+                          prev.map((it, i) => (i === idx ? { ...it, estimate: digits } : it))
+                        )
+                      }
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -539,13 +553,18 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                   ])
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="[&>span:first-child]:truncate [&>span:first-child]:text-left">
                   <SelectValue placeholder="Select a mentor" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                   {mentors.map((m) => (
-                    <SelectItem key={m.mentor_profile_id} value={m.mentor_profile_id}>
-                      {m.full_name} {m.expertise ? `· ${m.expertise}` : ''}
+                    <SelectItem
+                      key={m.mentor_profile_id}
+                      value={m.mentor_profile_id}
+                      description={m.expertise}
+                    >
+                      <span className="font-medium">{m.full_name}</span>
+                      {m.job_title && <span className="text-muted-foreground"> · {m.job_title}</span>}
                     </SelectItem>
                   ))}
                 </SelectContent>
