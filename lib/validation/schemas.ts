@@ -169,3 +169,42 @@ export const votingPeriodSchema = z
     path: ['closes_at'],
   });
 export type VotingPeriodInput = z.infer<typeof votingPeriodSchema>;
+
+// --- User management / passwords --------------------------------------
+
+export const MIN_PASSWORD_LENGTH = 12;
+
+export const newPasswordSchema = z
+  .string()
+  .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+  .max(200);
+
+export const userTierEnum = z.enum(['participant', 'mentor', 'admin', 'developer']);
+
+export const createUserSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(320),
+  fullName: z.string().trim().min(2, 'Full name is required').max(200),
+  employeeId: z
+    .string()
+    .trim()
+    .max(50)
+    .optional()
+    .transform((v) => (v ? v : null)),
+  tier: userTierEnum,
+  // Omit to have a temporary password generated.
+  tempPassword: newPasswordSchema.optional(),
+});
+export type CreateUserInput = z.input<typeof createUserSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password').max(200),
+    newPassword: newPasswordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, { message: 'Passwords do not match', path: ['confirmPassword'] })
+  .refine((v) => v.newPassword !== v.currentPassword, {
+    message: 'New password must be different from the current one',
+    path: ['newPassword'],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

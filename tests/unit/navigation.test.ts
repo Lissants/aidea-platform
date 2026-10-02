@@ -13,4 +13,10 @@ describe('navigation config', () => {
     expect(getDefaultRole(['employee_voter'])).toBe('employee_voter');
     expect(getDefaultRole([])).toBeNull();
   });
+
+  it('ranks developer above admin and gives it the admin pages incl. User Management', () => {
+    expect(getDefaultRole(['admin', 'developer'])).toBe('developer');
+    expect(NAVIGATION.developer.map((i) => i.href)).toEqual(NAVIGATION.admin.map((i) => i.href));
+    expect(NAVIGATION.admin.some((i) => i.href === '/roles')).toBe(true);
+  });
 });

@@ -23,7 +23,33 @@ import {
   Home,
 } from 'lucide-react';
 
-export type AppRole = 'participant' | 'mentor' | 'admin' | 'employee_voter';
+export type AppRole = 'participant' | 'mentor' | 'admin' | 'employee_voter' | 'developer';
+
+/** Every role, lowest privilege first. Single source for role lists and labels. */
+export const APP_ROLES: AppRole[] = ['participant', 'employee_voter', 'mentor', 'admin', 'developer'];
+
+export const ROLE_LABELS: Record<AppRole, string> = {
+  participant: 'Participant',
+  employee_voter: 'Employee Voter',
+  mentor: 'Mentor',
+  admin: 'Admin',
+  developer: 'Developer',
+};
+
+/**
+ * Privilege tiers an account sits on (User < Mentor < Admin < Developer).
+ * `employee_voter` is not a tier: it is an automatic extra every account keeps.
+ */
+export type UserTier = 'participant' | 'mentor' | 'admin' | 'developer';
+
+export const USER_TIERS: UserTier[] = ['participant', 'mentor', 'admin', 'developer'];
+
+export const TIER_LABELS: Record<UserTier, string> = {
+  participant: 'User',
+  mentor: 'Mentor',
+  admin: 'Admin',
+  developer: 'Developer',
+};
 
 export interface NavItem {
   label: string;
@@ -40,6 +66,24 @@ export interface NavItem {
  * desktop sidebar list and the mobile bottom-nav + "More" sheet from this,
  * so the two surfaces can never drift out of sync.
  */
+const ADMIN_NAV: NavItem[] = [
+  { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
+  { label: 'Program', href: '/program', icon: Settings2, mobileMore: true },
+  { label: 'Idea Management', href: '/ideas', icon: Lightbulb, mobilePrimary: true },
+  { label: 'Review Assignment', href: '/review-assignment', icon: ClipboardList, mobileMore: true },
+  { label: 'Screening Decision', href: '/screening', icon: Gavel, mobilePrimary: true },
+  { label: 'Idea Qualifier', href: '/qualifier', icon: FileCheck2, mobileMore: true },
+  { label: 'Project Mentor', href: '/project-mentor', icon: UserCog, mobileMore: true },
+  { label: 'Final Presentation', href: '/final-presentation', icon: Presentation, mobileMore: true },
+  { label: 'Showcase Content', href: '/showcase-content', icon: GalleryHorizontalEnd, mobileMore: true },
+  { label: 'Voting Management', href: '/voting-management', icon: Vote, mobileMore: true },
+  { label: 'Mentor Directory', href: '/mentors', icon: Users, mobileMore: true },
+  { label: 'User Management', href: '/roles', icon: Users, mobileMore: true },
+  { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
+  { label: 'Reports & Audit', href: '/reports', icon: BarChart3, mobilePrimary: true },
+  { label: 'Settings', href: '/settings', icon: ScrollText, mobileMore: true },
+];
+
 export const NAVIGATION: Record<AppRole, NavItem[]> = {
   participant: [
     { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
@@ -58,22 +102,9 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
     { label: 'Results', href: '/results', icon: Trophy, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
-  admin: [
-    { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
-    { label: 'Program', href: '/program', icon: Settings2, mobileMore: true },
-    { label: 'Idea Management', href: '/ideas', icon: Lightbulb, mobilePrimary: true },
-    { label: 'Review Assignment', href: '/review-assignment', icon: ClipboardList, mobileMore: true },
-    { label: 'Screening Decision', href: '/screening', icon: Gavel, mobilePrimary: true },
-    { label: 'Idea Qualifier', href: '/qualifier', icon: FileCheck2, mobileMore: true },
-    { label: 'Project Mentor', href: '/project-mentor', icon: UserCog, mobileMore: true },
-    { label: 'Final Presentation', href: '/final-presentation', icon: Presentation, mobileMore: true },
-    { label: 'Showcase Content', href: '/showcase-content', icon: GalleryHorizontalEnd, mobileMore: true },
-    { label: 'Voting Management', href: '/voting-management', icon: Vote, mobileMore: true },
-    { label: 'Mentor Directory', href: '/mentors', icon: Users, mobileMore: true },
-    { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
-    { label: 'Reports & Audit', href: '/reports', icon: BarChart3, mobilePrimary: true },
-    { label: 'Settings', href: '/settings', icon: ScrollText, mobileMore: true },
-  ],
+  admin: ADMIN_NAV,
+  // Developer sees everything an admin sees (same pages, see isAdmin()).
+  developer: ADMIN_NAV,
   employee_voter: [
     { label: 'Showcase', href: '/showcase', icon: Images, mobilePrimary: true },
     { label: 'Voting', href: '/voting', icon: Vote, mobilePrimary: true },
@@ -88,6 +119,7 @@ export const ROLE_BASE_PATH: Record<AppRole, string> = {
   mentor: '',
   admin: '',
   employee_voter: '',
+  developer: '',
 };
 
 /** Extra items always available via avatar/profile menu, not role nav. */
@@ -97,7 +129,7 @@ export const PROFILE_MENU_ITEMS: NavItem[] = [
 ];
 
 /** Highest-privilege-first ordering used to pick the default "acting as" role. */
-export const ROLE_PRIORITY: AppRole[] = ['admin', 'mentor', 'participant', 'employee_voter'];
+export const ROLE_PRIORITY: AppRole[] = ['developer', 'admin', 'mentor', 'participant', 'employee_voter'];
 
 export function getDefaultRole(roles: AppRole[]): AppRole | null {
   for (const r of ROLE_PRIORITY) {

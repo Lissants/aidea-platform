@@ -60,6 +60,8 @@ Other database scripts:
 
 The demo password comes from `DEMO_PASSWORD`, or defaults to the value shown in `README.md`.
 
+The seed also creates the platform Developers (Christopher Gerard, Janice Ong, Jose Siahaan, Yudha Bhakti Nugraha). They can manage every user at `/roles`. Their password is set only when the account is first created, so re-seeding never reverts a changed one.
+
 > **Running ad-hoc SQL with `sqlcmd`:** pass `-I` (`QUOTED_IDENTIFIER ON`), for example `sqlcmd -S . -E -C -I -d aidea -Q "..."`. The schema uses filtered indexes, and SQL Server rejects writes to those tables when `QUOTED_IDENTIFIER` is off, which is `sqlcmd`'s default. The app's ODBC and TDS connections have it on by default.
 
 ## 6. Run the app

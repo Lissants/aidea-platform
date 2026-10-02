@@ -11,7 +11,7 @@
 // Enums (mirrors CREATE TYPE ... AS ENUM statements in migrations)
 // ---------------------------------------------------------------------------
 
-export type RoleName = 'participant' | 'mentor' | 'admin' | 'employee_voter';
+export type RoleName = 'participant' | 'mentor' | 'admin' | 'employee_voter' | 'developer';
 
 export type ProgramStatus = 'draft' | 'active' | 'closed';
 
