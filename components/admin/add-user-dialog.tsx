@@ -25,7 +25,7 @@ export function AddUserDialog({ tiers }: { tiers: UserTier[] }) {
   const { errors, isSubmitting } = form.formState;
 
   async function onSubmit(values: CreateUserInput) {
-    const result = await createUser({ ...values, tempPassword: values.tempPassword || undefined });
+    const result = await createUser(values);
     if ('error' in result) return toast.error(result.error);
     toast.success('User created');
     setOpen(false);

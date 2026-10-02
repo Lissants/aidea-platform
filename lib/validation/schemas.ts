@@ -199,6 +199,9 @@ export const newPasswordSchema = z
 
 export const userTierEnum = z.enum(['participant', 'mentor', 'admin', 'developer']);
 
+// Parsed twice: by zodResolver in the browser, then again by createUser() on
+// the server with the browser's *output*. So every output must also be valid
+// input (blank -> null/undefined must be accepted back).
 export const createUserSchema = z.object({
   email: z.string().trim().toLowerCase().email('Enter a valid email address').max(320),
   fullName: z.string().trim().min(2, 'Full name is required').max(200),
@@ -206,11 +209,14 @@ export const createUserSchema = z.object({
     .string()
     .trim()
     .max(50)
-    .optional()
-    .transform((v) => (v ? v : null)),
+    .nullish()
+    .transform((v) => v || null),
   tier: userTierEnum,
-  // Omit to have a temporary password generated.
-  tempPassword: newPasswordSchema.optional(),
+  // Blank or omitted: a temporary password is generated.
+  tempPassword: z
+    .union([z.literal(''), newPasswordSchema])
+    .nullish()
+    .transform((v) => v || undefined),
 });
 export type CreateUserInput = z.input<typeof createUserSchema>;
 

@@ -69,6 +69,17 @@ describe('creating users', () => {
     expect(await bcrypt.compare(r.tempPassword, row!.password_hash)).toBe(true);
   });
 
+  it('accepts the Add user form as submitted: blank employee id and temp password', async () => {
+    const r = created(
+      await createUser({ email: 'form.blank@godrejcp.com', fullName: 'Form Blank', tier: 'participant', employeeId: '', tempPassword: '' })
+    );
+    expect(r.tempPassword.length).toBeGreaterThanOrEqual(12);
+    const p = await db.queryOne<{ employee_id: string | null }>('SELECT employee_id FROM profiles WHERE id = @id', { id: r.userId });
+    expect(p?.employee_id).toBeNull();
+    // The browser's resolver already turned '' into null before the server parses it again.
+    expect(ok(await createUser({ email: 'form.null@godrejcp.com', fullName: 'Form Null', tier: 'participant', employeeId: null }))).toBe(true);
+  });
+
   it('creates a mentor_profiles row for a new mentor', async () => {
     const r = created(await createUser({ email: 'new.mentor@godrejcp.com', fullName: 'New Mentor', tier: 'mentor' }));
     expect(await db.queryOne('SELECT 1 AS ok FROM mentor_profiles WHERE profile_id = @id', { id: r.userId })).not.toBeNull();

@@ -11,7 +11,29 @@ import {
   finalPresentationAssessmentSchema,
   voteSchema,
   votingPeriodSchema,
+  createUserSchema,
 } from '@/lib/validation/schemas';
+
+describe('createUserSchema', () => {
+  const form = { email: 'New.User@godrejcp.com', fullName: 'New User', tier: 'participant' as const };
+
+  it('turns blank optional fields into null / undefined (what the Add user form sends)', () => {
+    const out = createUserSchema.parse({ ...form, employeeId: '', tempPassword: '' });
+    expect(out).toEqual({ ...form, email: 'new.user@godrejcp.com', employeeId: null, tempPassword: undefined });
+  });
+
+  it('accepts its own output again, since the browser and the server both parse it', () => {
+    const once = createUserSchema.parse({ ...form, employeeId: '', tempPassword: '' });
+    expect(createUserSchema.safeParse(once).success).toBe(true);
+    const filled = createUserSchema.parse({ ...form, employeeId: ' EMP-9 ', tempPassword: 'Long-enough-pass-1' });
+    expect(createUserSchema.parse(filled)).toEqual(filled);
+    expect(filled.employeeId).toBe('EMP-9');
+  });
+
+  it('still rejects a short non-blank temporary password', () => {
+    expect(createUserSchema.safeParse({ ...form, tempPassword: 'short' }).success).toBe(false);
+  });
+});
 
 describe('ideaBasicsSchema', () => {
   it('accepts a well-formed idea', () => {
