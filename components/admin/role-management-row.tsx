@@ -46,12 +46,13 @@ export function RoleManagementRow({ user }: { user: ManagedUser }) {
     <Card className={user.active ? undefined : 'opacity-70'}>
       <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+          {/* div, not p: Badge renders a <div>, which can't sit inside a <p>. */}
+          <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
             {user.full_name}
             {user.isSelf && <Badge variant="outline">You</Badge>}
             {!user.active && <Badge variant="destructive">Deactivated</Badge>}
             {user.must_change_password && <Badge variant="warning">Password change pending</Badge>}
-          </p>
+          </div>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </div>
 
