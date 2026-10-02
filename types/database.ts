@@ -136,6 +136,7 @@ export interface MentorProfile {
   expertise: string | null;
   bio: string | null;
   max_capacity: number;
+  photo_url: string | null;
 }
 
 export interface Idea {

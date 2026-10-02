@@ -19,6 +19,7 @@ import {
   Shield,
   User,
   Home,
+  Contact,
 } from 'lucide-react';
 
 export type AppRole = 'participant' | 'mentor' | 'admin' | 'employee_voter' | 'developer';
@@ -76,6 +77,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Showcase Content', href: '/showcase-content', icon: GalleryHorizontalEnd, mobileMore: true },
   { label: 'Voting Management', href: '/voting-management', icon: Vote, mobileMore: true },
   { label: 'Mentor Directory', href: '/mentors', icon: Users, mobileMore: true },
+  { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
   { label: 'User Management', href: '/roles', icon: Users, mobileMore: true },
   { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   { label: 'Reports & Audit', href: '/reports', icon: BarChart3, mobilePrimary: true },
@@ -88,12 +90,14 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
     { label: 'My Ideas', href: '/my-ideas', icon: Lightbulb, mobilePrimary: true },
     { label: 'Submit New Idea', href: '/submit', icon: PlusCircle, mobilePrimary: true },
     { label: 'Voting', href: '/voting', icon: Vote, mobileMore: true },
+    { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
   mentor: [
     { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
     { label: 'Idea Dashboard', href: '/dashboard', icon: LayoutDashboard, mobilePrimary: true },
     { label: 'My Reviews', href: '/reviews', icon: ClipboardCheck, mobilePrimary: true },
+    { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
   admin: ADMIN_NAV,
@@ -101,6 +105,7 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
   developer: ADMIN_NAV,
   employee_voter: [
     { label: 'Voting', href: '/voting', icon: Vote, mobilePrimary: true },
+    { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobilePrimary: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobilePrimary: true },
   ],
 };

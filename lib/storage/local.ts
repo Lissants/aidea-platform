@@ -9,7 +9,7 @@ import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/va
  *
  * Layout:  {UPLOAD_DIR}/{bucket}/{prefix}/{uuid}.{ext}  + a `.meta.json` sidecar
  * holding the content type, size and original file name. `prefix` is the
- * owning idea/program id. Keys are always server-generated, and every key
+ * owning idea/program/mentor-profile id. Keys are always server-generated, and every key
  * that comes back in from a URL is validated against KEY_RE before touching
  * the filesystem, so path traversal is impossible.
  *
@@ -17,7 +17,7 @@ import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/va
  * /api/files/{bucket}/{key}.
  */
 
-export type Bucket = 'showcase-images' | 'program-resources';
+export type Bucket = 'showcase-images' | 'program-resources' | 'mentor-photos';
 
 interface BucketConfig {
   maxBytes: number;
@@ -30,6 +30,7 @@ interface BucketConfig {
 export const BUCKETS: Record<Bucket, BucketConfig> = {
   'showcase-images': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: true },
   'program-resources': { maxBytes: 10 * 1024 * 1024, types: null, publicRead: false },
+  'mentor-photos': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: false },
 };
 
 // Anything a browser would execute or render as active content.
@@ -48,7 +49,7 @@ export interface StoredFileMeta {
 }
 
 export function isBucket(value: string): value is Bucket {
-  return value === 'showcase-images' || value === 'program-resources';
+  return Object.hasOwn(BUCKETS, value);
 }
 
 export function uploadRoot() {

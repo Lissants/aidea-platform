@@ -14,6 +14,24 @@ export const profileSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileSchema>;
 
+export const MAX_MENTOR_EXPERTISE_CHARS = 600;
+
+/** Admin-edited mentor card (job title lives on profiles, the rest on mentor_profiles). */
+export const mentorProfileSchema = z.object({
+  job_title: z.string().trim().max(120, 'Title must be 120 characters or fewer').nullable(),
+  expertise: z
+    .string()
+    .trim()
+    .max(MAX_MENTOR_EXPERTISE_CHARS, `Expertise must be ${MAX_MENTOR_EXPERTISE_CHARS} characters or fewer`)
+    .nullable(),
+  // Relative URL from lib/storage/local.ts, so not z.string().url().
+  photo_url: z
+    .string()
+    .regex(/^\/api\/files\/mentor-photos\/[0-9a-f-]+\/[0-9a-f-]+(\.[a-z0-9]{1,8})?$/, 'Invalid photo')
+    .nullable(),
+});
+export type MentorProfileInput = z.infer<typeof mentorProfileSchema>;
+
 // --- Idea submission wizard (multi-step; each step schema composes into
 // ideaDraftSchema for final submit validation) --------------------------
 

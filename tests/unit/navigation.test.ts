@@ -19,4 +19,10 @@ describe('navigation config', () => {
     expect(NAVIGATION.developer.map((i) => i.href)).toEqual(NAVIGATION.admin.map((i) => i.href));
     expect(NAVIGATION.admin.some((i) => i.href === '/roles')).toBe(true);
   });
+
+  it('shows the Mentor Profile page to every role', () => {
+    for (const role of Object.keys(NAVIGATION) as (keyof typeof NAVIGATION)[]) {
+      expect(NAVIGATION[role].some((i) => i.href === '/mentor-profile')).toBe(true);
+    }
+  });
 });

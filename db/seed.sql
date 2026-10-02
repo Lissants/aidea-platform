@@ -50,9 +50,9 @@ SELECT p.id, r.id
 
 MERGE mentor_profiles AS t
 USING (VALUES
-  ('55555555-5555-5555-5555-555555555001', '22222222-2222-2222-2222-222222222001', 'Data & AI, forecasting', 'Leads AI adoption in Data & AI.', 10),
-  ('55555555-5555-5555-5555-555555555002', '22222222-2222-2222-2222-222222222002', 'Digital product, UX', 'Product mentor for digital-first ideas.', 10),
-  ('55555555-5555-5555-5555-555555555003', '22222222-2222-2222-2222-222222222003', 'Platform engineering', 'Principal engineer mentoring technical builds.', 2)
+  ('55555555-5555-5555-5555-555555555001', '22222222-2222-2222-2222-222222222001', 'Vikram leads AI adoption across the Data & AI function, with a focus on demand forecasting, machine learning in production and turning analytics prototypes into tools business teams use every day. He can help shape a measurable problem statement and a realistic data plan.', 'Leads AI adoption in Data & AI.', 10),
+  ('55555555-5555-5555-5555-555555555002', '22222222-2222-2222-2222-222222222002', 'Priya mentors digital-first ideas from concept to pilot. Her strengths are product discovery, user research and UX design, and she helps teams test assumptions early, define a clear user journey and scope a minimum viable product.', 'Product mentor for digital-first ideas.', 10),
+  ('55555555-5555-5555-5555-555555555003', '22222222-2222-2222-2222-222222222003', 'Karan is a principal engineer specialising in platform engineering, cloud architecture and integration with enterprise systems such as SAP. He guides teams on technical feasibility, security and building solutions that can scale beyond a pilot.', 'Principal engineer mentoring technical builds.', 2)
 ) AS s (id, profile_id, expertise, bio, max_capacity)
 ON t.id = s.id
 WHEN MATCHED THEN UPDATE SET expertise = s.expertise, bio = s.bio, max_capacity = s.max_capacity
