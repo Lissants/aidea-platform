@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { Laptop, LogOut, Moon, Sun, User as UserIcon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -23,10 +24,14 @@ function initials(name: string) {
 }
 
 export function AvatarMenu({ name, email, avatarUrl }: { name: string; email: string; avatarUrl?: string | null }) {
+  const { setTheme } = useTheme();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
+        <button
+          aria-label={`Account menu for ${name || email}`}
+          className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
           <Avatar>
             {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
             <AvatarFallback>{initials(name || email)}</AvatarFallback>
@@ -44,6 +49,20 @@ export function AvatarMenu({ name, email, avatarUrl }: { name: string; email: st
             <UserIcon className="h-4 w-4" /> Profile
           </Link>
         </DropdownMenuItem>
+        {/* Phones: the header hides the theme button, so offer it here. */}
+        <div className="sm:hidden">
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Theme</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setTheme('light')}>
+            <Sun className="h-4 w-4" aria-hidden="true" /> Light
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme('dark')}>
+            <Moon className="h-4 w-4" aria-hidden="true" /> Dark
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme('system')}>
+            <Laptop className="h-4 w-4" aria-hidden="true" /> Match device
+          </DropdownMenuItem>
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => void signOut()}>
           <LogOut className="h-4 w-4" /> Sign out

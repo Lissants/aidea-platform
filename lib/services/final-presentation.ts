@@ -16,6 +16,8 @@ export interface FinalPresentationQueueRow {
   winner_category: WinnerCategory | null;
   status: FinalPresentationStatus | null;
   published: boolean;
+  presentation_url: string | null;
+  presentation_name: string | null;
 }
 
 const LOCKED_MESSAGE = 'This assessment has already been published and can no longer be edited.';
@@ -26,7 +28,7 @@ export async function fetchFinalPresentationQueue(programId: string): Promise<Fi
   if (!user || !isAdmin(user.roles)) return [];
 
   return db.query<FinalPresentationQueueRow>(
-    `SELECT i.id AS idea_id, i.idea_title, i.team_name,
+    `SELECT i.id AS idea_id, i.idea_title, i.team_name, i.presentation_url, i.presentation_name,
             fpa.final_score, fpa.overall_comment, fpa.winner_decision, fpa.winner_category, fpa.status,
             CAST(ISNULL(fpa.published, 0) AS BIT) AS published
        FROM ideas i

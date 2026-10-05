@@ -7,10 +7,20 @@ import { ResponsiveTable, type ResponsiveTableColumn } from '@/components/ui/res
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDate } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth/session';
-import { db } from '@/lib/db';
-import { PUBLISHED_RESULTS_SELECT, publishedResultsJoins } from '@/lib/ideas/published-results';
+import { fetchMyIdeas } from '@/lib/ideas/my-ideas';
 import { resultColumns } from '@/components/ideas/result-columns';
+import { CommitIdeaPanel } from '@/components/ideas/commit-idea-panel';
+import { PresentationUpload } from '@/components/ideas/presentation-upload';
+import { PresentationLink } from '@/components/ideas/presentation-link';
+import { AttentionFlag } from '@/components/ui/attention-flag';
+import { fetchMyMembershipConflicts } from '@/lib/services/team-membership';
 import type { MyIdeaRow } from '@/types/database';
+
+const ROLE_LABEL: Record<MyIdeaRow['my_role'], string> = {
+  leader: 'Team leader',
+  member: 'Team member',
+  creator: 'Creator (not on team)',
+};
 
 export const metadata = { title: 'My Ideas' };
 
@@ -18,29 +28,52 @@ export default async function MyIdeasPage() {
   const user = await getCurrentUser();
   // Visible to the creator, team leader and team members. Results are
   // published-only (see lib/ideas/published-results.ts).
-  const ideas = user
-    ? await db.query<MyIdeaRow>(
-        `SELECT i.*, ${PUBLISHED_RESULTS_SELECT}
-           FROM ideas i
-           ${publishedResultsJoins('i')}
-          WHERE i.created_by = @uid
-             OR i.team_leader_id = @uid
-             OR EXISTS (SELECT 1 FROM idea_team_members m WHERE m.idea_id = i.id AND m.profile_id = @uid)
-          ORDER BY i.created_at DESC`,
-        { uid: user.id }
-      )
-    : [];
+  const [ideas, conflicts] = await Promise.all([user ? fetchMyIdeas(user.id) : [], fetchMyMembershipConflicts()]);
 
   const columns: ResponsiveTableColumn<MyIdeaRow>[] = [
-    { key: 'idea_title', header: 'Idea', cell: (row) => row.idea_title },
+    {
+      key: 'idea_title',
+      header: 'Idea',
+      mobile: 'title',
+      cell: (row) => row.idea_title || <span className="text-muted-foreground">Untitled draft</span>,
+    },
     { key: 'team_name', header: 'Team', cell: (row) => row.team_name },
+    { key: 'my_role', header: 'Your role', cell: (row) => ROLE_LABEL[row.my_role] },
     {
       key: 'status',
       header: 'Status',
-      cell: (row) => <StatusBadge status={row.status === 'submitted' ? 'submitted' : 'draft'} />,
+      cell: (row) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge status={row.status === 'submitted' ? 'submitted' : 'draft'} />
+          {row.status === 'submitted' && !row.team_leader_id && (
+            <AttentionFlag>Leader vacant</AttentionFlag>
+          )}
+        </div>
+      ),
     },
     ...resultColumns<MyIdeaRow>((row) => row.status !== 'submitted'),
-    { key: 'updated_at', header: 'Last updated', cell: (row) => formatDate(row.updated_at) },
+    {
+      key: 'presentation',
+      header: 'Presentation',
+      // Only the team can upload (a creator who left the team just sees the file).
+      cell: (row) =>
+        row.my_role === 'creator' ? (
+          row.presentation_url ? (
+            <PresentationLink url={row.presentation_url} name={row.presentation_name} />
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )
+        ) : (
+          <PresentationUpload
+            ideaId={row.id}
+            ideaTitle={row.idea_title}
+            enabled={row.qualifier === 'build'}
+            url={row.presentation_url}
+            name={row.presentation_name}
+          />
+        ),
+    },
+    { key: 'updated_at', header: 'Last updated', mobile: 'hidden', cell: (row) => formatDate(row.updated_at) },
   ];
 
   return (
@@ -56,6 +89,7 @@ export default async function MyIdeasPage() {
           </Button>
         }
       />
+      <CommitIdeaPanel conflicts={conflicts} />
       <ResponsiveTable
         columns={columns}
         data={ideas}
@@ -63,11 +97,11 @@ export default async function MyIdeasPage() {
         emptyState={
           <EmptyState
             icon={Lightbulb}
-            title="No ideas yet"
-            description="Start your first AI Innovation Challenge submission."
+            title="You have no ideas yet"
+            description="Ideas you create, lead or are added to as a team member appear here."
             action={
               <Button asChild>
-                <Link href="/submit">Submit New Idea</Link>
+                <Link href="/submit">Submit a new idea</Link>
               </Button>
             }
           />

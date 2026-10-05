@@ -11,7 +11,8 @@ import { isBucket, saveFile } from '@/lib/storage/local';
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ bucket: string }> }) {
   const { bucket } = await params;
-  if (!isBucket(bucket)) return NextResponse.json({ error: 'Unknown bucket' }, { status: 404 });
+  // idea-presentations is written only via /api/ideas/[ideaId]/presentation (team upload, Build check).
+  if (!isBucket(bucket) || bucket === 'idea-presentations') return NextResponse.json({ error: 'Unknown bucket' }, { status: 404 });
 
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });

@@ -39,7 +39,11 @@ export function MentorDirectoryRow({ mentor }: { mentor: MentorDirectoryRow }) {
               <p className="mt-1 whitespace-pre-line text-xs text-muted-foreground">Expertise: {mentor.expertise}</p>
             )}
             <div className="mt-2 flex items-center gap-2">
-              <Progress value={pct} className="max-w-[160px]" />
+              <Progress
+                value={pct}
+                className="max-w-[160px]"
+                aria-label={`${mentor.full_name}: ${mentor.active_count} of ${mentor.max_capacity} review slots in use`}
+              />
               <span className="text-xs text-muted-foreground">
                 {mentor.active_count} / {mentor.max_capacity} active
               </span>

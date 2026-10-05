@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PresentationLink } from '@/components/ideas/presentation-link';
 import { impactTypeLabel } from '@/lib/constants/impact';
+import { formatDate } from '@/lib/utils';
 
 interface IdeaDetailData {
   idea_title: string;
@@ -8,10 +10,14 @@ interface IdeaDetailData {
   problem_opportunity: string;
   proposed_solution: string;
   target_users: string | null;
+  /** Omit when the caller doesn't load it; null = leader slot vacant. */
+  team_leader?: { full_name: string } | null;
   team_members: { full_name: string }[];
   impacts: { impact_kind: string; impact_type: string; explanation: string | null; measurable_result: string | null }[];
   support_requests: { support_area: string; details: string | null; reason?: string | null; estimate: string | null }[];
   mentor_preferences: { priority: number; mentor_name: string }[];
+  /** Team-uploaded deck (Build ideas); omitted or null = none yet. */
+  presentation?: { url: string; name: string | null; uploaded_at: string | null } | null;
 }
 
 const SUPPORT_AREA_LABEL: Record<string, string> = {
@@ -45,14 +51,34 @@ export function IdeaDetailReadonly({ idea }: { idea: IdeaDetailData }) {
               <p className="text-muted-foreground">{idea.target_users}</p>
             </div>
           )}
+          {idea.team_leader !== undefined && (
+            <div>
+              <p className="font-medium">Team leader</p>
+              <p className="text-muted-foreground">{idea.team_leader?.full_name ?? 'Vacant'}</p>
+            </div>
+          )}
           {idea.team_members.length > 0 && (
             <div>
-              <p className="font-medium">Team</p>
+              <p className="font-medium">{idea.team_leader !== undefined ? 'Team members' : 'Team'}</p>
               <p className="text-muted-foreground">{idea.team_members.map((m) => m.full_name).join(', ')}</p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {idea.presentation && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Presentation</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <PresentationLink url={idea.presentation.url} name={idea.presentation.name} />
+            {idea.presentation.uploaded_at && (
+              <p className="text-xs text-muted-foreground">Uploaded {formatDate(idea.presentation.uploaded_at)}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

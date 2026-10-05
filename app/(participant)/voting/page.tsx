@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { VoteForm } from '@/components/voting/vote-form';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
+import { isDeveloper } from '@/lib/permissions';
 
 export const metadata = { title: 'Voting' };
 
@@ -55,7 +56,12 @@ export default async function VotingPage() {
       {candidates.length === 0 ? (
         <EmptyState icon={VoteIcon} title="No candidates yet" description="Showcase projects haven't been published for this cycle." />
       ) : (
-        <VoteForm votingPeriodId={period.id} candidates={candidates} alreadyVotedIdeaId={existingVote?.idea_id} />
+        <VoteForm
+          votingPeriodId={period.id}
+          candidates={candidates}
+          alreadyVotedIdeaId={existingVote?.idea_id}
+          canDelete={!!user && isDeveloper(user.roles)}
+        />
       )}
     </div>
   );

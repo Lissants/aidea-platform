@@ -4,6 +4,7 @@ import {
   ideaTeamSchema,
   ideaImpactsSchema,
   ideaMentorPreferencesSchema,
+  ideaMentorPreferencesRequiredSchema,
   reviewSchema,
   reopenReviewSchema,
   screeningDecisionSchema,
@@ -84,6 +85,28 @@ describe('ideaTeamSchema', () => {
   it('requires a team leader', () => {
     expect(ideaTeamSchema.safeParse({ team_members: [] }).success).toBe(false);
   });
+
+  it('rejects the same person listed twice', () => {
+    const member = '11111111-1111-1111-1111-111111111111';
+    const result = ideaTeamSchema.safeParse({
+      team_leader_id: leader,
+      team_members: [
+        { profile_id: member, member_order: 1 },
+        { profile_id: member, member_order: 2 },
+      ],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toMatch(/more than once/);
+  });
+
+  it('rejects a team leader who is also listed as a member', () => {
+    const result = ideaTeamSchema.safeParse({
+      team_leader_id: leader,
+      team_members: [{ profile_id: leader, member_order: 1 }],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toMatch(/leader cannot also be listed/);
+  });
 });
 
 describe('ideaImpactsSchema', () => {
@@ -119,6 +142,23 @@ describe('ideaMentorPreferencesSchema', () => {
       ],
     });
     expect(result.success).toBe(false);
+  });
+
+  it('rejects the same mentor chosen for both priorities (matches the DB unique constraint)', () => {
+    const result = ideaMentorPreferencesSchema.safeParse({
+      mentor_preferences: [
+        { priority: 1, mentor_profile_id: '11111111-1111-1111-1111-111111111111' },
+        { priority: 2, mentor_profile_id: '11111111-1111-1111-1111-111111111111' },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe('Choose two different mentors for Priority 1 and Priority 2');
+  });
+
+  it('lets a draft keep fewer than two preferences, but the submit form requires two', () => {
+    const one = { mentor_preferences: [{ priority: 1, mentor_profile_id: '11111111-1111-1111-1111-111111111111' }] };
+    expect(ideaMentorPreferencesSchema.safeParse(one).success).toBe(true);
+    expect(ideaMentorPreferencesRequiredSchema.safeParse(one).success).toBe(false);
   });
 
   it('accepts two distinct priorities', () => {

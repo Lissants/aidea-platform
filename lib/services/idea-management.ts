@@ -15,6 +15,10 @@ export interface IdeaListRow {
   reviewer_name: string | null;
   stage: DerivedStage;
   created_at: string;
+  /** Submitted idea whose team leader slot is empty (leader left or was removed). */
+  leader_vacant: boolean;
+  /** Approved idea with someone on the team still on another approved idea (hasn't committed yet). */
+  membership_conflict: boolean;
 }
 
 export interface IdeaListFilters {
@@ -59,8 +63,26 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
 
   // review_assignments / screening_decisions / qualifier_assessments /
   // showcase_projects are each unique per idea, so plain LEFT JOINs are 1:1.
-  const ideas = await db.query<StageSource & { id: string; idea_title: string; team_name: string; created_at: string; reviewer_name: string | null }>(
-    `SELECT i.id, i.idea_title, i.team_name, i.status, i.created_at,
+  const ideas = await db.query<
+    StageSource & {
+      id: string;
+      idea_title: string;
+      team_name: string;
+      created_at: string;
+      reviewer_name: string | null;
+      team_leader_id: string | null;
+      membership_conflict: boolean;
+    }
+  >(
+    `SELECT i.id, i.idea_title, i.team_name, i.status, i.created_at, i.team_leader_id,
+            CAST(CASE WHEN EXISTS (
+              SELECT 1 FROM dbo.v_idea_participants p
+               WHERE p.idea_id = i.id
+                 AND EXISTS (SELECT 1 FROM dbo.v_approved_ideas a WHERE a.idea_id = i.id)
+                 AND (SELECT COUNT(*) FROM dbo.v_idea_participants p2
+                        JOIN dbo.v_approved_ideas a2 ON a2.idea_id = p2.idea_id
+                       WHERE p2.profile_id = p.profile_id AND p2.program_id = i.program_id) > 1
+            ) THEN 1 ELSE 0 END AS BIT) AS membership_conflict,
             p.full_name AS reviewer_name,
             sd.decision AS screening_decision, sd.published AS screening_published,
             qa.build_decision, qa.published AS qualifier_published,
@@ -102,6 +124,8 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
       reviewer_name: idea.reviewer_name ?? null,
       stage: deriveStage(idea),
       created_at: idea.created_at,
+      leader_vacant: idea.status === 'submitted' && !idea.team_leader_id,
+      membership_conflict: !!idea.membership_conflict,
     };
   });
 
@@ -132,11 +156,17 @@ export interface IdeaFullDetail {
   proposed_solution: string;
   target_users: string | null;
   status: string;
-  team_members: { full_name: string }[];
+  program_id: string;
+  /** Screening Pass published: from here on each person may be on only this idea. */
+  approved: boolean;
+  /** null = leader slot vacant. */
+  team_leader: { profile_id: string; full_name: string } | null;
+  team_members: { profile_id: string; full_name: string }[];
   impacts: { impact_kind: string; impact_type: string; explanation: string | null; measurable_result: string | null }[];
   support_requests: { support_area: string; details: string | null; reason: string | null; estimate: string | null }[];
   mentor_preferences: { priority: number; mentor_name: string }[];
   review: { id: string; status: string; reviewer_name: string | null } | null;
+  presentation: { url: string; name: string | null; uploaded_at: string | null } | null;
 }
 
 /** Full read-only submission detail — admin can view everything but has no
@@ -155,16 +185,27 @@ export async function fetchIdeaDetail(ideaId: string): Promise<IdeaFullDetail | 
     proposed_solution: string;
     target_users: string | null;
     status: string;
+    program_id: string;
+    team_leader_id: string | null;
+    team_leader_name: string | null;
+    approved: boolean;
+    presentation_url: string | null;
+    presentation_name: string | null;
+    presentation_uploaded_at: string | null;
   }>(
-    `SELECT id, idea_title, team_name, problem_opportunity, proposed_solution, target_users, status
-       FROM ideas WHERE id = @ideaId`,
+    `SELECT i.id, i.idea_title, i.team_name, i.problem_opportunity, i.proposed_solution, i.target_users, i.status,
+            i.program_id, i.team_leader_id, lp.full_name AS team_leader_name,
+            i.presentation_url, i.presentation_name, i.presentation_uploaded_at,
+            CAST(CASE WHEN EXISTS (SELECT 1 FROM dbo.v_approved_ideas a WHERE a.idea_id = i.id) THEN 1 ELSE 0 END AS BIT) AS approved
+       FROM ideas i LEFT JOIN profiles lp ON lp.id = i.team_leader_id
+      WHERE i.id = @ideaId`,
     { ideaId }
   );
   if (!idea) return null;
 
   const [teamMembers, impacts, supportRequests, mentorPrefs, review] = await Promise.all([
-    db.query<{ full_name: string | null }>(
-      `SELECT p.full_name FROM idea_team_members itm LEFT JOIN profiles p ON p.id = itm.profile_id
+    db.query<{ profile_id: string; full_name: string | null }>(
+      `SELECT itm.profile_id, p.full_name FROM idea_team_members itm LEFT JOIN profiles p ON p.id = itm.profile_id
         WHERE itm.idea_id = @ideaId ORDER BY itm.member_order`,
       { ideaId }
     ),
@@ -202,11 +243,19 @@ export async function fetchIdeaDetail(ideaId: string): Promise<IdeaFullDetail | 
     proposed_solution: idea.proposed_solution,
     target_users: idea.target_users,
     status: idea.status,
-    team_members: teamMembers.map((m) => ({ full_name: m.full_name ?? 'Unknown' })),
+    program_id: idea.program_id,
+    approved: !!idea.approved,
+    team_leader: idea.team_leader_id
+      ? { profile_id: idea.team_leader_id, full_name: idea.team_leader_name ?? 'Unknown' }
+      : null,
+    team_members: teamMembers.map((m) => ({ profile_id: m.profile_id, full_name: m.full_name ?? 'Unknown' })),
     impacts,
     support_requests: supportRequests,
     mentor_preferences: mentorPrefs.map((p) => ({ priority: p.priority, mentor_name: p.full_name ?? 'Unknown' })),
     review: review ? { id: review.id, status: review.status, reviewer_name: review.reviewer_name ?? null } : null,
+    presentation: idea.presentation_url
+      ? { url: idea.presentation_url, name: idea.presentation_name, uploaded_at: idea.presentation_uploaded_at }
+      : null,
   };
 }
 

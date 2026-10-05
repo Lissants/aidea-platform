@@ -27,9 +27,22 @@ export function TableRowsSkeleton({ rows = 5 }: { rows?: number }) {
 export function PageHeaderSkeleton() {
   return (
     <div className="space-y-2 pb-6">
-      <Skeleton className="h-3 w-40" />
-      <Skeleton className="h-7 w-64" />
-      <Skeleton className="h-4 w-96" />
+      <Skeleton className="h-7 w-64 max-w-full" />
+      <Skeleton className="h-4 w-96 max-w-full" />
+    </div>
+  );
+}
+
+/**
+ * Route-level loading UI (loading.tsx). Shown inside the app shell while a
+ * page's server queries run, so navigation responds immediately.
+ */
+export function PageLoading({ label = 'Loading page' }: { label?: string }) {
+  return (
+    <div role="status" aria-busy="true" aria-live="polite" className="max-w-5xl">
+      <span className="sr-only">{label}…</span>
+      <PageHeaderSkeleton />
+      <TableRowsSkeleton rows={6} />
     </div>
   );
 }

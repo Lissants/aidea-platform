@@ -13,7 +13,18 @@ const eslintConfig = [
     },
   },
   {
-    ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts'],
+    // Vendored agent-skill folders live in the repo root but are not app code.
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'agent-skills/**',
+      'skills/**',
+      'ui-ux-pro-max-skill/**',
+      'claude-marketplace/**',
+    ],
   },
 ];
 

@@ -1,59 +1,95 @@
 import Link from 'next/link';
-import { ClipboardCheck, LayoutDashboard } from 'lucide-react';
-import { PageHeader } from '@/components/layout/page-header';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricRow } from '@/components/layout/metric';
+import { NextStepHeader } from '@/components/overview/next-step-header';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { SessionUser } from '@/lib/auth/session';
 import { db } from '@/lib/db';
-import type { MentorProfile } from '@/types/database';
+import { reviewStatusKey } from '@/lib/constants/status';
+import { mentorNextStep } from '@/lib/overview/next-step';
+import { mentorProfileIdFor } from '@/lib/permissions/scopes';
+import { fetchMyReviewQueue, filterQueueByTab } from '@/lib/services/my-reviews';
+import { formatDate } from '@/lib/utils';
 
 export async function MentorOverview({ user }: { user: SessionUser }) {
-  const mentorProfile = await db.queryOne<MentorProfile>('SELECT * FROM mentor_profiles WHERE profile_id = @uid', {
-    uid: user.id,
-  });
+  const mentorProfileId = await mentorProfileIdFor(user.id);
+  // Same source as My Reviews, so the counts here always match its tabs.
+  const [queue, profile] = mentorProfileId
+    ? await Promise.all([
+        fetchMyReviewQueue(mentorProfileId),
+        db.queryOne<{ max_capacity: number }>('SELECT max_capacity FROM mentor_profiles WHERE id = @id', {
+          id: mentorProfileId,
+        }),
+      ])
+    : [[], null];
 
-  const pendingReviews = mentorProfile
-    ? ((
-        await db.queryOne<{ count: number }>(
-          `SELECT COUNT(*) AS count FROM review_assignments WHERE mentor_profile_id = @mentorProfileId AND status = 'pending'`,
-          { mentorProfileId: mentorProfile.id }
-        )
-      )?.count ?? 0)
-    : 0;
+  const notStarted = filterQueueByTab(queue, 'pending');
+  const inProgress = filterQueueByTab(queue, 'draft');
+  const reopened = filterQueueByTab(queue, 'reopened');
+  const completed = filterQueueByTab(queue, 'submitted');
+  // Reopened first: an admin is waiting on those.
+  const toDo = [...reopened, ...inProgress, ...notStarted];
+
+  const next = mentorNextStep({ hasMentorProfile: !!mentorProfileId, totalAssigned: queue.length, toDo });
+  const firstName = user.profile?.full_name?.split(' ')[0];
 
   return (
-    <div>
-      <PageHeader
-        title={`Welcome${user.profile?.full_name ? `, ${user.profile.full_name.split(' ')[0]}` : ''}`}
-        description="Mentor dashboard"
-      />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <ClipboardCheck className="h-4 w-4" /> Pending reviews
-            </CardDescription>
-            <CardTitle className="text-3xl">{pendingReviews ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4" /> Idea Dashboard
-            </CardDescription>
-            <CardTitle className="text-lg">
-              <Link href="/dashboard" className="text-primary hover:underline">
-                Open dashboard
-              </Link>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Mentoring capacity</CardDescription>
-            <CardTitle className="text-lg">{mentorProfile ? `Up to ${mentorProfile.max_capacity} ideas` : '—'}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+    <div className="max-w-5xl space-y-10">
+      <NextStepHeader eyebrow={firstName ? `Welcome back, ${firstName}` : 'Mentor overview'} step={next} />
+
+      {mentorProfileId && (
+        <section aria-labelledby="review-counts-title" className="space-y-3">
+          <h2 id="review-counts-title" className="text-lg font-bold">
+            Your reviews
+          </h2>
+          <MetricRow
+            label="Reviews by status"
+            items={[
+              { label: 'Not started', value: notStarted.length, href: '/reviews?tab=pending' },
+              { label: 'In progress', value: inProgress.length, href: '/reviews?tab=draft' },
+              { label: 'Reopened', value: reopened.length, href: '/reviews?tab=reopened' },
+              { label: 'Completed', value: completed.length, href: '/reviews?tab=submitted' },
+            ]}
+          />
+          {profile && (
+            <p className="text-sm text-muted-foreground">
+              Your capacity is up to {profile.max_capacity} ideas in this program.
+            </p>
+          )}
+        </section>
+      )}
+
+      {toDo.length > 0 && (
+        <section aria-labelledby="todo-title" className="space-y-3">
+          <h2 id="todo-title" className="text-lg font-bold">
+            To finish
+          </h2>
+          <ul className="divide-y rounded-xl border">
+            {toDo.map((r) => (
+              <li key={r.assignment_id}>
+                <Link
+                  href={`/reviews/${r.assignment_id}`}
+                  className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span className="min-w-0">
+                    <span className="block break-words font-semibold">{r.idea_title}</span>
+                    <span className="block text-sm text-muted-foreground">
+                      {r.team_name}
+                      {r.submitted_at ? `, submitted ${formatDate(r.submitted_at)}` : ''}
+                    </span>
+                  </span>
+                  <StatusBadge status={reviewStatusKey(r.review_status)} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <p className="text-sm">
+        <Link href="/dashboard" className="focus-ring font-semibold underline underline-offset-4">
+          Browse every idea in the Idea Dashboard
+        </Link>
+      </p>
     </div>
   );
 }

@@ -1,12 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session-cookie';
+import { getCurrentUser } from '@/lib/auth/session';
+import { canReadIdea } from '@/lib/permissions/scopes';
 import { BUCKETS, isBucket, readStoredFile } from '@/lib/storage/local';
 
 const INLINE_TYPES = /^(image\/(png|jpeg|webp|gif)|application\/pdf|text\/plain)$/;
 
 /**
  * Serves stored files. showcase-images are public (like the old public
- * bucket); program-resources require a signed-in session. Files are
+ * bucket); the others require a signed-in session, and idea-presentations
+ * additionally require read access to the owning idea (team, mentors,
+ * admins — see canReadIdea). Files are
  * immutable (keys are random per upload), so they cache aggressively.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ bucket: string; key: string[] }> }) {
@@ -16,6 +20,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!BUCKETS[bucket].publicRead) {
     const claims = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
     if (!claims) return new NextResponse('Not authenticated', { status: 401 });
+  }
+
+  if (bucket === 'idea-presentations') {
+    // Key is {ideaId}/{uuid}.{ext}; readStoredFile validates the shape below.
+    const user = await getCurrentUser();
+    if (!user) return new NextResponse('Not authenticated', { status: 401 });
+    if (!(await canReadIdea(user, key[0] ?? '').catch(() => false))) return new NextResponse('Not found', { status: 404 });
   }
 
   let file;

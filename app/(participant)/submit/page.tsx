@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
-import { EmptyState } from '@/components/layout/empty-state';
-import { AlertTriangle } from 'lucide-react';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { IdeaWizard } from '@/components/forms/idea-wizard';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -18,7 +17,7 @@ export default async function SubmitIdeaPage() {
     return (
       <div>
         <PageHeader title="Submit New Idea" />
-        <EmptyState icon={AlertTriangle} title="No active program" description="There is no open submission window right now." />
+        <NoActiveProgram audience="participant" />
       </div>
     );
   }
@@ -43,7 +42,14 @@ export default async function SubmitIdeaPage() {
 
   return (
     <div>
-      <PageHeader title="Submit New Idea" description={program.title} />
+      <PageHeader
+        title="Submit New Idea"
+        description={
+          program.submission_close_at
+            ? `${program.title}. Submissions close ${new Date(program.submission_close_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}.`
+            : program.title
+        }
+      />
       <IdeaWizard programId={program.id} mentors={mentors} />
     </div>
   );

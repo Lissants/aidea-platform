@@ -40,7 +40,7 @@ export function PublishReadinessBar({ readyCount, totalCount, label, publishLabe
         <p className="text-sm font-medium">
           {readyCount} of {totalCount} {label} ready to publish
         </p>
-        <Progress value={pct} className="max-w-sm" />
+        <Progress value={pct} className="max-w-sm" aria-label={`${readyCount} of ${totalCount} ${label} ready to publish`} />
       </div>
       <Button onClick={() => setConfirmOpen(true)} disabled={!canPublish} className="shrink-0">
         <Rocket className="h-4 w-4" />
