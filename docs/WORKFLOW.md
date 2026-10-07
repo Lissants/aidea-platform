@@ -4,8 +4,8 @@ The full path an idea takes from a participant's first draft to a possible Grand
 
 ```mermaid
 flowchart TD
-    A[Participant creates draft idea] -->|saveIdeaDraft, editable, creator only while draft: canEditIdeaDraft| A
-    A -->|submitIdea → usp_submit_idea| B{Complete?}
+    A[Participant creates draft idea: team name, team leader, up to 5 members] -->|saveIdeaDraft, lenient validation, creator only while draft: canEditIdeaDraft| A
+    A -->|submitIdeaDraft: full ideaDraftSchema → usp_submit_idea| B{Complete?}
     B -->|No| A
     B -->|Yes| C[Status: submitted, idea locked]
     C --> D[usp_route_reviewer]
