@@ -61,6 +61,23 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 - The `(admin)`, `(mentor)` and `(participant)` layouts check roles server-side.
 - `redirect_to` only accepts same-origin paths.
 
+## User management and the Developer role
+
+Accounts sit on one tier: User < Mentor < Admin < Developer. `employee_voter` is an extra that tier changes never touch. All changes go through `lib/services/users.ts`, which re-checks the caller on every action and applies `canManageUser()` (`lib/permissions`).
+
+| Actor | Can manage |
+| --- | --- |
+| Developer | every tier, including other admins and Developers |
+| Admin | User and Mentor accounts only. Cannot create, promote, demote, reset or remove an admin or Developer. |
+| Mentor / User | nobody |
+
+- A Developer passes every admin check: `isAdmin()` in the app and `dbo.fn_has_role(u, 'admin')` in SQL (migration `0005`). The "Routing required" notification (`0003_procedures.sql`) still goes to `admin` role holders only, so a Developer who isn't also an Admin doesn't receive it.
+- Server-enforced locks: you cannot change, deactivate, delete or reset your own account here; the last active Developer and the last active admin-level account cannot be demoted, deactivated or deleted.
+- "Remove" means deactivate (`profiles.active = 0`), which blocks sign-in on the next request and keeps history. Permanent delete works only for accounts with no ideas, votes, reviews, decisions or audit entries, because those foreign keys do not cascade.
+- Created and reset accounts get a temporary password shown once, `users.must_change_password = 1`, and are redirected to `/profile/password` by every layout until they choose their own (12+ characters).
+- Every create, tier change, deactivate/reactivate, reset and delete is written to the audit log (`entity_type = 'users'`). Passwords are never logged.
+- The four platform Developers are created by `npm run db:seed` (`scripts/seed.ts`). The password is only applied when the account is first created and is hard-coded there, so treat it as compromised-by-design and change it after first sign-in.
+
 ## File uploads
 
 - **Where files live:** showcase images and program resources are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).

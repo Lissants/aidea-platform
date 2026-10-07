@@ -3,9 +3,10 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin, isMentor } from '@/lib/permissions';
 import { ideaReadFilter, reviewAssignmentReadFilter, reviewReadFilter } from '@/lib/permissions/scopes';
 import type { StatusKey } from '@/lib/constants/status';
+import { PUBLISHED_RESULTS_SELECT, publishedResultsJoins, type PublishedResults } from '@/lib/ideas/published-results';
 import type { ImpactType } from '@/types/database';
 
-export interface DashboardIdeaRow {
+export interface DashboardIdeaRow extends PublishedResults {
   id: string;
   idea_title: string;
   team_name: string;
@@ -14,6 +15,8 @@ export interface DashboardIdeaRow {
   workflow_status: StatusKey;
   assignment_status: string | null;
   reviewer_name: string | null;
+  presentation_url: string | null;
+  presentation_name: string | null;
 }
 
 interface DashboardFilters {
@@ -26,11 +29,10 @@ interface DashboardFilters {
 
 /**
  * Idea Dashboard read model for mentors: every submitted idea, with a
- * derived workflow status. Screening/qualifier fields are intentionally
- * NOT surfaced here beyond "awaiting publication" vs "published" — even
- * though mentors may read the underlying screening_decisions rows (for
- * downstream program context), the product rule is that mentors only see
- * the actual decision once it's published.
+ * derived workflow status plus the published-only screening / qualifier
+ * outcome and project mentor (lib/ideas/published-results.ts). The product
+ * rule is that mentors only see the actual decision once it's published;
+ * unpublished decisions surface only as "awaiting publication" and N/A.
  *
  * The joined rows are scoped exactly as the old RLS policies did: review
  * assignments and reviews only the caller's own (admins: all), screening
@@ -76,13 +78,17 @@ export async function fetchMentorDashboard(programId: string, filters: Dashboard
       screening_published: boolean | null;
       qualifier_id: string | null;
       qualifier_published: boolean | null;
-    }>(
-      `SELECT i.id, i.idea_title, i.team_name, i.submitted_at,
+      presentation_url: string | null;
+      presentation_name: string | null;
+    } & PublishedResults>(
+      `SELECT i.id, i.idea_title, i.team_name, i.submitted_at, i.presentation_url, i.presentation_name,
               ra.id AS assignment_id, ra.status AS assignment_status,
               rv.status AS review_status,
               sd.id AS screening_id, sd.published AS screening_published,
-              qa.id AS qualifier_id, qa.published AS qualifier_published
+              qa.id AS qualifier_id, qa.published AS qualifier_published,
+              ${PUBLISHED_RESULTS_SELECT}
          FROM ideas i
+         ${publishedResultsJoins('i')}
          LEFT JOIN review_assignments ra ON ra.idea_id = i.id AND ${raScope.sql}
          OUTER APPLY (SELECT TOP (1) r.status FROM reviews r
                        WHERE r.idea_id = i.id AND ${reviewScope.sql}
@@ -145,6 +151,11 @@ export async function fetchMentorDashboard(programId: string, filters: Dashboard
       workflow_status,
       assignment_status: assignmentStatus,
       reviewer_name: null,
+      screening: idea.screening ?? null,
+      qualifier: idea.qualifier ?? null,
+      mentor_name: idea.mentor_name ?? null,
+      presentation_url: idea.presentation_url,
+      presentation_name: idea.presentation_name,
     };
   });
 

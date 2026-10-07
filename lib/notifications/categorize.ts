@@ -12,6 +12,16 @@ export type NotificationCategory = 'program' | 'your_ideas' | 'system';
  */
 export function categorizeNotification(type: string): NotificationCategory {
   if (['voting_opened', 'voting_closing_reminder', 'voting_result_published'].includes(type)) return 'program';
-  if (['published', 'review_reopened', 'reviewer_assigned'].includes(type)) return 'your_ideas';
+  if (
+    [
+      'published',
+      'review_reopened',
+      'reviewer_assigned',
+      'idea_screening_passed',
+      'idea_qualifier_build',
+      'idea_mentor_assigned',
+    ].includes(type)
+  )
+    return 'your_ideas';
   return 'system'; // e.g. routing_required (admin escalation)
 }

@@ -4,7 +4,11 @@ import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { FunnelStage, WorkloadRow, TurnoutPoint, WinnerCategoryRow } from '@/lib/services/reports';
 
-const COLORS = ['#141414', '#5B5FEF', '#22C55E', '#F59E0B', '#EF4444'];
+// Monochrome (GIG brand): series are told apart by tone + legend/labels, not hue.
+// Theme tokens so charts stay legible in dark mode.
+const INK = 'hsl(var(--foreground))';
+const GREY = 'hsl(var(--muted-foreground))';
+const COLORS = [INK, GREY, 'hsl(var(--input))'];
 
 export function ReportsCharts({
   funnel,
@@ -30,7 +34,7 @@ export function ReportsCharts({
               <XAxis type="number" allowDecimals={false} />
               <YAxis type="category" dataKey="stage" width={110} tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="count" fill={COLORS[1]} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill={INK} radius={[0, 2, 2, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -50,8 +54,8 @@ export function ReportsCharts({
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="active" name="Active reviews" fill={COLORS[1]} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="capacity" name="Capacity" fill={COLORS[0]} opacity={0.25} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="active" name="Active reviews" fill={INK} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="capacity" name="Capacity" fill={GREY} opacity={0.35} radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -72,7 +76,7 @@ export function ReportsCharts({
                 <XAxis dataKey="idea_title" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="vote_count" name="Votes" fill={COLORS[2]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="vote_count" name="Votes" fill={INK} radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

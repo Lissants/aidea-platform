@@ -48,6 +48,44 @@ async function ensureUsers(log: (msg: string) => void) {
   }
 }
 
+// Real (non-demo) platform developers: top-level role, manage every user.
+// The password is hard-coded by request; it is only applied when the account
+// is first created, so a later `db:seed` never reverts a changed password.
+const DEVELOPER_PASSWORD = 'AideaDemo!2026';
+const DEVELOPERS: { id: string; email: string; fullName: string }[] = [
+  { id: 'dddddddd-dddd-dddd-dddd-ddddddddd001', email: 'christopher.gerard@godrejcp.com', fullName: 'Christopher Gerard' },
+  { id: 'dddddddd-dddd-dddd-dddd-ddddddddd002', email: 'janice.ong@godrejcp.com', fullName: 'Janice Ong' },
+  { id: 'dddddddd-dddd-dddd-dddd-ddddddddd003', email: 'jose.siahaan@godrejcp.com', fullName: 'Jose Siahaan' },
+  { id: 'dddddddd-dddd-dddd-dddd-ddddddddd004', email: 'yudha.nugraha@godrejcp.com', fullName: 'Yudha Bhakti Nugraha' },
+];
+
+async function ensureDevelopers(log: (msg: string) => void) {
+  const hash = await bcrypt.hash(DEVELOPER_PASSWORD, 10);
+  for (const d of DEVELOPERS) {
+    const existing = await db.queryOne<{ id: string }>('SELECT id FROM users WHERE email = @email', { email: d.email });
+    const id = existing?.id ?? d.id;
+    if (!existing) {
+      await db.execute('INSERT INTO users (id, email, password_hash) VALUES (@id, @email, @hash)', {
+        id,
+        email: d.email,
+        hash,
+      });
+    }
+    await db.execute(
+      `IF EXISTS (SELECT 1 FROM profiles WHERE id = @id)
+         UPDATE profiles SET active = 1 WHERE id = @id
+       ELSE
+         INSERT INTO profiles (id, email, full_name, active) VALUES (@id, @email, @fullName, 1);
+       INSERT INTO user_roles (user_id, role_id)
+       SELECT @id, r.id FROM roles r
+        WHERE r.name IN ('developer', 'employee_voter')
+          AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = @id AND ur.role_id = r.id);`,
+      { id, email: d.email, fullName: d.fullName }
+    );
+    log(`Ensured developer: ${d.email}`);
+  }
+}
+
 async function runSeedSql(log: (msg: string) => void) {
   const sqlPath = path.join(__dirname, '..', 'db', 'seed.sql');
   for (const batch of splitBatches(readFileSync(sqlPath, 'utf-8'))) await db.execute(batch);
@@ -57,6 +95,7 @@ async function runSeedSql(log: (msg: string) => void) {
 export async function seedDatabase({ log = console.log }: { log?: (msg: string) => void } = {}) {
   await ensureUsers(log);
   await runSeedSql(log);
+  await ensureDevelopers(log);
 }
 
 // `require` is undefined when this module is imported as ESM (e.g. by vitest).

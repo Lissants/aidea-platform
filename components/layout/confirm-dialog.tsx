@@ -24,6 +24,10 @@ interface ConfirmDialogProps {
   onConfirm: () => void | Promise<void>;
   /** When set, the confirm button stays disabled until the user types this exact text. */
   requiredConfirmationText?: string;
+  /** Extra content between the description and the typed confirmation (e.g. a reason field). */
+  children?: React.ReactNode;
+  /** Keeps the confirm button disabled, e.g. until a required field is filled in. */
+  confirmDisabled?: boolean;
 }
 
 /**
@@ -40,12 +44,14 @@ export function ConfirmDialog({
   destructive = false,
   onConfirm,
   requiredConfirmationText,
+  children,
+  confirmDisabled = false,
 }: ConfirmDialogProps) {
   const [typed, setTyped] = React.useState('');
   const [pending, setPending] = React.useState(false);
 
   const requiresTyping = !!requiredConfirmationText;
-  const canConfirm = !requiresTyping || typed === requiredConfirmationText;
+  const canConfirm = (!requiresTyping || typed === requiredConfirmationText) && !confirmDisabled;
 
   React.useEffect(() => {
     if (!open) setTyped('');
@@ -58,6 +64,7 @@ export function ConfirmDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         {requiresTyping && (
           <div className="space-y-1.5">
             <Label htmlFor="confirm-text">

@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { Presentation } from 'lucide-react';
 import { FinalPresentationRow } from '@/components/admin/final-presentation-row';
@@ -21,7 +22,7 @@ export default async function FinalPresentationPage() {
     return (
       <div>
         <PageHeader title="Final Presentation" />
-        <EmptyState icon={Presentation} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }
