@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Lightbulb, PlusCircle, Images, Vote } from 'lucide-react';
+import { Lightbulb, PlusCircle, Vote } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,25 +30,13 @@ export async function ParticipantOverview({ user }: { user: SessionUser }) {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Lightbulb className="h-4 w-4" /> My Ideas
             </CardDescription>
             <CardTitle className="text-3xl">{myIdeasCount ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <Images className="h-4 w-4" /> Showcase
-            </CardDescription>
-            <CardTitle className="text-lg">
-              <Link href="/showcase" className="text-primary hover:underline">
-                Browse projects
-              </Link>
-            </CardTitle>
           </CardHeader>
         </Card>
         <Card>

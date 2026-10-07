@@ -25,14 +25,15 @@ export default async function VotingPage() {
     );
   }
 
-  // Candidates are published showcase projects only (the same rows the old
-  // anyone_select_published_showcase_projects policy exposed).
+  // Candidates are every idea in the program whose qualifier assessment is
+  // finalized as Build (usp_submit_vote enforces the same rule).
   const candidates = (
     await db.query<{ idea_id: string; idea_title: string | null; team_name: string | null }>(
-      `SELECT sp.idea_id, i.idea_title, i.team_name
-         FROM showcase_projects sp
-         LEFT JOIN ideas i ON i.id = sp.idea_id
-        WHERE sp.program_id = @programId AND sp.published = 1`,
+      `SELECT i.id AS idea_id, i.idea_title, i.team_name
+         FROM ideas i
+         JOIN qualifier_assessments qa ON qa.idea_id = i.id
+        WHERE i.program_id = @programId AND qa.status = 'finalized' AND qa.build_decision = 'build'
+        ORDER BY i.idea_title`,
       { programId: period.program_id }
     )
   ).map((p) => ({
@@ -51,9 +52,9 @@ export default async function VotingPage() {
 
   return (
     <div>
-      <PageHeader title="Voting" description="Cast one vote for your favorite showcased project." action={<StatusBadge status="voting_open" />} />
+      <PageHeader title="Voting" description="Cast one vote for your favorite Build project." action={<StatusBadge status="voting_open" />} />
       {candidates.length === 0 ? (
-        <EmptyState icon={VoteIcon} title="No candidates yet" description="Showcase projects haven't been published for this cycle." />
+        <EmptyState icon={VoteIcon} title="No candidates yet" description="No ideas have been marked Build for this cycle yet." />
       ) : (
         <VoteForm votingPeriodId={period.id} candidates={candidates} alreadyVotedIdeaId={existingVote?.idea_id} />
       )}

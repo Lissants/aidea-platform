@@ -14,7 +14,6 @@ erDiagram
     PROGRAMS ||--o{ PROGRAM_RESOURCES : "has"
     PROGRAMS ||--o{ IDEAS : "receives"
     PROGRAMS ||--o{ VOTING_PERIODS : "schedules"
-    PROGRAMS ||--o{ SHOWCASE_PROJECTS : "publishes"
     PROGRAMS ||--o{ FINAL_PRESENTATION_ASSESSMENTS : "scopes"
     PROGRAMS ||--o{ PUBLICATIONS : "scopes"
     PROGRAMS ||--o{ AUDIT_LOGS : "scopes"
@@ -46,7 +45,6 @@ erDiagram
     IDEAS ||--o| FINAL_PRESENTATION_ASSESSMENTS : "presented as"
     PROFILES ||--o{ FINAL_PRESENTATION_ASSESSMENTS : "decided by"
 
-    IDEAS ||--o| SHOWCASE_PROJECTS : "showcased as"
 
     VOTING_PERIODS ||--o{ VOTES : "collects"
     IDEAS ||--o{ VOTES : "receives"
@@ -100,7 +98,6 @@ erDiagram
         datetimeoffset screening_close_at
         datetimeoffset qualifier_close_at
         datetimeoffset final_presentation_close_at
-        datetimeoffset showcase_open_at
         datetimeoffset voting_open_at
         datetimeoffset voting_close_at
         nvarchar status "CHECK: draft, active, closed"
@@ -224,15 +221,6 @@ erDiagram
         bit published
     }
 
-    SHOWCASE_PROJECTS {
-        uniqueidentifier id PK
-        uniqueidentifier idea_id FK
-        uniqueidentifier program_id FK
-        nvarchar image_url
-        nvarchar short_description
-        bit published
-    }
-
     VOTING_PERIODS {
         uniqueidentifier id PK
         uniqueidentifier program_id FK
@@ -290,8 +278,8 @@ erDiagram
 - `users` holds sign-in credentials and replaces Supabase's `auth.users`: `password_hash` (bcrypt) for email + password sign-in, `entra_oid` for a linked Microsoft Entra ID identity. `profiles.id` is both its primary key and a foreign key to `users.id` (one-to-one, `ON DELETE CASCADE`). Everything else references `profiles`, never `users`.
 - `audit_logs.prior_value` / `new_value` are JSON stored as `NVARCHAR(MAX)` with an `ISJSON` check constraint.
 - Nullable unique columns (`users.entra_oid`, `profiles.employee_id`) use filtered unique indexes, because a SQL Server `UNIQUE` constraint allows only one `NULL`. The one-grand-winner / one-runner-up-per-program rules are also filtered unique indexes on `final_presentation_assessments.program_id`, which `trg_final_presentation_program_id` keeps in sync with the idea's program.
-- SQL Server rejects multiple cascade paths into one table, so three foreign keys are `NO ACTION` instead of `ON DELETE CASCADE`: `reviews.idea_id`, `final_presentation_assessments.program_id` and `showcase_projects.program_id`. Those rows are still deleted with their idea or program, through the other cascade path (via `review_assignments` or `ideas`).
+- SQL Server rejects multiple cascade paths into one table, so two foreign keys are `NO ACTION` instead of `ON DELETE CASCADE`: `reviews.idea_id` and `final_presentation_assessments.program_id`. Those rows are still deleted with their idea or program, through the other cascade path (via `review_assignments` or `ideas`).
 - The Supabase-era views `ideas_participant_view` and `reviews_participant_safe` no longer exist. The participant-safe column selection lives in the service-layer SQL instead.
 - `entity_id` on `PUBLICATIONS` and `AUDIT_LOGS` is a polymorphic reference (no single FK target) — `entity_type` says which table it points into. This is why the Audit Log viewer's "jump to entity" links are built from `entity_type` + `entity_id` rather than a real foreign key.
-- Every `*_ASSESSMENTS` / `*_DECISIONS` / `*_ASSIGNMENTS` table (`screening_decisions`, `qualifier_assessments`, `project_mentor_assignments`, `final_presentation_assessments`, `showcase_projects`) has a `unique(idea_id)` constraint — one row per idea per stage, upserted in place rather than versioned, which is why "Save ≠ Finalize ≠ Publish" is expressed as boolean/status columns on that single row instead of an append-only history.
+- Every `*_ASSESSMENTS` / `*_DECISIONS` / `*_ASSIGNMENTS` table (`screening_decisions`, `qualifier_assessments`, `project_mentor_assignments`, `final_presentation_assessments`) has a `unique(idea_id)` constraint — one row per idea per stage, upserted in place rather than versioned, which is why "Save ≠ Finalize ≠ Publish" is expressed as boolean/status columns on that single row instead of an append-only history.
 - `reviews.version` + `reopened_at`/`reopen_reason` is the review table's own light history mechanism — a reopened review is edited in place with those fields recording the fact, not stored as a new row.

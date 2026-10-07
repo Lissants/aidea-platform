@@ -1,7 +1,7 @@
 /**
  * Integration coverage for lib/services/voting.ts's castVote against the
- * real aidea_test database: usp_submit_vote's open-window and own-team
- * checks, and uq_votes_period_voter's one-vote-per-period guarantee.
+ * real aidea_test database: usp_submit_vote's open-window, Build-candidate
+ * and own-team checks, and uq_votes_period_voter's one-vote-per-period guarantee.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SessionUser } from '@/lib/auth/session';
@@ -34,8 +34,8 @@ describe('castVote', () => {
   });
 
   it('blocks a second vote by the same voter in the same period', async () => {
-    const result = await castVote({ voting_period_id: SEED.openPeriod, idea_id: SEED.ideaBeacon });
-    expect('error' in result).toBe(true);
+    const result = await castVote({ voting_period_id: SEED.openPeriod, idea_id: SEED.ideaDelta });
+    expect('error' in result && result.error).toMatch(/already voted/i);
     // The original vote must be untouched — a vote cannot be changed by
     // simply casting another one.
     expect(await votesBy(SEED.voter1)).toEqual([{ idea_id: SEED.ideaDelta }]);
@@ -46,6 +46,13 @@ describe('castVote', () => {
     const result = await castVote({ voting_period_id: SEED.openPeriod, idea_id: SEED.ideaDelta });
     expect('error' in result && result.error).toMatch(/own team/i);
     expect(await votesBy(SEED.participant1)).toHaveLength(0);
+  });
+
+  it('rejects a vote for an idea that is not marked Build', async () => {
+    currentUser = sessionUser(SEED.voter2, ['employee_voter']);
+    const result = await castVote({ voting_period_id: SEED.openPeriod, idea_id: SEED.ideaBeacon });
+    expect('error' in result && result.error).toMatch(/not a voting candidate/i);
+    expect(await votesBy(SEED.voter2)).toHaveLength(0);
   });
 
   it('rejects votes outside the voting window', async () => {

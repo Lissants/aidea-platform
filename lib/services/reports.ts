@@ -44,15 +44,14 @@ export async function fetchSubmissionFunnel(programId: string): Promise<FunnelSt
   const admin = await currentAdmin();
 
   const counts = admin
-    ? await db.queryOne<{ total: number; submitted: number; screened: number; qualified: number; showcased: number }>(
+    ? await db.queryOne<{ total: number; submitted: number; screened: number; qualified: number }>(
         `SELECT
            (SELECT COUNT(*) FROM ideas WHERE program_id = @programId) AS total,
            (SELECT COUNT(*) FROM ideas WHERE program_id = @programId AND status = 'submitted') AS submitted,
            (SELECT COUNT(*) FROM screening_decisions sd JOIN ideas i ON i.id = sd.idea_id
              WHERE i.program_id = @programId AND sd.published = 1) AS screened,
            (SELECT COUNT(*) FROM qualifier_assessments qa JOIN ideas i ON i.id = qa.idea_id
-             WHERE i.program_id = @programId AND qa.published = 1 AND qa.build_decision = 'build') AS qualified,
-           (SELECT COUNT(*) FROM showcase_projects WHERE program_id = @programId AND published = 1) AS showcased`,
+             WHERE i.program_id = @programId AND qa.published = 1 AND qa.build_decision = 'build') AS qualified`,
         { programId }
       )
     : null;
@@ -62,7 +61,6 @@ export async function fetchSubmissionFunnel(programId: string): Promise<FunnelSt
     { stage: 'Submitted', count: counts?.submitted ?? 0 },
     { stage: 'Screened', count: counts?.screened ?? 0 },
     { stage: 'Qualified (Build)', count: counts?.qualified ?? 0 },
-    { stage: 'Showcased', count: counts?.showcased ?? 0 },
   ];
 }
 

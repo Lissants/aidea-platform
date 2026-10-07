@@ -22,7 +22,6 @@ export type ProgramStageKey =
   | 'qualifier'
   | 'project_mentor'
   | 'final_presentation'
-  | 'showcase'
   | 'voting';
 
 export type IdeaStatus = 'draft' | 'submitted';
@@ -94,7 +93,6 @@ export interface Program {
   screening_close_at: string | null;
   qualifier_close_at: string | null;
   final_presentation_close_at: string | null;
-  showcase_open_at: string | null;
   voting_open_at: string | null;
   voting_close_at: string | null;
   status: ProgramStatus;
@@ -262,17 +260,6 @@ export interface FinalPresentationAssessment {
   published: boolean;
   published_at: string | null;
   decided_by: string | null;
-}
-
-export interface ShowcaseProject {
-  id: string;
-  idea_id: string;
-  program_id: string;
-  image_url: string | null;
-  short_description: string | null;
-  published: boolean;
-  published_at: string | null;
-  created_at: string;
 }
 
 export interface VotingPeriod {

@@ -16,7 +16,6 @@ const STAGE_FIELDS: { key: DateField; label: string; quickAction?: string }[] = 
   { key: 'screening_close_at', label: 'Screening closes' },
   { key: 'qualifier_close_at', label: 'Qualifier closes' },
   { key: 'final_presentation_close_at', label: 'Final presentation closes' },
-  { key: 'showcase_open_at', label: 'Showcase opens', quickAction: 'Open showcase now' },
   { key: 'voting_open_at', label: 'Voting opens' },
   { key: 'voting_close_at', label: 'Voting closes' },
 ];

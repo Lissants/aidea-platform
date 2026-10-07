@@ -46,7 +46,7 @@ services:
       - 'host.docker.internal:host-gateway'
     environment: *app-env
     volumes:
-      # Uploaded showcase images + program resources. Back this up together
+      # Uploaded program resources. Back this up together
       # with the database.
       - uploads:/app/uploads
     healthcheck:

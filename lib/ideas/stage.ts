@@ -1,4 +1,4 @@
-export type DerivedStage = 'draft' | 'submitted' | 'screened_pass' | 'screened_fail' | 'build' | 'no_build' | 'showcased';
+export type DerivedStage = 'draft' | 'submitted' | 'screened_pass' | 'screened_fail' | 'build' | 'no_build';
 
 /**
  * Deliberately NOT in lib/services/idea-management.ts: that file has a
@@ -13,5 +13,4 @@ export const STAGE_LABEL: Record<DerivedStage, string> = {
   screened_fail: 'Screened — Not Passed',
   build: 'Qualified — Build',
   no_build: 'Qualified — No Build',
-  showcased: 'Showcased',
 };

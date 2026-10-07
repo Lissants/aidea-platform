@@ -63,18 +63,17 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 
 ## File uploads
 
-- **Where files live:** showcase images and program resources are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
+- **Where files live:** program resources are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
 - **Uploads** go through `POST /api/files/[bucket]`, which is admin-only.
   - Keys are server-generated (`<uuid>/<uuid>.<ext>`), and every key is validated against a strict pattern, so path traversal is impossible.
-  - Showcase images are validated by their actual bytes (PNG, JPEG or WebP signature), not the browser-supplied type. The limit is 5 MB.
   - Program resources are limited to 10 MB, and HTML, SVG, script and executable types are refused.
 - **Serving** goes through `GET /api/files/[bucket]/[...key]`.
-  - Showcase images are public, as the old public bucket was. Program resources require a signed-in session.
+  - Program resources require a signed-in session.
   - Responses send `X-Content-Type-Options: nosniff` and a sandboxing `Content-Security-Policy`. Anything that isn't an image, PDF or plain text is served as an attachment.
 
 ## Publication gating ("Save ≠ Finalize ≠ Publish")
 
-Every admin decision screen (Screening, Qualifier, Project Mentor Assignment, Final Presentation, Showcase Content), and Voting Management too, separates three distinct actions:
+Every admin decision screen (Screening, Qualifier, Project Mentor Assignment, Final Presentation), and Voting Management too, separates three distinct actions:
 
 1. **Save:** a working draft. It stays editable and isn't visible to anyone outside the admin or mentor working on it.
 2. **Finalize** (where applicable, e.g. Qualifier and Final Presentation): locks the assessment's content as complete. It is still not visible to the participant.

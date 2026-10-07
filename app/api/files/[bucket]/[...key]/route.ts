@@ -5,8 +5,8 @@ import { BUCKETS, isBucket, readStoredFile } from '@/lib/storage/local';
 const INLINE_TYPES = /^(image\/(png|jpeg|webp|gif)|application\/pdf|text\/plain)$/;
 
 /**
- * Serves stored files. showcase-images are public (like the old public
- * bucket); program-resources require a signed-in session. Files are
+ * Serves stored files. Buckets marked publicRead are open to anyone;
+ * the rest (program-resources) require a signed-in session. Files are
  * immutable (keys are random per upload), so they cache aggressively.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ bucket: string; key: string[] }> }) {

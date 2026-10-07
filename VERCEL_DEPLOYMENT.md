@@ -3,7 +3,7 @@
 > **Obsolete — Vercel is not a supported deployment target.** Since the move from Supabase to an on-premises Microsoft SQL Server 2019 database, the app cannot run on Vercel:
 >
 > - **Database**: Vercel's serverless functions run on the public internet and cannot reach a SQL Server instance inside the company network (and the database must not be exposed to the internet to make that possible).
-> - **File uploads**: showcase images and program resources are stored on local disk under `UPLOAD_DIR`. Vercel functions have no persistent disk, so every upload would be lost.
+> - **File uploads**: program resources are stored on local disk under `UPLOAD_DIR`. Vercel functions have no persistent disk, so every upload would be lost.
 >
 > Deploy on a company server with Docker instead — see **[COMPANY_SERVER_DEPLOYMENT.md](./COMPANY_SERVER_DEPLOYMENT.md)**. The notes below are kept only for the parts that still apply if a future version adds a reachable database and object storage.
 

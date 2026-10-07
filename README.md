@@ -4,13 +4,13 @@
 
 ## What it does
 
-Employees submit AI innovation ideas as a team. Each idea is routed to a mentor for review, screened by admins, assessed at a "qualifier" gate (Build / No Build), assigned a project mentor if it moves to build, presented at a final round (winner / runner-up), and — if selected — published to a public Project Showcase where every employee can vote for their favorite. Every publish step (screening result, qualifier result, mentor assignment, final result, showcase entry, voting result) is a deliberate, audited action separate from saving or finalizing a decision, so nothing reaches a participant before an admin explicitly publishes it.
+Employees submit AI innovation ideas as a team. Each idea is routed to a mentor for review, screened by admins, assessed at a "qualifier" gate (Build / No Build), assigned a project mentor if it moves to build, presented at a final round (winner / runner-up). Every idea marked Build is a voting candidate, and every employee can vote for their favorite. Every publish step (screening result, qualifier result, mentor assignment, final result, voting result) is a deliberate, audited action separate from saving or finalizing a decision, so nothing reaches a participant before an admin explicitly publishes it.
 
 ## Feature summary
 
-- **Participant**: idea submission wizard (team, problem/solution, business impact, support needs, mentor preference), My Ideas dashboard, Project Showcase, voting, notifications.
+- **Participant**: idea submission wizard (team, problem/solution, business impact, support needs, mentor preference), My Ideas dashboard, voting, notifications.
 - **Mentor**: reviewer dashboard, structured review form (desirability / viability / realistic implementation + recommendation), My Reviews queue.
-- **Admin**: Review Assignment (routing + manual reassignment), Screening, Qualifier, Project Mentor Assignment, Final Presentation — each with Save → Finalize → Publish as three distinct steps; Showcase Content curation; Voting Management (schedule voting, live turnout, publish results); Idea Management (search/filter/export/drill-in); Program Configuration (cycle dates, eligibility text, FAQ, resource files); Mentor Directory (capacity management); Role Management (grant/revoke roles, audited); Reports (funnel, workload, turnout, winners); Audit Log viewer; CSV exports.
+- **Admin**: Review Assignment (routing + manual reassignment), Screening, Qualifier, Project Mentor Assignment, Final Presentation — each with Save → Finalize → Publish as three distinct steps; Voting Management (schedule voting, live turnout, publish results); Idea Management (search/filter/export/drill-in); Program Configuration (cycle dates, eligibility text, FAQ, resource files); Mentor Directory (capacity management); Role Management (grant/revoke roles, audited); Reports (funnel, workload, turnout, winners); Audit Log viewer; CSV exports.
 - **Cross-cutting**: email/password sign-in plus optional Microsoft Entra ID SSO (company-domain gated), server-side row-level authorization, an in-app notification center, a pluggable email-adapter stub, dark/light/system theme.
 
 ## Tech stack

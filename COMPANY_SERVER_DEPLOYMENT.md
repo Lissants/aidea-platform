@@ -124,7 +124,7 @@ server {
 
 - **App logs**: the Next.js server logs to stdout/stderr inside the container — collect via your platform's usual container log pipeline (`docker logs`, journald, or a log shipper like Fluent Bit/Vector pointed at the Docker log driver). This app writes no logs to the local filesystem.
 - **Database backups**: use SQL Server's native backups (SQL Server Agent job, a maintenance plan, or your existing company backup tooling), e.g. `BACKUP DATABASE aidea TO DISK = '...\aidea_full.bak' WITH COMPRESSION, CHECKSUM;` nightly. If the database uses the FULL recovery model, also schedule `BACKUP LOG aidea ...` (e.g. every 15–60 minutes) so point-in-time restore is possible and the log doesn't grow unbounded; under SIMPLE recovery, full (plus optional differential) backups are enough.
-- **Upload backups**: showcase images and program resources are files in the `uploads` Docker volume (`/app/uploads` in the container). Back the volume up on the same schedule as the database — the DB stores only `/api/files/...` URLs, so a DB restore without the matching files leaves broken images/links, and vice versa.
+- **Upload backups**: program resources are files in the `uploads` Docker volume (`/app/uploads` in the container). Back the volume up on the same schedule as the database — the DB stores only `/api/files/...` URLs, so a DB restore without the matching files leaves broken links, and vice versa.
 
 ## 8. Migration & rollback procedure
 
@@ -135,7 +135,7 @@ server {
 
 ## 9. Uploaded files are stored on the server's disk
 
-Showcase images (`showcase-images`) and program resource files (`program-resources`) are uploaded by admins via `POST /api/files/[bucket]` and written under `UPLOAD_DIR` (`lib/storage/local.ts`), then served by `GET /api/files/[bucket]/[...key]`: showcase images are public, program resources require a signed-in session. This has two consequences for a containerized deployment:
+Program resource files (`program-resources`) are uploaded by admins via `POST /api/files/[bucket]` and written under `UPLOAD_DIR` (`lib/storage/local.ts`), then served by `GET /api/files/[bucket]/[...key]` and require a signed-in session. This has two consequences for a containerized deployment:
 
 - `/app/uploads` **must** be a persistent volume (the compose file's `uploads` volume). Without it, every redeploy loses all uploaded files.
 - The app is not horizontally scalable as-is: multiple replicas would each see a different disk. Running more than one replica requires pointing every replica's `UPLOAD_DIR` at the same shared storage (e.g. an SMB/NFS mount).

@@ -16,7 +16,6 @@ export interface ProgramRow {
   screening_close_at: string | null;
   qualifier_close_at: string | null;
   final_presentation_close_at: string | null;
-  showcase_open_at: string | null;
   voting_open_at: string | null;
   voting_close_at: string | null;
   status: string;
@@ -28,7 +27,6 @@ const DATE_FIELDS = [
   'screening_close_at',
   'qualifier_close_at',
   'final_presentation_close_at',
-  'showcase_open_at',
   'voting_open_at',
   'voting_close_at',
 ] as const;

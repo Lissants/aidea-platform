@@ -2,7 +2,6 @@ import 'server-only';
 
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/validation/showcase-image';
 
 /**
  * Local-disk file storage (replaces Supabase Storage buckets).
@@ -17,18 +16,17 @@ import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/va
  * /api/files/{bucket}/{key}.
  */
 
-export type Bucket = 'showcase-images' | 'program-resources';
+export type Bucket = 'program-resources';
 
 interface BucketConfig {
   maxBytes: number;
   /** Allowed MIME types; null = any type not in BLOCKED_TYPES. */
   types: string[] | null;
-  /** Whether anonymous visitors may read (showcase) or a session is required. */
+  /** Whether anonymous visitors may read or a session is required. */
   publicRead: boolean;
 }
 
 export const BUCKETS: Record<Bucket, BucketConfig> = {
-  'showcase-images': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: true },
   'program-resources': { maxBytes: 10 * 1024 * 1024, types: null, publicRead: false },
 };
 
@@ -48,7 +46,7 @@ export interface StoredFileMeta {
 }
 
 export function isBucket(value: string): value is Bucket {
-  return value === 'showcase-images' || value === 'program-resources';
+  return value === 'program-resources';
 }
 
 export function uploadRoot() {

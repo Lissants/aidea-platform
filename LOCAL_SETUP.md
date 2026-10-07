@@ -70,7 +70,7 @@ npm run dev
 
 Visit `http://localhost:3000` and sign in with a seeded demo account using email and password.
 
-Uploaded files (showcase images and program resources) are written to `./uploads` (`UPLOAD_DIR`).
+Uploaded files (program resources) are written to `./uploads` (`UPLOAD_DIR`).
 
 ### Optional: Microsoft sign-in (Entra ID)
 

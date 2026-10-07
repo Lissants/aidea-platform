@@ -4,7 +4,7 @@ import { getCurrentUser, getActiveRole } from '@/lib/auth/session';
 
 /**
  * This route group also serves the shared pages employee voters use
- * (Showcase, Voting, Results, Notifications) — so any authenticated user
+ * (Voting, Results, Notifications) — so any authenticated user
  * with at least one recognized role can enter here. Participant-only pages
  * (My Ideas, Submit) additionally check `role === 'participant'` in-page.
  */

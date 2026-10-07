@@ -1,6 +1,6 @@
 # Idea Lifecycle Workflow
 
-The full path an idea takes from a participant's first draft to a possible Grand Winner on the public Project Showcase, including every publish gate.
+The full path an idea takes from a participant's first draft to a possible Grand Winner and the employee vote, including every publish gate.
 
 ```mermaid
 flowchart TD
@@ -43,12 +43,8 @@ flowchart TD
     P -->|Finalize: score + comment + winner_decision + winner_category| Q{Publish batch}
     Q -->|usp_publish_batch 'final_presentation_assessment'| R[Published — winner/runner-up/no-winner visible program-wide]
 
-    R --> S[Admin: Showcase Content — image + short description]
-    S -->|Save per project| S
-    S -->|Publish batch: usp_publish_batch 'showcase_project'| T[Live on public Project Showcase]
-
-    T --> U[Admin: Voting Management — schedule voting_periods]
-    U --> V[Voting open — any employee votes once, not for own team's idea, usp_submit_vote]
+    R --> U[Admin: Voting Management — schedule voting_periods]
+    U --> V[Voting open — candidates are every finalized Build idea; any employee votes once, not for own team's idea, usp_submit_vote]
     V -->|Admin sees live turnout, usp_vote_tallies admin bypass| V
     V -->|Voting closes| W[Admin: Publish Favorite Project]
     W -->|publishVotingResults: results_published = true| X[Results page shows tallies/percentages to everyone]

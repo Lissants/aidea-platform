@@ -207,9 +207,6 @@ export async function AdminOverview() {
         <Link href="/final-presentation" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
           Final Presentation
         </Link>
-        <Link href="/showcase-content" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Showcase Content
-        </Link>
       </div>
     </div>
   );

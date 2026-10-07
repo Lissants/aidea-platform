@@ -5,7 +5,7 @@ import { isBucket, saveFile } from '@/lib/storage/local';
 
 /**
  * Admin-only upload: multipart form with `file` and `prefix` (the owning
- * idea id for showcase-images, program id for program-resources).
+ * program id for program-resources).
  * Responds with { key, url }.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ bucket: string }> }) {
