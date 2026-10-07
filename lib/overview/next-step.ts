@@ -44,7 +44,7 @@ export function participantNextStep(input: ParticipantNextStepInput): NextStep {
   if (conflictCount > 0) {
     return {
       title: 'Pick the one idea you will continue with',
-      body: `You are on ${conflictCount} ideas that passed screening. Make your choice in the panel below.`,
+      body: 'One of your ideas was selected to Build. Make your choice in the panel below.',
     };
   }
   if (submitted.length === 0 && drafts.length > 0 && submissionOpen) {

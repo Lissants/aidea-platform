@@ -6,7 +6,8 @@
  * and ideas directly in the database (unique emails per run), so it never
  * touches the demo accounts' ideas. Business rules themselves are covered in
  * tests/integration/team-membership.test.ts; this spec checks the screens:
- *  - participant on 2 approved ideas sees the banner; the commit dialog stays
+ *  - participant on a Build idea and another in-progress idea sees the banner,
+ *    with a commit button only on the Build idea; the commit dialog stays
  *    disabled until the team name is typed; committing clears the banner;
  *  - admin removes a member (reason required) and adds a replacement.
  */
@@ -45,8 +46,8 @@ const createPerson = (p: Person, hash: string): SqlStep[] => [
   },
 ];
 
-/** A submitted idea led by `leader` whose screening Pass is already published. */
-const createApprovedIdea = (idea: typeof ideaOne, members: Person[]): SqlStep[] => [
+/** A submitted idea led by `leader` whose screening Pass (and, with `build`, qualifier Build) is already published. */
+const createApprovedIdea = (idea: typeof ideaOne, members: Person[], build = false): SqlStep[] => [
   {
     sql: `INSERT INTO ideas (id, program_id, team_name, team_leader_id, idea_title, problem_opportunity,
                              proposed_solution, status, locked, created_by)
@@ -63,6 +64,15 @@ const createApprovedIdea = (idea: typeof ideaOne, members: Person[]): SqlStep[] 
           VALUES (@id, 'pass_to_qualifier', SYSDATETIMEOFFSET(), 1, SYSDATETIMEOFFSET())`,
     params: { id: idea.id },
   },
+  ...(build
+    ? [
+        {
+          sql: `INSERT INTO qualifier_assessments (idea_id, final_score, build_decision, status, finalized_at, published, published_at)
+                VALUES (@id, 80, 'build', 'finalized', SYSDATETIMEOFFSET(), 1, SYSDATETIMEOFFSET())`,
+          params: { id: idea.id },
+        },
+      ]
+    : []),
 ];
 
 test.describe.configure({ mode: 'serial' });
@@ -71,16 +81,19 @@ test.beforeAll(async () => {
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
   runSql([
     ...[leader, memberB, memberC, replacement].flatMap((p) => createPerson(p, hash)),
-    ...createApprovedIdea(ideaOne, [memberB, memberC]),
+    ...createApprovedIdea(ideaOne, [memberB, memberC], true),
     ...createApprovedIdea(ideaTwo, [memberB, memberC]),
   ]);
 });
 
-test('participant on two approved ideas must type the team name to commit', async ({ page }) => {
+test('participant on a Build idea must type the team name to commit to it', async ({ page }) => {
   await signIn(page, leader.email);
   await page.goto('/my-ideas');
 
   await expect(page.getByText('Choose the idea you will commit to')).toBeVisible();
+  const twoRow = page.getByRole('alert').locator('div.rounded-md', { hasText: ideaTwo.title });
+  await expect(twoRow.getByRole('button', { name: 'Commit to this idea' })).toHaveCount(0);
+  await expect(twoRow.getByText('Not Build · still in progress')).toBeVisible();
   const oneRow = page.getByRole('alert').locator('div.rounded-md', { hasText: ideaOne.title });
   await oneRow.getByRole('button', { name: 'Commit to this idea' }).click();
 

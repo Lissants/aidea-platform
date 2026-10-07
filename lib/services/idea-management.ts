@@ -17,7 +17,7 @@ export interface IdeaListRow {
   created_at: string;
   /** Submitted idea whose team leader slot is empty (leader left or was removed). */
   leader_vacant: boolean;
-  /** Approved idea with someone on the team still on another approved idea (hasn't committed yet). */
+  /** In-progress idea with someone on the team who is on a Build idea and still on another in-progress idea (hasn't committed yet). */
   membership_conflict: boolean;
 }
 
@@ -78,9 +78,12 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
             CAST(CASE WHEN EXISTS (
               SELECT 1 FROM dbo.v_idea_participants p
                WHERE p.idea_id = i.id
-                 AND EXISTS (SELECT 1 FROM dbo.v_approved_ideas a WHERE a.idea_id = i.id)
+                 AND EXISTS (SELECT 1 FROM dbo.v_open_ideas o WHERE o.idea_id = i.id)
+                 AND EXISTS (SELECT 1 FROM dbo.v_idea_participants pb
+                               JOIN dbo.v_build_ideas b ON b.idea_id = pb.idea_id
+                              WHERE pb.profile_id = p.profile_id AND pb.program_id = i.program_id)
                  AND (SELECT COUNT(*) FROM dbo.v_idea_participants p2
-                        JOIN dbo.v_approved_ideas a2 ON a2.idea_id = p2.idea_id
+                        JOIN dbo.v_open_ideas o2 ON o2.idea_id = p2.idea_id
                        WHERE p2.profile_id = p.profile_id AND p2.program_id = i.program_id) > 1
             ) THEN 1 ELSE 0 END AS BIT) AS membership_conflict,
             p.full_name AS reviewer_name,

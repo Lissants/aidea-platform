@@ -8,9 +8,10 @@ import { adminAddTeamMemberSchema, adminRemoveTeamMemberSchema } from '@/lib/val
 
 /**
  * Team membership after approval (db/migrations/0009_team_membership.sql).
- * Before screening is published a person may be on any number of ideas;
- * once 2+ of their ideas in a program pass screening they must commit to
- * one. Admins handle later team changes (resignations, leave) by removing a
+ * A person may be on any number of ideas until one of them is marked Build
+ * (published qualifier decision, db/migrations/0012_commit_on_build.sql).
+ * From then on they must commit to one Build idea and leave their other
+ * in-progress ideas in that program. Admins handle later team changes (resignations, leave) by removing a
  * member and, after agreeing it offline with the team, assigning a
  * replacement. The procedures re-check every rule and write the audit rows.
  */
@@ -21,33 +22,43 @@ export interface ConflictIdea {
   idea_title: string;
   team_name: string;
   my_role: 'leader' | 'member';
+  /** Marked Build: the participant can commit to it. Other rows are ideas they would leave. */
+  is_build: boolean;
   team: string[];
 }
 
-/** The signed-in user's approved ideas, only for programs where they are on 2+ of them. */
+/**
+ * The signed-in user's in-progress ideas, only for programs where at least
+ * one of them is marked Build and there is another in-progress idea to leave.
+ */
 export async function fetchMyMembershipConflicts(): Promise<ConflictIdea[]> {
   const user = await getCurrentUser();
   if (!user) return [];
 
   const rows = await db.query<Omit<ConflictIdea, 'team'> & { team: string | null }>(
     `SELECT p.idea_id, p.program_id, i.idea_title, i.team_name, p.role AS my_role,
+            CAST(CASE WHEN EXISTS (SELECT 1 FROM dbo.v_build_ideas b WHERE b.idea_id = p.idea_id)
+                      THEN 1 ELSE 0 END AS BIT) AS is_build,
             (SELECT STRING_AGG(pr.full_name, N'|') WITHIN GROUP (ORDER BY t.role, pr.full_name)
                FROM dbo.v_idea_participants t JOIN profiles pr ON pr.id = t.profile_id
               WHERE t.idea_id = p.idea_id) AS team
        FROM dbo.v_idea_participants p
-       JOIN dbo.v_approved_ideas a ON a.idea_id = p.idea_id
+       JOIN dbo.v_open_ideas o ON o.idea_id = p.idea_id
        JOIN ideas i ON i.id = p.idea_id
       WHERE p.profile_id = @uid
-        AND (SELECT COUNT(*) FROM dbo.v_idea_participants p2
-               JOIN dbo.v_approved_ideas a2 ON a2.idea_id = p2.idea_id
-              WHERE p2.profile_id = @uid AND p2.program_id = p.program_id) > 1
-      ORDER BY i.idea_title`,
+        AND EXISTS (SELECT 1 FROM dbo.v_idea_participants p2
+                      JOIN dbo.v_build_ideas b2 ON b2.idea_id = p2.idea_id
+                     WHERE p2.profile_id = @uid AND p2.program_id = p.program_id)
+        AND (SELECT COUNT(*) FROM dbo.v_idea_participants p3
+               JOIN dbo.v_open_ideas o3 ON o3.idea_id = p3.idea_id
+              WHERE p3.profile_id = @uid AND p3.program_id = p.program_id) > 1
+      ORDER BY is_build DESC, i.idea_title`,
     { uid: user.id }
   );
-  return rows.map((r) => ({ ...r, team: r.team ? r.team.split('|') : [] }));
+  return rows.map((r) => ({ ...r, is_build: !!r.is_build, team: r.team ? r.team.split('|') : [] }));
 }
 
-/** Keep `ideaId` and leave every other approved idea of its program (usp_commit_to_idea). */
+/** Keep the Build idea `ideaId` and leave every other in-progress idea of its program (usp_commit_to_idea). */
 export async function commitToIdea(ideaId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: 'Not authenticated' } as const;

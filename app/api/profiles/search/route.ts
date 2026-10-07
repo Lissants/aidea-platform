@@ -11,7 +11,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * minimum columns are returned and results are capped at 10.
  *
  * With `programId`, each result also carries `committed_idea_title`: the
- * approved idea of that program the person is already on (they can't join
+ * Build idea of that program the person is already on (they can't join
  * another team), or null.
  */
 export async function GET(request: NextRequest) {
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
          FROM profiles pr
         OUTER APPLY (SELECT TOP (1) i.idea_title
                        FROM dbo.v_idea_participants p
-                       JOIN dbo.v_approved_ideas a ON a.idea_id = p.idea_id
+                       JOIN dbo.v_build_ideas a ON a.idea_id = p.idea_id
                        JOIN ideas i ON i.id = p.idea_id
                       WHERE p.profile_id = pr.id AND p.program_id = @programId) c
         WHERE pr.active = 1
