@@ -6,8 +6,7 @@ import { toast } from 'sonner';
 import { Circle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { markNotificationRead, markAllNotificationsRead } from '@/lib/services/notifications';
 import type { NotificationRow } from '@/lib/services/notifications';
 import { categorizeNotification } from '@/lib/notifications/categorize';
@@ -42,15 +41,23 @@ export function NotificationList({ notifications }: { notifications: Notificatio
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            {TABS.map((t) => (
-              <TabsTrigger key={t.value} value={t.value}>
-                {t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        {/* A filter, not tabs: there are no separate tab panels, so a pressed-button group is the honest semantics. */}
+        <div role="group" aria-label="Filter notifications" className="inline-flex flex-wrap gap-1 rounded-lg border bg-muted p-1">
+          {TABS.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              aria-pressed={tab === t.value}
+              onClick={() => setTab(t.value)}
+              className={cn(
+                'inline-flex min-h-10 items-center rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                tab === t.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-background hover:text-foreground'
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         {unreadCount > 0 && (
           <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
             Mark all as read ({unreadCount})
@@ -63,7 +70,12 @@ export function NotificationList({ notifications }: { notifications: Notificatio
           const content = (
             <CardContent className="flex items-start justify-between gap-4 p-4">
               <div className="flex items-start gap-2">
-                {!n.read && <Circle className="mt-1.5 h-2 w-2 shrink-0 fill-primary text-primary" />}
+                {!n.read && (
+                  <>
+                    <Circle className="mt-1.5 h-2 w-2 shrink-0 fill-primary text-primary" aria-hidden="true" />
+                    <span className="sr-only">Unread: </span>
+                  </>
+                )}
                 <div>
                   <p className="text-sm font-medium">{n.title}</p>
                   {n.body && <p className="text-sm text-muted-foreground">{n.body}</p>}

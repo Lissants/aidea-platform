@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { UserCog } from 'lucide-react';
 import { ProjectMentorRow } from '@/components/admin/project-mentor-row';
@@ -17,7 +18,7 @@ export default async function ProjectMentorPage() {
     return (
       <div>
         <PageHeader title="Project Mentor" />
-        <EmptyState icon={UserCog} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }

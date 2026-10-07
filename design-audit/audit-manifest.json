@@ -1,0 +1,2208 @@
+{
+  "$schema_note": "status: pass | partial | fail | not_applicable | unable_to_verify. Validated by scripts/validate-design-audit.ts (npm run audit:design). post_change records outcomes after implementation.",
+  "generated": "2026-10-04",
+  "items": [
+    {
+      "id": "WIG-01",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Icon-only buttons need aria-label",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "idea-wizard.tsx:268,305,386,488 unlabeled X buttons; axe button-name x3 on /submit",
+      "affected_routes": [
+        "/submit"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [
+        "R-03"
+      ],
+      "validation_method": "AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "aria-label on remove buttons (components/forms/idea-form-parts.tsx RemoveButton); evidence/after/results-*.json: 0 axe violations across 16 routes at 390+1280 (before: 195 nodes)"
+      }
+    },
+    {
+      "id": "WIG-02",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Form controls need <label> or aria-label",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "axe label + select-name (14 nodes); 21 <Label> without htmlFor",
+      "affected_routes": [
+        "/submit",
+        "/ideas",
+        "/dashboard",
+        "/project-mentor"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx",
+        "app/(admin)/ideas/page.tsx"
+      ],
+      "recommendation_ids": [
+        "R-03"
+      ],
+      "validation_method": "AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Labels on all submit/filter controls; evidence/after/results-*.json: 0 axe violations across 16 routes at 390+1280 (before: 195 nodes)"
+      }
+    },
+    {
+      "id": "WIG-03",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Use <button> for actions, <a>/<Link> for navigation",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "grep: no div/span onClick in app or components",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-04",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Images need alt",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "Only AvatarImage (alt=name) and SVG Microsoft logo in a labelled button",
+      "affected_routes": [
+        "/sign-in"
+      ],
+      "affected_components": [
+        "components/navigation/avatar-menu.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-05",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Decorative icons aria-hidden",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "StatusBadge icons hidden; CardDescription/EmptyState/nav icons not",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/layout/empty-state.tsx"
+      ],
+      "recommendation_ids": [
+        "R-24"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "aria-hidden on decorative icons in shell, nav, empty state, badges"
+      }
+    },
+    {
+      "id": "WIG-06",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Async updates use aria-live",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "Sonner Toaster provides a live region (app/layout.tsx)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/ui/sonner.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Source review of Sonner Toaster",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-07",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Hierarchical headings and skip link",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "CardTitle h3 under h1 (card.tsx:22); firstTabFocus = logo on 15/15 routes",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/ui/card.tsx",
+        "components/layout/app-shell.tsx"
+      ],
+      "recommendation_ids": [
+        "R-07",
+        "R-24"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "CardTitle renders h2; skip link first Tab on 30/30 authenticated captures"
+      }
+    },
+    {
+      "id": "WIG-08",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Heading anchors scroll-margin-top",
+      "applicability": "not_applicable",
+      "status": "not_applicable",
+      "evidence": "",
+      "affected_routes": [],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "No in-page heading anchors exist outside the new submit-form section index, which uses scroll-margin via scroll-padding",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "WIG-09",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "accessibility",
+      "rule_or_check": "Media captions and controls",
+      "applicability": "not_applicable",
+      "status": "not_applicable",
+      "evidence": "",
+      "affected_routes": [],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "App has no audio or video media",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "WIG-10",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "focus",
+      "rule_or_check": "Visible focus on interactive elements",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "Primitives have focus-visible ring; hand-styled links (admin-overview.tsx:195-212, reviews/page.tsx:79) do not",
+      "affected_routes": [
+        "/overview",
+        "/reviews",
+        "/ideas"
+      ],
+      "affected_components": [
+        "app/overview/admin-overview.tsx",
+        "app/(mentor)/reviews/page.tsx"
+      ],
+      "recommendation_ids": [
+        "R-07"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "focus-ring utility + focus-visible on nav, tabs, filters, links"
+      }
+    },
+    {
+      "id": "WIG-11",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "focus",
+      "rule_or_check": "Never outline-none without replacement",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "All outline-none usages pair with focus-visible:ring (button.tsx, avatar-menu.tsx:29, inputs)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/ui/button.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-12",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "focus",
+      "rule_or_check": "Sticky UI must not obscure focused element",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Browser at 375x812: action bar 751-812 vs bottom nav 748-812; elementFromPoint at Submit = More",
+      "affected_routes": [
+        "/submit",
+        "/reviews/[id]"
+      ],
+      "affected_components": [
+        "components/layout/contextual-action-bar.tsx"
+      ],
+      "recommendation_ids": [
+        "R-04"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "evidence/after/results-submit-form.json: bar bottom 748 = nav top 748, Submit hit-test true"
+      }
+    },
+    {
+      "id": "WIG-13",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "forms",
+      "rule_or_check": "Inputs have autocomplete and meaningful name",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "Sign-in has autocomplete; submit form controls have no name/autocomplete (controlled state, not posted)",
+      "affected_routes": [
+        "/submit"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Accepted: the submit form is a client-state form posted via server action; adding autocomplete=off adds no user value. Recorded, not actioned.",
+      "post_change": {
+        "status": "accepted",
+        "evidence": "Accepted, see notes"
+      }
+    },
+    {
+      "id": "WIG-14",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "forms",
+      "rule_or_check": "Labels clickable via htmlFor",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "12 Labels without htmlFor in idea-wizard.tsx",
+      "affected_routes": [
+        "/submit"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [
+        "R-03"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "FormField htmlFor on every field"
+      }
+    },
+    {
+      "id": "WIG-15",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "forms",
+      "rule_or_check": "Inline errors next to fields; focus first error on submit",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "idea-wizard.tsx:217-227 toast of first error only",
+      "affected_routes": [
+        "/submit"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [
+        "R-06"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "evidence/after/results-submit-form.json: summary visible+focused, 7 links, 8 aria-invalid, no dialog"
+      }
+    },
+    {
+      "id": "WIG-16",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "forms",
+      "rule_or_check": "Submit stays enabled until request starts",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "review-form.tsx:182 disabled until complete with no reason",
+      "affected_routes": [
+        "/reviews/[id]"
+      ],
+      "affected_components": [
+        "components/reviews/review-form.tsx"
+      ],
+      "recommendation_ids": [
+        "R-26"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "review-form.tsx: missing items listed and linked via aria-describedby"
+      }
+    },
+    {
+      "id": "WIG-17",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "forms",
+      "rule_or_check": "Warn before navigation with unsaved changes",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "No beforeunload/router guard on submit or review forms",
+      "affected_routes": [
+        "/submit",
+        "/reviews/[id]"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [
+        "R-14"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "Deferred with draft-resume work (R-14)",
+      "post_change": {
+        "status": "open_planned",
+        "evidence": "Not addressed (R-14 planned)"
+      }
+    },
+    {
+      "id": "WIG-18",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "forms",
+      "rule_or_check": "Never block paste",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "grep onPaste: 0",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-19",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "animation",
+      "rule_or_check": "Honor prefers-reduced-motion",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "grep prefers-reduced-motion/motion-reduce: 0",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/globals.css"
+      ],
+      "recommendation_ids": [
+        "R-15"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "globals.css prefers-reduced-motion rule"
+      }
+    },
+    {
+      "id": "WIG-20",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "animation",
+      "rule_or_check": "Never transition: all",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "sidebar-nav.tsx:27 transition-all",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/navigation/sidebar-nav.tsx"
+      ],
+      "recommendation_ids": [
+        "R-15"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "grep transition-all: 0"
+      }
+    },
+    {
+      "id": "WIG-21",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "typography",
+      "rule_or_check": "tabular-nums for number columns",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Stat values (admin-overview.tsx:44) and tables have no tabular-nums",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "app/overview/admin-overview.tsx"
+      ],
+      "recommendation_ids": [
+        "R-10"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "MetricRow tabular-nums"
+      }
+    },
+    {
+      "id": "WIG-22",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "typography",
+      "rule_or_check": "Loading states end with …",
+      "applicability": "not_applicable",
+      "status": "not_applicable",
+      "evidence": "",
+      "affected_routes": [],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "No textual loading states existed; new skeletons are non-textual with aria-busy",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "WIG-23",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "content-handling",
+      "rule_or_check": "Handle long content and empty strings",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "Untitled draft renders blank title (admin__ideas__mobile-390.png)",
+      "affected_routes": [
+        "/ideas"
+      ],
+      "affected_components": [
+        "app/(admin)/ideas/page.tsx"
+      ],
+      "recommendation_ids": [
+        "R-23"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Untitled draft fallback (admin ideas, My Ideas, overview)"
+      }
+    },
+    {
+      "id": "WIG-24",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "navigation-state",
+      "rule_or_check": "URL reflects state (filters, tabs, pagination)",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "searchParams drive /ideas filters, /reviews tabs, pagination",
+      "affected_routes": [
+        "/ideas",
+        "/reviews",
+        "/dashboard"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "Source review + manual navigation",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-25",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "navigation-state",
+      "rule_or_check": "Destructive actions need confirmation",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "ConfirmDialog on submit idea, submit review, remove member, publish",
+      "affected_routes": [
+        "/submit",
+        "/reviews/[id]",
+        "/ideas/[id]"
+      ],
+      "affected_components": [
+        "components/layout/confirm-dialog.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-26",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "touch",
+      "rule_or_check": "touch-action, overscroll-behavior in sheets",
+      "applicability": "applicable",
+      "status": "unable_to_verify",
+      "evidence": "",
+      "affected_routes": [],
+      "affected_components": [
+        "components/ui/sheet.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Requires a physical touch device; emulated touch in the browser pane cannot verify double-tap delay or overscroll chaining",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "WIG-27",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "layout",
+      "rule_or_check": "Full-bleed layouts use safe-area insets",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Fixed bottom nav and sticky action bar have no env(safe-area-inset-bottom)",
+      "affected_routes": [
+        "all mobile routes"
+      ],
+      "affected_components": [
+        "components/navigation/mobile-bottom-nav.tsx",
+        "components/layout/contextual-action-bar.tsx"
+      ],
+      "recommendation_ids": [
+        "R-04"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "env(safe-area-inset-bottom) on bottom nav + action bar"
+      }
+    },
+    {
+      "id": "WIG-28",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "theming",
+      "rule_or_check": "color-scheme and theme-color match theme",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "No color-scheme on html; next-themes sets data-theme only",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/layout.tsx"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "improved_partial",
+        "evidence": "color-scheme set per theme; theme-color meta not added"
+      }
+    },
+    {
+      "id": "WIG-29",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "i18n",
+      "rule_or_check": "Dates via Intl, not hard-coded",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "formatDate + toLocaleDateString(en-IN)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "lib/utils.ts"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-30",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "hydration",
+      "rule_or_check": "No hydration mismatches",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "0 console errors across 80 captures",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "results-*.json consoleErrors",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "WIG-31",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "copy",
+      "rule_or_check": "Specific button labels; errors include next step",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "Generic \"Apply\"/\"Open\"; empty states without direction; DB error for duplicate mentor",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/layout/empty-state.tsx"
+      ],
+      "recommendation_ids": [
+        "R-12",
+        "R-25",
+        "R-05"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "improved_partial",
+        "evidence": "Copy rewritten on touched pages only"
+      }
+    },
+    {
+      "id": "WIG-32",
+      "source_skill": "vercel-web-design-guidelines",
+      "category": "anti-patterns",
+      "rule_or_check": "Zoom not disabled (no user-scalable=no)",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "No viewport override; Next default viewport",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/layout.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "RBP-01",
+      "source_skill": "vercel-react-best-practices",
+      "category": "async",
+      "rule_or_check": "async-parallel: independent awaits in parallel",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "admin-overview uses Promise.all; participant-overview.tsx:13-28 sequential",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "app/overview/participant-overview.tsx"
+      ],
+      "recommendation_ids": [
+        "R-20"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Promise.all in participant overview and My Ideas"
+      }
+    },
+    {
+      "id": "RBP-02",
+      "source_skill": "vercel-react-best-practices",
+      "category": "async",
+      "rule_or_check": "async-suspense-boundaries / loading UI",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "0 Suspense, 0 loading.tsx",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [
+        "R-11"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "loading.tsx per role group"
+      }
+    },
+    {
+      "id": "RBP-03",
+      "source_skill": "vercel-react-best-practices",
+      "category": "server",
+      "rule_or_check": "server-serialization: minimal props to client",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "Only role crosses to SidebarNav/MobileBottomNav (sidebar-nav.tsx:12)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/navigation/sidebar-nav.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Source review",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "RBP-04",
+      "source_skill": "vercel-react-best-practices",
+      "category": "server",
+      "rule_or_check": "server-cache-react: per-request dedupe",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "getCurrentUser wrapped in React cache()",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "lib/auth/session.ts"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Source review",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "RBP-05",
+      "source_skill": "vercel-react-best-practices",
+      "category": "server",
+      "rule_or_check": "server-auth-actions: actions authenticate",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "lib/services/* call getCurrentUser + can() before writes",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "lib/services/ideas.ts"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Source review",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "RBP-06",
+      "source_skill": "vercel-react-best-practices",
+      "category": "bundle",
+      "rule_or_check": "bundle-dynamic-imports for heavy libs",
+      "applicability": "not_applicable",
+      "status": "not_applicable",
+      "evidence": "",
+      "affected_routes": [
+        "/reports"
+      ],
+      "affected_components": [
+        "components/admin/reports-charts.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "recharts is imported only from the admin /reports route chunk; route-level splitting already isolates it",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "RBP-07",
+      "source_skill": "vercel-react-best-practices",
+      "category": "rerender",
+      "rule_or_check": "rerender-no-inline-components",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "No component definitions inside render bodies",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "RBP-08",
+      "source_skill": "vercel-react-best-practices",
+      "category": "rerender",
+      "rule_or_check": "rerender-derived-state-no-effect",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "theme-toggle.tsx:17 mounted-flag effect (lint warning)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/layout/theme-toggle.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Accepted pattern for next-themes hydration safety; kept",
+      "post_change": {
+        "status": "accepted",
+        "evidence": "Accepted, see notes"
+      }
+    },
+    {
+      "id": "RBP-09",
+      "source_skill": "vercel-react-best-practices",
+      "category": "rendering",
+      "rule_or_check": "rendering-hydration-no-flicker",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "next-themes injects pre-hydration script; no theme flash observed",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/layout/theme-provider.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Browser reload observation",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "CMP-01",
+      "source_skill": "vercel-composition-patterns",
+      "category": "architecture",
+      "rule_or_check": "architecture-avoid-boolean-props",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "Max 3 boolean props (ConfirmDialog)",
+      "affected_routes": [],
+      "affected_components": [
+        "components/layout/confirm-dialog.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "CMP-02",
+      "source_skill": "vercel-composition-patterns",
+      "category": "patterns",
+      "rule_or_check": "patterns-explicit-variants (status)",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "6 separate status mappings (F-29)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/ui/status-badge.tsx"
+      ],
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Single STATUS_META + stageStatusKey/reviewStatusKey; tests/unit/status-meta.test.ts"
+      }
+    },
+    {
+      "id": "CMP-03",
+      "source_skill": "vercel-composition-patterns",
+      "category": "architecture",
+      "rule_or_check": "Monolithic components decomposed",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "idea-wizard.tsx 609 lines",
+      "affected_routes": [
+        "/submit"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [
+        "R-19",
+        "R-06"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "idea-wizard 609 -> 424 lines; parts, picker, field, issues extracted"
+      }
+    },
+    {
+      "id": "CMP-04",
+      "source_skill": "vercel-composition-patterns",
+      "category": "patterns",
+      "rule_or_check": "patterns-children-over-render-props",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "ResponsiveTable cell renderers pass data back (legitimate render props)",
+      "affected_routes": [],
+      "affected_components": [
+        "components/ui/responsive-table.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Source review",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "CMP-05",
+      "source_skill": "vercel-composition-patterns",
+      "category": "architecture",
+      "rule_or_check": "Generic components hiding product variants",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "3 stat-card copies; Card used for tiles, rows, alerts",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "components/ui/card.tsx"
+      ],
+      "recommendation_ids": [
+        "R-10",
+        "R-18"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "MetricRow replaces 3 stat-card copies"
+      }
+    },
+    {
+      "id": "CMP-06",
+      "source_skill": "vercel-composition-patterns",
+      "category": "react19",
+      "rule_or_check": "react19-no-forwardref",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "shadcn primitives use forwardRef",
+      "affected_routes": [],
+      "affected_components": [
+        "components/ui/button.tsx",
+        "components/ui/card.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Works under React 19.3; migrating vendored shadcn primitives has no user value in this pass",
+      "post_change": {
+        "status": "accepted",
+        "evidence": "Accepted, see notes"
+      }
+    },
+    {
+      "id": "FD-01",
+      "source_skill": "anthropic-frontend-design",
+      "category": "identity",
+      "rule_or_check": "Aesthetic direction grounded in subject",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Default shadcn slate/blue + lightbulb tile logo",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/globals.css",
+        "components/layout/app-shell.tsx"
+      ],
+      "recommendation_ids": [
+        "R-01",
+        "R-07"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Monochrome workbench direction; text wordmark"
+      }
+    },
+    {
+      "id": "FD-02",
+      "source_skill": "anthropic-frontend-design",
+      "category": "typography",
+      "rule_or_check": "Intentional typeface and scale",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Tailwind default stack; no display role; brand requires Arial/GI Sans",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "tailwind.config.ts"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "GI Sans / Arial stack"
+      }
+    },
+    {
+      "id": "FD-03",
+      "source_skill": "anthropic-frontend-design",
+      "category": "composition",
+      "rule_or_check": "Avoid SaaS-card kit (identical rounded cards, soft shadow)",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "card.tsx:8 rounded-xl shadow-sm everywhere; 3-col tile grids",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "components/ui/card.tsx"
+      ],
+      "recommendation_ids": [
+        "R-16",
+        "R-10"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Card shadow removed, 6px radius, list rows over tiles"
+      }
+    },
+    {
+      "id": "FD-04",
+      "source_skill": "anthropic-frontend-design",
+      "category": "composition",
+      "rule_or_check": "First screen leads with the most characteristic content",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Participant home = greeting + 3 equal cards",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "app/overview/participant-overview.tsx"
+      ],
+      "recommendation_ids": [
+        "R-08"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Next-step H1 on each home"
+      }
+    },
+    {
+      "id": "FD-05",
+      "source_skill": "anthropic-frontend-design",
+      "category": "content",
+      "rule_or_check": "Copy in the user's language, specific CTAs",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "\"team_leader_assigned on idea\", \"status: submitted\"",
+      "affected_routes": [
+        "/overview",
+        "/ideas/[id]"
+      ],
+      "affected_components": [
+        "app/overview/admin-overview.tsx"
+      ],
+      "recommendation_ids": [
+        "R-10",
+        "R-02"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "humanizeAuditAction; review status badge"
+      }
+    },
+    {
+      "id": "FD-06",
+      "source_skill": "anthropic-frontend-design",
+      "category": "typography",
+      "rule_or_check": "No all-caps labels or single-word headline accents",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "grep uppercase/tracking-widest: none in app UI",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "Repository grep",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "FD-07",
+      "source_skill": "anthropic-frontend-design",
+      "category": "motion",
+      "rule_or_check": "Motion sparse and purposeful",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "No decorative motion present",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "Source review",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "FD-08",
+      "source_skill": "anthropic-frontend-design",
+      "category": "quality-floor",
+      "rule_or_check": "Responsive, visible focus, reduced motion, contrast",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "See WIG-10, WIG-19, UUX-01",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [
+        "R-01",
+        "R-07",
+        "R-15"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "See WIG-10/19, UUX-01"
+      }
+    },
+    {
+      "id": "UUX-01",
+      "source_skill": "ui-ux-pro-max",
+      "category": "accessibility",
+      "rule_or_check": "Text contrast >= 4.5:1",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "axe color-contrast 169 nodes, 16/16 routes",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/globals.css",
+        "components/ui/badge.tsx"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "evidence/after/results-*.json: 0 axe violations across 16 routes at 390+1280 (before: 195 nodes)"
+      }
+    },
+    {
+      "id": "UUX-02",
+      "source_skill": "ui-ux-pro-max",
+      "category": "accessibility",
+      "rule_or_check": "Focus not obscured (WCAG 2.4.11)",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "See WIG-12",
+      "affected_routes": [
+        "/submit"
+      ],
+      "affected_components": [
+        "components/layout/contextual-action-bar.tsx"
+      ],
+      "recommendation_ids": [
+        "R-04"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "See WIG-12"
+      }
+    },
+    {
+      "id": "UUX-03",
+      "source_skill": "ui-ux-pro-max",
+      "category": "touch",
+      "rule_or_check": "Touch targets >= 44px",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Remove buttons 24px; row \"Open\" links text-height",
+      "affected_routes": [
+        "/submit",
+        "/reviews"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx",
+        "components/ui/responsive-table.tsx"
+      ],
+      "recommendation_ids": [
+        "R-03",
+        "R-17"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Buttons h-11 below lg; remove buttons 44px; table row actions min-h-11"
+      }
+    },
+    {
+      "id": "UUX-04",
+      "source_skill": "ui-ux-pro-max",
+      "category": "layout",
+      "rule_or_check": "No horizontal scroll at any viewport",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "overflowPx 0 on 80/80 captures",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "results-*.json overflowPx",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "UUX-05",
+      "source_skill": "ui-ux-pro-max",
+      "category": "layout",
+      "rule_or_check": "Mobile-first content reprioritisation",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "Tables become cards but list every column right-aligned",
+      "affected_routes": [
+        "/reviews",
+        "/my-ideas",
+        "/dashboard"
+      ],
+      "affected_components": [
+        "components/ui/responsive-table.tsx"
+      ],
+      "recommendation_ids": [
+        "R-17"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "ResponsiveTable mobile roles (title/action/hidden), left-aligned"
+      }
+    },
+    {
+      "id": "UUX-06",
+      "source_skill": "ui-ux-pro-max",
+      "category": "color",
+      "rule_or_check": "Semantic tokens, no raw palette in components",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "amber-* x6, chart hex palette",
+      "affected_routes": [
+        "/ideas",
+        "/my-ideas",
+        "/reports"
+      ],
+      "affected_components": [
+        "app/(admin)/ideas/page.tsx",
+        "components/admin/reports-charts.tsx"
+      ],
+      "recommendation_ids": [
+        "R-02",
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "grep amber-: 0; chart palette tokens"
+      }
+    },
+    {
+      "id": "UUX-07",
+      "source_skill": "ui-ux-pro-max",
+      "category": "color",
+      "rule_or_check": "Colour is not the only indicator",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "StatusBadge pairs icon+label; amber conflict pills have no icon",
+      "affected_routes": [
+        "/ideas"
+      ],
+      "affected_components": [
+        "app/(admin)/ideas/page.tsx"
+      ],
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "AttentionFlag icon+text"
+      }
+    },
+    {
+      "id": "UUX-08",
+      "source_skill": "ui-ux-pro-max",
+      "category": "forms",
+      "rule_or_check": "Visible labels; error near field; focusable summary",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Placeholder-only filters; toast-only errors",
+      "affected_routes": [
+        "/submit",
+        "/ideas"
+      ],
+      "affected_components": [
+        "components/forms/idea-wizard.tsx"
+      ],
+      "recommendation_ids": [
+        "R-03",
+        "R-06"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Visible filter labels; inline errors + summary"
+      }
+    },
+    {
+      "id": "UUX-09",
+      "source_skill": "ui-ux-pro-max",
+      "category": "navigation",
+      "rule_or_check": "Bottom nav <= 5 items with fitting labels",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "4+More; admin labels wrap at 390",
+      "affected_routes": [
+        "admin mobile routes"
+      ],
+      "affected_components": [
+        "components/navigation/mobile-bottom-nav.tsx"
+      ],
+      "recommendation_ids": [
+        "R-07"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "mobileLabel: single-line labels (evidence/after admin__ideas__mobile-390.png)"
+      }
+    },
+    {
+      "id": "UUX-10",
+      "source_skill": "ui-ux-pro-max",
+      "category": "navigation",
+      "rule_or_check": "Navigation organised around user goals",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Admin nav is 16 flat items in implementation order",
+      "affected_routes": [
+        "admin routes"
+      ],
+      "affected_components": [
+        "lib/constants/navigation.ts"
+      ],
+      "recommendation_ids": [
+        "R-07"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Admin nav grouped (lib/constants/navigation.ts group)"
+      }
+    },
+    {
+      "id": "UUX-11",
+      "source_skill": "ui-ux-pro-max",
+      "category": "dashboard",
+      "rule_or_check": "Dashboards actionable, not record counts",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Admin 8 equal tiles; mentor count unlinked and misleading",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "app/overview/admin-overview.tsx",
+        "app/overview/mentor-overview.tsx"
+      ],
+      "recommendation_ids": [
+        "R-09",
+        "R-10"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Role homes rebuilt (R-08/09/10)"
+      }
+    },
+    {
+      "id": "UUX-12",
+      "source_skill": "ui-ux-pro-max",
+      "category": "accessibility",
+      "rule_or_check": "Sequential heading levels",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "h1 -> h3 (CardTitle)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/ui/card.tsx"
+      ],
+      "recommendation_ids": [
+        "R-24"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "See WIG-07"
+      }
+    },
+    {
+      "id": "UUX-13",
+      "source_skill": "ui-ux-pro-max",
+      "category": "performance",
+      "rule_or_check": "CLS < 0.1, fonts do not shift layout",
+      "applicability": "applicable",
+      "status": "pass",
+      "evidence": "No web fonts loaded; system Arial; no images above fold",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/layout.tsx"
+      ],
+      "recommendation_ids": [],
+      "validation_method": "Source review (no font or image loading)",
+      "notes": "",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "Still passing (re-captured)"
+      }
+    },
+    {
+      "id": "UUX-14",
+      "source_skill": "ui-ux-pro-max",
+      "category": "performance",
+      "rule_or_check": "Core Web Vitals measured",
+      "applicability": "applicable",
+      "status": "unable_to_verify",
+      "evidence": "",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Only a dev server (Turbopack, unminified) is available; LCP/INP measured on dev would be misleading",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "UUX-15",
+      "source_skill": "ui-ux-pro-max",
+      "category": "style",
+      "rule_or_check": "Style matches product type (enterprise tool)",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "Design-system query recommended Swiss minimalism; current UI is generic SaaS kit",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [
+        "R-01",
+        "R-16"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Monochrome Swiss-minimal tokens"
+      }
+    },
+    {
+      "id": "UUX-16",
+      "source_skill": "ui-ux-pro-max",
+      "category": "charts",
+      "rule_or_check": "Chart colours accessible, not colour-only",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "reports-charts.tsx:7 hex palette incl. off-brand hues",
+      "affected_routes": [
+        "/reports"
+      ],
+      "affected_components": [
+        "components/admin/reports-charts.tsx"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Chart palette ink/grey tokens"
+      }
+    },
+    {
+      "id": "UUX-17",
+      "source_skill": "ui-ux-pro-max",
+      "category": "states",
+      "rule_or_check": "Loading, empty and error states",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "No loading/error/not-found files; generic empty copy",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/layout/empty-state.tsx"
+      ],
+      "recommendation_ids": [
+        "R-11",
+        "R-12"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "loading/error/not-found added; empty states rewritten"
+      }
+    },
+    {
+      "id": "UUX-18",
+      "source_skill": "ui-ux-pro-max",
+      "category": "accessibility",
+      "rule_or_check": "Valid ARIA on tabs and progress bars",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "axe aria-valid-attr-value (/notifications), aria-progressbar-name (/screening, /project-mentor)",
+      "affected_routes": [
+        "/notifications",
+        "/screening",
+        "/project-mentor"
+      ],
+      "affected_components": [
+        "components/notifications/notification-list.tsx",
+        "components/ui/progress.tsx"
+      ],
+      "recommendation_ids": [
+        "R-13"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "evidence/after/results-*.json: 0 axe violations across 16 routes at 390+1280 (before: 195 nodes)"
+      }
+    },
+    {
+      "id": "UUX-19",
+      "source_skill": "ui-ux-pro-max",
+      "category": "accessibility",
+      "rule_or_check": "Radio groups have accessible names",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "review-form.tsx:46,142",
+      "affected_routes": [
+        "/reviews/[id]"
+      ],
+      "affected_components": [
+        "components/reviews/review-form.tsx"
+      ],
+      "recommendation_ids": [
+        "R-03"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "aria-labelledby on review radio groups; evidence/after/results-*.json: 0 axe violations across 16 routes at 390+1280 (before: 195 nodes)"
+      }
+    },
+    {
+      "id": "TST-01",
+      "source_skill": "taste-skill-v2",
+      "category": "color",
+      "rule_or_check": "One accent colour used identically",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Blue primary + solid green/amber/red/blue badges + amber pills",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/globals.css"
+      ],
+      "recommendation_ids": [
+        "R-01",
+        "R-02"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Ink primary; soft status tones only"
+      }
+    },
+    {
+      "id": "TST-02",
+      "source_skill": "taste-skill-v2",
+      "category": "shape",
+      "rule_or_check": "One corner-radius system",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "rounded-xl cards, rounded-md controls, rounded-full badges without rule",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "components/ui/card.tsx",
+        "components/ui/badge.tsx"
+      ],
+      "recommendation_ids": [
+        "R-16"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "--radius 0.375rem; badges rounded-sm"
+      }
+    },
+    {
+      "id": "TST-03",
+      "source_skill": "taste-skill-v2",
+      "category": "layout",
+      "rule_or_check": "No 3+ equal-card rows",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "All three homes use equal tile grids",
+      "affected_routes": [
+        "/overview"
+      ],
+      "affected_components": [
+        "app/overview/*"
+      ],
+      "recommendation_ids": [
+        "R-08",
+        "R-09",
+        "R-10"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Homes use lists + metric row"
+      }
+    },
+    {
+      "id": "TST-04",
+      "source_skill": "taste-skill-v2",
+      "category": "decoration",
+      "rule_or_check": "No decorative status badges",
+      "applicability": "applicable",
+      "status": "partial",
+      "evidence": "\"N/A\" badges on every mentor queue row",
+      "affected_routes": [
+        "/reviews",
+        "/dashboard"
+      ],
+      "affected_components": [
+        "components/ideas/result-columns.tsx"
+      ],
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "N/A rendered quiet (no badge)"
+      }
+    },
+    {
+      "id": "TST-05",
+      "source_skill": "taste-skill-v2",
+      "category": "states",
+      "rule_or_check": "Empty/loading/error states provided",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "See UUX-17",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [],
+      "recommendation_ids": [
+        "R-11",
+        "R-12"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "See UUX-17"
+      }
+    },
+    {
+      "id": "TST-06",
+      "source_skill": "taste-skill-v2",
+      "category": "theming",
+      "rule_or_check": "Dark mode tokens defined and tested both modes",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "dark: variant broken (tailwind.config.ts:4)",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "tailwind.config.ts"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "darkMode selector fix; evidence/after/results-dark.json 0 axe"
+      }
+    },
+    {
+      "id": "TST-07",
+      "source_skill": "taste-skill-v2",
+      "category": "copy",
+      "rule_or_check": "No em-dashes in UI copy",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "STAGE_LABEL \"Screened — Passed\"; admin voting status \"Closed — awaiting publication\"",
+      "affected_routes": [
+        "/ideas",
+        "/overview"
+      ],
+      "affected_components": [
+        "lib/ideas/stage.ts"
+      ],
+      "recommendation_ids": [
+        "R-25"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Em dashes removed from status/stage/voting labels"
+      }
+    },
+    {
+      "id": "TST-08",
+      "source_skill": "taste-skill-v2",
+      "category": "decoration",
+      "rule_or_check": "No gradients or glass for decoration",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "(auth)/layout.tsx:3 gradient; backdrop-blur x2",
+      "affected_routes": [
+        "/sign-in"
+      ],
+      "affected_components": [
+        "app/(auth)/layout.tsx"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "Gradient + backdrop-blur removed"
+      }
+    },
+    {
+      "id": "TST-09",
+      "source_skill": "taste-skill-v2",
+      "category": "layout",
+      "rule_or_check": "Hero fits viewport, nav one line",
+      "applicability": "not_applicable",
+      "status": "not_applicable",
+      "evidence": "",
+      "affected_routes": [],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Marketing-page rules (hero, logo wall, marquee, zigzag) do not apply to an authenticated workflow app",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "TST-10",
+      "source_skill": "taste-skill-v2",
+      "category": "icons",
+      "rule_or_check": "Icons from Phosphor/HugeIcons/Radix/Tabler only",
+      "applicability": "not_applicable",
+      "status": "not_applicable",
+      "evidence": "",
+      "affected_routes": [],
+      "affected_components": [],
+      "recommendation_ids": [],
+      "validation_method": "",
+      "notes": "Rejected for this product: lucide is consistent and accessible; switching icon libraries adds churn with no user benefit (directions.md)",
+      "post_change": {
+        "status": "unchanged",
+        "evidence": "n/a"
+      }
+    },
+    {
+      "id": "GIG-01",
+      "source_skill": "gig-brand-standards",
+      "category": "brand",
+      "rule_or_check": "Colours limited to #141414 / #FFFFFF (+ agreed status tones)",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Blue/slate HSL tokens in globals.css:7-44",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "app/globals.css"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "globals.css tokens"
+      }
+    },
+    {
+      "id": "GIG-02",
+      "source_skill": "gig-brand-standards",
+      "category": "brand",
+      "rule_or_check": "Typography GI Sans / Arial",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "Tailwind default font stack",
+      "affected_routes": [
+        "all captured routes"
+      ],
+      "affected_components": [
+        "tailwind.config.ts"
+      ],
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "tailwind fontFamily"
+      }
+    },
+    {
+      "id": "GIG-03",
+      "source_skill": "gig-brand-standards",
+      "category": "brand",
+      "rule_or_check": "All text left-aligned",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "text-center in empty-state.tsx:17, access-denied, session-error; centred auth card",
+      "affected_routes": [
+        "/sign-in",
+        "/access-denied"
+      ],
+      "affected_components": [
+        "components/layout/empty-state.tsx",
+        "app/(auth)/layout.tsx"
+      ],
+      "recommendation_ids": [
+        "R-12",
+        "R-01"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "EmptyState, auth pages left-aligned"
+      }
+    },
+    {
+      "id": "GIG-04",
+      "source_skill": "gig-brand-standards",
+      "category": "brand",
+      "rule_or_check": "Business logo + Godrej Signature lockup where branded",
+      "applicability": "applicable",
+      "status": "fail",
+      "evidence": "No lockup on sign-in",
+      "affected_routes": [
+        "/sign-in"
+      ],
+      "affected_components": [
+        "app/(auth)/layout.tsx"
+      ],
+      "recommendation_ids": [
+        "R-27"
+      ],
+      "validation_method": "See validation method of linked recommendation(s) in improvement-plan.md",
+      "notes": "Lockup assets: see final-report.md for fetch outcome",
+      "post_change": {
+        "status": "resolved_verified",
+        "evidence": "public/brand lockup on (auth)/layout.tsx (evidence/after anonymous__sign-in__*.png)"
+      }
+    }
+  ],
+  "critical_components": [
+    {
+      "path": "app/globals.css",
+      "recommendation_ids": [
+        "R-01",
+        "R-04",
+        "R-15"
+      ],
+      "validation_method": "AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280; browser dark-mode check"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "recommendation_ids": [
+        "R-01"
+      ],
+      "validation_method": "npm run build; dark: utility check in browser"
+    },
+    {
+      "path": "components/ui/badge.tsx",
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280"
+    },
+    {
+      "path": "components/ui/status-badge.tsx",
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "tests/unit/status-meta.test.ts; AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280"
+    },
+    {
+      "path": "components/ui/attention-flag.tsx",
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence)"
+    },
+    {
+      "path": "components/ui/card.tsx",
+      "recommendation_ids": [
+        "R-16",
+        "R-24"
+      ],
+      "validation_method": "Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence)"
+    },
+    {
+      "path": "components/ui/responsive-table.tsx",
+      "recommendation_ids": [
+        "R-17"
+      ],
+      "validation_method": "Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence)"
+    },
+    {
+      "path": "components/layout/contextual-action-bar.tsx",
+      "recommendation_ids": [
+        "R-04"
+      ],
+      "validation_method": "Browser elementFromPoint measurement at 375x812"
+    },
+    {
+      "path": "components/layout/app-shell.tsx",
+      "recommendation_ids": [
+        "R-07"
+      ],
+      "validation_method": "Keyboard walk in browser pane + firstTabFocus in results-*.json"
+    },
+    {
+      "path": "components/layout/empty-state.tsx",
+      "recommendation_ids": [
+        "R-12"
+      ],
+      "validation_method": "Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence)"
+    },
+    {
+      "path": "components/navigation/sidebar-nav.tsx",
+      "recommendation_ids": [
+        "R-07",
+        "R-15"
+      ],
+      "validation_method": "Keyboard walk in browser pane + firstTabFocus in results-*.json; tests/unit/navigation.test.ts"
+    },
+    {
+      "path": "components/navigation/mobile-bottom-nav.tsx",
+      "recommendation_ids": [
+        "R-07"
+      ],
+      "validation_method": "Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence) at 360"
+    },
+    {
+      "path": "lib/constants/navigation.ts",
+      "recommendation_ids": [
+        "R-07"
+      ],
+      "validation_method": "tests/unit/navigation.test.ts"
+    },
+    {
+      "path": "lib/constants/status.ts",
+      "recommendation_ids": [
+        "R-02"
+      ],
+      "validation_method": "tests/unit/status-meta.test.ts"
+    },
+    {
+      "path": "lib/validation/schemas.ts",
+      "recommendation_ids": [
+        "R-05"
+      ],
+      "validation_method": "tests/unit/validation-schemas.test.ts"
+    },
+    {
+      "path": "components/forms/idea-wizard.tsx",
+      "recommendation_ids": [
+        "R-03",
+        "R-05",
+        "R-06",
+        "R-19"
+      ],
+      "validation_method": "tests/unit/idea-form-issues.test.ts; Playwright submit-validation check; AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280"
+    },
+    {
+      "path": "components/reviews/review-form.tsx",
+      "recommendation_ids": [
+        "R-03",
+        "R-26"
+      ],
+      "validation_method": "AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280; manual browser check (no submit)"
+    },
+    {
+      "path": "app/overview/participant-overview.tsx",
+      "recommendation_ids": [
+        "R-08",
+        "R-20"
+      ],
+      "validation_method": "Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence); AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280"
+    },
+    {
+      "path": "app/overview/mentor-overview.tsx",
+      "recommendation_ids": [
+        "R-09"
+      ],
+      "validation_method": "Overview count vs /reviews tabs comparison; Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence)"
+    },
+    {
+      "path": "app/overview/admin-overview.tsx",
+      "recommendation_ids": [
+        "R-10"
+      ],
+      "validation_method": "tests/unit/audit-labels.test.ts; Before/after screenshots at 360/390/768/1280/1536 (design-audit/evidence); AUDIT_PHASE=after axe capture (tests/e2e/ui-baseline.spec.ts) at 390 and 1280"
+    }
+  ]
+}

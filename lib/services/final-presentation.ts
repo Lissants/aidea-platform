@@ -16,21 +16,27 @@ export interface FinalPresentationQueueRow {
   winner_category: WinnerCategory | null;
   status: FinalPresentationStatus | null;
   published: boolean;
+  presentation_url: string | null;
+  presentation_name: string | null;
 }
 
 const LOCKED_MESSAGE = 'This assessment has already been published and can no longer be edited.';
+const NOT_ELIGIBLE_MESSAGE = "This idea hasn't passed a published qualifier yet.";
 
-/** Build-decision ideas — the pool eligible for final presentation. Admin-only. */
+/** Ideas whose screening Pass and qualifier Build are both published — the
+ * pool eligible for final presentation. Admin-only. */
 export async function fetchFinalPresentationQueue(programId: string): Promise<FinalPresentationQueueRow[]> {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return [];
 
   return db.query<FinalPresentationQueueRow>(
-    `SELECT i.id AS idea_id, i.idea_title, i.team_name,
+    `SELECT i.id AS idea_id, i.idea_title, i.team_name, i.presentation_url, i.presentation_name,
             fpa.final_score, fpa.overall_comment, fpa.winner_decision, fpa.winner_category, fpa.status,
             CAST(ISNULL(fpa.published, 0) AS BIT) AS published
        FROM ideas i
+       JOIN screening_decisions sd ON sd.idea_id = i.id AND sd.decision = 'pass_to_qualifier' AND sd.published = 1
        JOIN qualifier_assessments qa ON qa.idea_id = i.id AND qa.status = 'finalized' AND qa.build_decision = 'build'
+                                    AND qa.published = 1
        LEFT JOIN final_presentation_assessments fpa ON fpa.idea_id = i.id
       WHERE i.program_id = @programId`,
     { programId }
@@ -60,12 +66,29 @@ export async function fetchTakenCategories(programId: string): Promise<Record<Wi
 }
 
 async function assertEditable(ideaId: string) {
+  const eligible = await db.queryOne<{ ok: number }>(
+    `SELECT 1 AS ok
+       FROM screening_decisions sd
+       JOIN qualifier_assessments qa ON qa.idea_id = sd.idea_id
+      WHERE sd.idea_id = @ideaId AND sd.decision = 'pass_to_qualifier' AND sd.published = 1
+        AND qa.status = 'finalized' AND qa.build_decision = 'build' AND qa.published = 1`,
+    { ideaId }
+  );
+  if (!eligible) return NOT_ELIGIBLE_MESSAGE;
+
   const row = await db.queryOne<{ published: boolean }>(
     'SELECT published FROM final_presentation_assessments WHERE idea_id = @ideaId',
     { ideaId }
   );
   if (row?.published) return LOCKED_MESSAGE;
   return null;
+}
+
+/** A final-presentation row makes the idea a voting candidate (v_vote_candidates). */
+function revalidateFinalPresentation() {
+  revalidatePath('/final-presentation');
+  revalidatePath('/voting-management');
+  revalidatePath('/voting');
 }
 
 type UpsertResult = { ok: true } | { ok: false; error: string; uniqueViolation: boolean };
@@ -143,7 +166,7 @@ export async function saveFinalPresentationDraft(
     return { error: result.error } as const;
   }
 
-  revalidatePath('/final-presentation');
+  revalidateFinalPresentation();
   return { ok: true } as const;
 }
 
@@ -191,7 +214,7 @@ export async function finalizeFinalPresentation(
     return { error: result.error } as const;
   }
 
-  revalidatePath('/final-presentation');
+  revalidateFinalPresentation();
   return { ok: true } as const;
 }
 
@@ -209,6 +232,5 @@ export async function publishFinalPresentationResults(programId: string) {
 
   if (error) return { error } as const;
   revalidatePath('/final-presentation');
-  revalidatePath('/results');
   return { ok: true, count: data?.[0]?.published_count ?? 0 } as const;
 }

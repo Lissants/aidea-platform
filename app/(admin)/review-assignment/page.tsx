@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { AlertTriangle } from 'lucide-react';
 import { RoutingQueueTable } from '@/components/admin/routing-queue-table';
@@ -16,7 +17,7 @@ export default async function ReviewAssignmentPage() {
     return (
       <div>
         <PageHeader title="Review Assignment" />
-        <EmptyState icon={AlertTriangle} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }

@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
+import { requireCurrentPassword } from '@/lib/auth/password-gate';
 import { getCurrentUser, getActiveRole } from '@/lib/auth/session';
 
 export default async function NotificationsLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
+  requireCurrentPassword(user);
   const activeRole = await getActiveRole(user);
   if (!activeRole) redirect('/access-denied');
 

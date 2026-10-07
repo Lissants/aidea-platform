@@ -4,28 +4,24 @@ import { cn } from '@/lib/utils';
 
 interface EmptyStateProps {
   icon: LucideIcon;
+  /** States the situation ("You have no ideas yet"). */
   title: string;
+  /** Tells the person what happens next or what to do. */
   description?: string;
   action?: React.ReactNode;
   className?: string;
 }
 
+/** Left-aligned (GIG rule) empty state: situation, direction, optional action. */
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/30 px-6 py-14 text-center',
-        className
-      )}
-    >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-        <Icon className="h-6 w-6 text-muted-foreground" />
+    <div className={cn('flex gap-4 rounded-xl border border-dashed px-5 py-6', className)}>
+      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <div className="min-w-0 space-y-1">
+        <p className="font-semibold text-foreground">{title}</p>
+        {description && <p className="max-w-prose text-sm text-muted-foreground">{description}</p>}
+        {action && <div className="pt-3">{action}</div>}
       </div>
-      <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">{title}</p>
-        {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
-      </div>
-      {action}
     </div>
   );
 }

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   let reminderCount = 0;
 
   const toOpen = await db.query<{ id: string }>(
-    'SELECT id FROM voting_periods WHERE opens_at <= @now AND opened_notified_at IS NULL',
+    'SELECT id FROM voting_periods WHERE voting_published = 1 AND opens_at <= @now AND opened_notified_at IS NULL',
     { now }
   );
 
@@ -41,11 +41,11 @@ export async function GET(request: NextRequest) {
         { id: period.id, now }
       );
       if (n === 0) return false;
-      // Every profile is eligible to vote.
+      // Every active profile is eligible to vote.
       await tx.execute(
         `INSERT INTO notifications (user_id, type, title, body, link)
          SELECT id, 'voting_opened', 'Voting is open', 'You can now cast your Favorite Project vote.', '/voting'
-           FROM profiles`
+           FROM profiles WHERE active = 1`
       );
       return true;
     });
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
   const toRemind = await db.query<{ id: string }>(
     `SELECT id FROM voting_periods
-      WHERE closes_at <= @in24h AND closes_at > @now AND closing_reminder_sent_at IS NULL`,
+      WHERE voting_published = 1 AND closes_at <= @in24h AND closes_at > @now AND closing_reminder_sent_at IS NULL`,
     { now, in24h }
   );
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       await tx.execute(
         `INSERT INTO notifications (user_id, type, title, body, link)
          SELECT id, 'voting_closing_reminder', 'Voting closes soon', @body, '/voting'
-           FROM profiles`,
+           FROM profiles WHERE active = 1`,
         { body: "Favorite Project voting closes within 24 hours — cast your vote if you haven't yet." }
       );
       return true;

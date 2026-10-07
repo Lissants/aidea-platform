@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
+import { requireCurrentPassword } from '@/lib/auth/password-gate';
 import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/permissions';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
+  requireCurrentPassword(user);
   if (!isAdmin(user.roles)) redirect('/access-denied');
 
   return (

@@ -30,6 +30,10 @@ export async function resetTestDb() {
 export const SEED = {
   program: '66666666-6666-6666-6666-666666666001',
   admin1: '11111111-1111-1111-1111-111111111001',
+  dev1: 'dddddddd-dddd-dddd-dddd-ddddddddd001',
+  dev2: 'dddddddd-dddd-dddd-dddd-ddddddddd002',
+  dev3: 'dddddddd-dddd-dddd-dddd-ddddddddd003',
+  dev4: 'dddddddd-dddd-dddd-dddd-ddddddddd004',
   mentor1: '22222222-2222-2222-2222-222222222001',
   mentor2: '22222222-2222-2222-2222-222222222002',
   mentor3: '22222222-2222-2222-2222-222222222003',
@@ -51,5 +55,5 @@ export const SEED = {
 
 /** Builds the SessionUser shape getCurrentUser() returns, for mocking. */
 export function sessionUser(id: string, roles: AppRole[], email = `${id}@test.local`): SessionUser {
-  return { id, email, profile: null, roles };
+  return { id, email, profile: null, roles, mustChangePassword: false };
 }

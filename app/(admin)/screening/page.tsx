@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { Gavel } from 'lucide-react';
 import { ScreeningRow } from '@/components/admin/screening-row';
@@ -17,7 +18,7 @@ export default async function ScreeningPage() {
     return (
       <div>
         <PageHeader title="Screening Decision" />
-        <EmptyState icon={Gavel} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }

@@ -12,14 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { AppRole } from '@/lib/constants/navigation';
-
-const ROLE_LABELS: Record<AppRole, string> = {
-  admin: 'Admin',
-  mentor: 'Mentor',
-  participant: 'Participant',
-  employee_voter: 'Employee Voter',
-};
+import { ROLE_LABELS, type AppRole } from '@/lib/constants/navigation';
 
 /**
  * Shown only when a user has more than one role. Lets them switch "acting

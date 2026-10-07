@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { GalleryHorizontalEnd } from 'lucide-react';
 import { ShowcaseContentRow } from '@/components/admin/showcase-content-row';
@@ -17,7 +18,7 @@ export default async function ShowcaseContentPage() {
     return (
       <div>
         <PageHeader title="Showcase Content" />
-        <EmptyState icon={GalleryHorizontalEnd} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }
