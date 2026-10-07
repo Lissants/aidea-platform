@@ -225,17 +225,28 @@ ELSE
    WHERE idea_id = '77777777-7777-7777-7777-777777777004';
 
 -- ---------------------------------------------------------------------
+-- Final presentation (draft) for the built idea: makes it a voting
+-- candidate (v_vote_candidates) before any winner is published.
+-- ---------------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM final_presentation_assessments WHERE idea_id = '77777777-7777-7777-7777-777777777004')
+  INSERT INTO final_presentation_assessments (idea_id, status, decided_by)
+  VALUES ('77777777-7777-7777-7777-777777777004', 'draft', '11111111-1111-1111-1111-111111111001');
+
+-- ---------------------------------------------------------------------
 -- Voting periods: one closed with published results, one currently open.
+-- Both are published to voters.
 -- ---------------------------------------------------------------------
 IF NOT EXISTS (SELECT 1 FROM voting_periods WHERE id = '99999999-9999-9999-9999-999999999001')
-  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages)
+  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages,
+                              voting_published, voting_published_at)
   VALUES ('99999999-9999-9999-9999-999999999001', @program, DATEADD(day, -30, @now), DATEADD(day, -25, @now),
-          1, DATEADD(day, -24, @now), 1);
+          1, DATEADD(day, -24, @now), 1, 1, DATEADD(day, -30, @now));
 
 IF NOT EXISTS (SELECT 1 FROM voting_periods WHERE id = '99999999-9999-9999-9999-999999999002')
-  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages)
+  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages,
+                              voting_published, voting_published_at)
   VALUES ('99999999-9999-9999-9999-999999999002', @program, DATEADD(hour, -1, @now), DATEADD(day, 7, @now),
-          0, NULL, 1);
+          0, NULL, 1, 1, DATEADD(hour, -1, @now));
 
 INSERT INTO votes (voting_period_id, voter_id, idea_id)
 SELECT s.period, s.voter, s.idea_id

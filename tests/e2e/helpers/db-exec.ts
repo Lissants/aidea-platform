@@ -12,7 +12,9 @@ export type SqlStep = { sql: string; params?: Record<string, unknown> };
 
 /** Executes the steps in one transaction, via a tsx child process. */
 export function runSql(steps: SqlStep[]) {
-  execFileSync('npx', ['tsx', path.join(__dirname, 'db-exec.ts')], {
+  const script = path.join(__dirname, 'db-exec.ts');
+  // With shell: true (Windows) arguments are joined unquoted, so quote paths with spaces.
+  execFileSync('npx', ['tsx', process.platform === 'win32' ? `"${script}"` : script], {
     input: JSON.stringify(steps),
     stdio: ['pipe', 'inherit', 'inherit'],
     shell: process.platform === 'win32',
