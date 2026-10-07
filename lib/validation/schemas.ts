@@ -112,6 +112,7 @@ export type IdeaDraftSaveInput = z.infer<typeof ideaDraftSaveSchema>;
 export const reviewSchema = z.object({
   desirability: z.boolean(),
   viability: z.boolean(),
+  business_impact: z.boolean(),
   realistic_implementation: z.boolean(),
   recommendation: z.enum(['recommend_pass', 'recommend_not_pass']),
   comment: z.string().min(10, 'Comment is required').max(4000),

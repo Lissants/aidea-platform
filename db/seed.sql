@@ -158,14 +158,14 @@ WHEN NOT MATCHED THEN INSERT (id, idea_id, mentor_profile_id, status)
   VALUES (s.id, s.idea_id, s.mentor_profile_id, s.status);
 
 INSERT INTO reviews (review_assignment_id, idea_id, reviewer_id, desirability, viability,
-                     realistic_implementation, recommendation, comment, status, submitted_at)
-SELECT s.ra, s.idea_id, s.reviewer, s.d, s.v, s.r, s.rec, s.comment, 'submitted', DATEADD(day, s.offset_days, @now)
+                     business_impact, realistic_implementation, recommendation, comment, status, submitted_at)
+SELECT s.ra, s.idea_id, s.reviewer, s.d, s.v, s.b, s.r, s.rec, s.comment, 'submitted', DATEADD(day, s.offset_days, @now)
   FROM (VALUES
     ('88888888-8888-8888-8888-888888888003', '77777777-7777-7777-7777-777777777004', '22222222-2222-2222-2222-222222222002',
-     1, 1, 1, 'recommend_pass', 'Strong forecasting use case, clear ROI.', -5),
+     1, 1, 1, 1, 'recommend_pass', 'Strong forecasting use case, clear ROI.', -5),
     ('88888888-8888-8888-8888-888888888004', '77777777-7777-7777-7777-777777777005', '22222222-2222-2222-2222-222222222001',
-     1, 0, 1, 'recommend_not_pass', 'Vision hardware dependency is a risk this cycle.', -4)
-  ) AS s (ra, idea_id, reviewer, d, v, r, rec, comment, offset_days)
+     1, 0, 0, 1, 'recommend_not_pass', 'Vision hardware dependency is a risk this cycle.', -4)
+  ) AS s (ra, idea_id, reviewer, d, v, b, r, rec, comment, offset_days)
  WHERE NOT EXISTS (SELECT 1 FROM reviews x WHERE x.review_assignment_id = s.ra);
 
 -- ---------------------------------------------------------------------

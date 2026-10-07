@@ -22,6 +22,7 @@ interface ReviewFormProps {
   initial: {
     desirability: boolean | null;
     viability: boolean | null;
+    business_impact: boolean | null;
     realistic_implementation: boolean | null;
     recommendation: ReviewRecommendation | null;
     comment: string | null;
@@ -32,11 +33,13 @@ interface ReviewFormProps {
 
 function YesNo({
   label,
+  description,
   value,
   onChange,
   disabled,
 }: {
   label: string;
+  description?: string;
   value: boolean | null;
   onChange: (v: boolean) => void;
   disabled: boolean;
@@ -44,6 +47,7 @@ function YesNo({
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
+      {description && <p className="text-sm text-muted-foreground">{description}</p>}
       <RadioGroup
         value={value === null ? undefined : value ? 'yes' : 'no'}
         onValueChange={(v) => onChange(v === 'yes')}
@@ -74,18 +78,25 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
 
   const [desirability, setDesirability] = React.useState<boolean | null>(initial.desirability);
   const [viability, setViability] = React.useState<boolean | null>(initial.viability);
+  const [businessImpact, setBusinessImpact] = React.useState<boolean | null>(initial.business_impact);
   const [realistic, setRealistic] = React.useState<boolean | null>(initial.realistic_implementation);
   const [recommendation, setRecommendation] = React.useState<ReviewRecommendation | null>(initial.recommendation);
   const [comment, setComment] = React.useState(initial.comment ?? '');
 
   const isComplete =
-    desirability !== null && viability !== null && realistic !== null && recommendation !== null && comment.trim().length >= 10;
+    desirability !== null &&
+    viability !== null &&
+    businessImpact !== null &&
+    realistic !== null &&
+    recommendation !== null &&
+    comment.trim().length >= 10;
 
   async function handleSaveDraft() {
     setPending(true);
     const result = await saveReviewDraft(assignmentId, ideaId, {
       desirability: desirability ?? undefined,
       viability: viability ?? undefined,
+      business_impact: businessImpact ?? undefined,
       realistic_implementation: realistic ?? undefined,
       recommendation: recommendation ?? undefined,
       comment,
@@ -100,11 +111,20 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
   }
 
   async function handleSubmit() {
-    if (!isComplete || desirability === null || viability === null || realistic === null || recommendation === null) return;
+    if (
+      !isComplete ||
+      desirability === null ||
+      viability === null ||
+      businessImpact === null ||
+      realistic === null ||
+      recommendation === null
+    )
+      return;
     setPending(true);
     const result = await submitReview(assignmentId, ideaId, {
       desirability,
       viability,
+      business_impact: businessImpact,
       realistic_implementation: realistic,
       recommendation,
       comment,
@@ -136,6 +156,13 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
         <CardContent className="space-y-4">
           <YesNo label="Desirability" value={desirability} onChange={setDesirability} disabled={isReadOnly} />
           <YesNo label="Viability" value={viability} onChange={setViability} disabled={isReadOnly} />
+          <YesNo
+            label="Business impact"
+            description="How large and measurable is the expected result?"
+            value={businessImpact}
+            onChange={setBusinessImpact}
+            disabled={isReadOnly}
+          />
           <YesNo label="Realistic implementation" value={realistic} onChange={setRealistic} disabled={isReadOnly} />
 
           <div className="space-y-1.5">

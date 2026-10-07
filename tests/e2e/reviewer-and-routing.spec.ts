@@ -15,6 +15,7 @@ test('a mentor can submit a review for an assigned idea', async ({ page }) => {
 
   await page.getByLabel('Desirability').check();
   await page.getByLabel('Viability').check();
+  await page.getByLabel('Business impact').check();
   await page.getByLabel('Realistic implementation').check();
   await page.getByLabel(/recommend/i).first().check();
   await page.getByLabel(/comment/i).fill('Clear articulation of desirability, viability, and feasibility.');

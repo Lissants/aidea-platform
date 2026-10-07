@@ -203,6 +203,7 @@ export interface Review {
   reviewer_id: string;
   desirability: boolean | null;
   viability: boolean | null;
+  business_impact: boolean | null;
   realistic_implementation: boolean | null;
   recommendation: ReviewRecommendation | null;
   comment: string | null;

@@ -8,12 +8,13 @@ import { reviewSchema } from '@/lib/validation/schemas';
 type ReviewFields = Partial<{
   desirability: boolean;
   viability: boolean;
+  business_impact: boolean;
   realistic_implementation: boolean;
   recommendation: 'recommend_pass' | 'recommend_not_pass';
   comment: string;
 }>;
 
-const REVIEW_FIELDS = ['desirability', 'viability', 'realistic_implementation', 'recommendation', 'comment'] as const;
+const REVIEW_FIELDS = ['desirability', 'viability', 'business_impact', 'realistic_implementation', 'recommendation', 'comment'] as const;
 
 /**
  * Creates or updates the caller's review row for an assignment, inside the
@@ -86,6 +87,7 @@ export async function saveReviewDraft(
   input: Partial<{
     desirability: boolean;
     viability: boolean;
+    business_impact: boolean;
     realistic_implementation: boolean;
     recommendation: 'recommend_pass' | 'recommend_not_pass';
     comment: string;
@@ -116,6 +118,7 @@ export async function submitReview(
   input: {
     desirability: boolean;
     viability: boolean;
+    business_impact: boolean;
     realistic_implementation: boolean;
     recommendation: 'recommend_pass' | 'recommend_not_pass';
     comment: string;

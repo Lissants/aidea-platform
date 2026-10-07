@@ -15,7 +15,7 @@ flowchart TD
     D -->|Both full| E3[Routing Required — admin notified]
     E3 -->|Admin manually assigns, Review Assignment page| E1
 
-    E1 --> F[Mentor reviews: desirability / viability / realistic implementation + recommendation]
+    E1 --> F[Mentor reviews: desirability / viability / business impact / realistic implementation + recommendation]
     E2 --> F
     F -->|usp_submit_review| G[Review submitted]
     G -->|Admin: usp_reopen_review, reason required| F

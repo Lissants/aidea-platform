@@ -115,6 +115,7 @@ describe('reviewSchema', () => {
     const result = reviewSchema.safeParse({
       desirability: true,
       viability: true,
+      business_impact: true,
       realistic_implementation: true,
       comment: 'Looks good overall',
     });
@@ -125,6 +126,7 @@ describe('reviewSchema', () => {
     const result = reviewSchema.safeParse({
       desirability: true,
       viability: true,
+      business_impact: true,
       realistic_implementation: false,
       recommendation: 'recommend_pass',
       comment: 'Solid idea with clear impact.',

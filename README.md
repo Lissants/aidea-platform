@@ -9,7 +9,7 @@ Employees submit AI innovation ideas as a team. Each idea is routed to a mentor 
 ## Feature summary
 
 - **Participant**: idea submission wizard (team, problem/solution, business impact, support needs, mentor preference), My Ideas dashboard, Project Showcase, voting, notifications.
-- **Mentor**: reviewer dashboard, structured review form (desirability / viability / realistic implementation + recommendation), My Reviews queue.
+- **Mentor**: reviewer dashboard, structured review form (desirability / viability / business impact / realistic implementation + recommendation), My Reviews queue.
 - **Admin**: Review Assignment (routing + manual reassignment), Screening, Qualifier, Project Mentor Assignment, Final Presentation — each with Save → Finalize → Publish as three distinct steps; Showcase Content curation; Voting Management (schedule voting, live turnout, publish results); Idea Management (search/filter/export/drill-in); Program Configuration (cycle dates, eligibility text, FAQ, resource files); Mentor Directory (capacity management); Role Management (grant/revoke roles, audited); Reports (funnel, workload, turnout, winners); Audit Log viewer; CSV exports.
 - **Cross-cutting**: email/password sign-in plus optional Microsoft Entra ID SSO (company-domain gated), server-side row-level authorization, an in-app notification center, a pluggable email-adapter stub, dark/light/system theme.
 
