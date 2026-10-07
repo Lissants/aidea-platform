@@ -1,5 +1,7 @@
 # Local Setup
 
+The fastest route to a working dev environment on your own Windows machine. To replicate the full reference setup (other devices on the LAN, production mode as a Windows service, backups), follow **[SELF_HOSTING_WINDOWS.md](./SELF_HOSTING_WINDOWS.md)** instead.
+
 ## 1. Prerequisites
 
 - **Node.js 20.12+** (Node 24 is fine). The Docker image pins `node:20`.
@@ -72,6 +74,23 @@ Visit `http://localhost:3000` and sign in with a seeded demo account using email
 
 Uploaded files (showcase images and program resources) are written to `./uploads` (`UPLOAD_DIR`).
 
+If you use Claude Code's preview, `.claude/launch.json` defines an `aidea-dev` configuration that runs `npm run dev` on port 3000.
+
+### Opening the dev server from another device (LAN / VM host)
+
+By default the dev server only fully works at `http://localhost:3000`. To open it from a phone, another laptop, or the host of a VM:
+
+1. Find this machine's IPv4 address: `ipconfig` (Windows) or `ip -4 addr` (Linux), on the adapter you're connected with.
+2. In `next.config.mjs`, replace the address in `allowedDevOrigins` (it ships with `'192.168.48.128'`, the original developer's machine) with yours. You can list several: `['192.168.1.25', 'my-pc.corp.local']`.
+3. Set `NEXT_PUBLIC_APP_URL=http://<your-IP>:3000` in `.env.local`.
+4. Restart with `npm run dev -- -H 0.0.0.0` and allow inbound TCP 3000 through the firewall.
+
+If your IP is missing from `allowedDevOrigins`, Next.js blocks its dev scripts for that origin. The page renders but never becomes interactive. The setting has no effect in production (`npm run start`). Full details, including keeping the IP stable, are in [SELF_HOSTING_WINDOWS.md §5](./SELF_HOSTING_WINDOWS.md#5-find-your-ip-address-and-add-it-to-the-config).
+
+### What to try first
+
+Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wizard requires a team name and a **Team Leader**, accepts up to **5 team members**, and lets you **Save draft** at any point. Missing fields are only reported when you click **Submit idea**.
+
 ### Optional: Microsoft sign-in (Entra ID)
 
 1. Ask IT to register a web app in Entra ID with the redirect URI `http://localhost:3000/auth/callback/microsoft`. For other environments, use `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft`.
@@ -108,7 +127,9 @@ npm run build
 npm run start
 ```
 
-For a containerized or company-server deployment, see **[COMPANY_SERVER_DEPLOYMENT.md](./COMPANY_SERVER_DEPLOYMENT.md)**.
+`npm run start` serves on `localhost:3000`. Add `-- -H 0.0.0.0` to accept LAN connections, and set `SESSION_COOKIE_SECURE=false` if you serve production over plain `http://`, otherwise the sign-in cookie is never sent back.
+
+To run it permanently on a Windows PC, see **[SELF_HOSTING_WINDOWS.md](./SELF_HOSTING_WINDOWS.md)**. For a containerized or Linux company-server deployment, see **[COMPANY_SERVER_DEPLOYMENT.md](./COMPANY_SERVER_DEPLOYMENT.md)**.
 
 ## Connecting with a SQL login instead (TCP)
 

@@ -8,7 +8,13 @@ Employees submit AI innovation ideas as a team. Each idea is routed to a mentor 
 
 ## Feature summary
 
-- **Participant**: idea submission wizard (team, problem/solution, business impact, support needs, mentor preference), My Ideas dashboard, Project Showcase, voting, notifications.
+- **Participant**: idea submission wizard, My Ideas dashboard, Project Showcase, voting, notifications. The wizard collects:
+  - **Team & idea information**: team name, a required **Team Leader** (any colleague, picked by name/email search), up to **5 team members**, idea title, problem/opportunity, proposed solution and target users.
+  - **Business impact**: a primary and an optional secondary impact (revenue growth, time efficiency, cost efficiency, governance improvement), each with an explanation and an optional measurable result.
+  - **Support needed** (optional): tools, budget (IDR) and/or data access, with guidance text for each.
+  - **Preferred mentors**: first and second choice, used to route the idea for review.
+
+  **Save draft** works at any point, even with empty sections. The full validation runs only on **Submit idea**.
 - **Mentor**: reviewer dashboard, structured review form (desirability / viability / realistic implementation + recommendation), My Reviews queue.
 - **Admin**: Review Assignment (routing + manual reassignment), Screening, Qualifier, Project Mentor Assignment, Final Presentation — each with Save → Finalize → Publish as three distinct steps; Showcase Content curation; Voting Management (schedule voting, live turnout, publish results); Idea Management (search/filter/export/drill-in); Program Configuration (cycle dates, eligibility text, FAQ, resource files); Mentor Directory (capacity management); Role Management (grant/revoke roles, audited); Reports (funnel, workload, turnout, winners); Audit Log viewer; CSV exports.
 - **Cross-cutting**: email/password sign-in plus optional Microsoft Entra ID SSO (company-domain gated), server-side row-level authorization, an in-app notification center, a pluggable email-adapter stub, dark/light/system theme.
@@ -17,9 +23,17 @@ Employees submit AI innovation ideas as a team. Each idea is routed to a mentor 
 
 Next.js 16 (App Router, Server Components/Actions, Turbopack) on React 19 and Node.js ≥ 20.12, TypeScript (strict), Tailwind CSS + shadcn/ui, Microsoft SQL Server 2019 (`mssql` with the `msnodesqlv8` or `tedious` driver; T-SQL migrations and stored procedures in `db/`), `jose` sessions, `bcryptjs`, `@azure/msal-node`, Zod, React Hook Form, next-themes, Lucide icons, Recharts, Sonner, Vitest, Playwright.
 
+## Choose your path
+
+| I want to… | Read |
+| --- | --- |
+| Code on my own laptop | **[LOCAL_SETUP.md](./LOCAL_SETUP.md)** |
+| Replicate the reference setup: a Windows PC with SQL Server 2019 that colleagues open by IP over the LAN (dev or production, as a Windows service) | **[SELF_HOSTING_WINDOWS.md](./SELF_HOSTING_WINDOWS.md)** ⭐ |
+| Deploy on a Linux server with Docker + Nginx | **[COMPANY_SERVER_DEPLOYMENT.md](./COMPANY_SERVER_DEPLOYMENT.md)** |
+
 ## Quick start
 
-See **[LOCAL_SETUP.md](./LOCAL_SETUP.md)** for the full walkthrough. In short, against a local SQL Server 2019 instance:
+In short, against a local SQL Server 2019 instance on Windows:
 
 ```bash
 npm install
@@ -28,6 +42,8 @@ cp .env.example .env.local   # the defaults work for a local default instance
 npm run db:reset             # migrations + demo seed
 npm run dev
 ```
+
+To open the dev server from another device on your network, add your PC's IPv4 address (from `ipconfig`) to `allowedDevOrigins` in `next.config.mjs` and start with `npm run dev -- -H 0.0.0.0`. See [SELF_HOSTING_WINDOWS.md §5](./SELF_HOSTING_WINDOWS.md#5-find-your-ip-address-and-add-it-to-the-config).
 
 ## Demo credentials
 
@@ -44,6 +60,7 @@ Seeded by `npm run db:seed` / `npm run db:reset` (see `scripts/seed.ts` / `db/se
 ## Other documentation
 
 - **[LOCAL_SETUP.md](./LOCAL_SETUP.md)** — local development setup end to end.
+- **[SELF_HOSTING_WINDOWS.md](./SELF_HOSTING_WINDOWS.md)** — step-by-step self-hosting on a Windows PC: SQL Server 2019, LAN access by IP, Windows Firewall, running as a Windows service, backups, upgrades and troubleshooting.
 - **[COMPANY_SERVER_DEPLOYMENT.md](./COMPANY_SERVER_DEPLOYMENT.md)** — self-hosted / company-server deployment with Docker + Nginx against SQL Server.
 - **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** — obsolete since the SQL Server migration (kept for history).
 - **[SECURITY.md](./SECURITY.md)** — server-side authorization, auth model, uploads, publication gating, known limitations.

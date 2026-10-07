@@ -32,14 +32,14 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 
 ## Database credentials
 
-- **Local development:** Windows Integrated authentication (`msnodesqlv8` over shared memory). No password is stored anywhere.
+- **Local development and Windows self-hosting:** Windows Integrated authentication (`msnodesqlv8` over shared memory). No password is stored anywhere. The app runs with the rights of the Windows account it runs under, so a Windows service needs its own database access (see `SELF_HOSTING_WINDOWS.md` §9c).
 - **Server and Docker:** a dedicated least-privilege SQL login such as `aidea_app` with `db_datareader`, `db_datawriter` and `GRANT EXECUTE`. It has no DDL rights. Migrations run separately with a `db_owner` account. The password lives only in the server environment (`MSSQL_PASSWORD`), never in the image or the repo.
 - **Browser:** no database credential ever reaches the browser. Nothing database-related is prefixed `NEXT_PUBLIC_`.
 
 ## Auth model
 
 **Sessions.** The session is an app-owned, HS256-signed JWT in the `aidea_session` cookie (`lib/auth/session-cookie.ts`).
-- The cookie is `httpOnly` and `SameSite=Lax`. It is `Secure` in production.
+- The cookie is `httpOnly` and `SameSite=Lax`. It is `Secure` in production. `SESSION_COOKIE_SECURE=false` turns that off for a plain-HTTP intranet deployment; prefer HTTPS where possible, because the cookie then travels unencrypted on the network.
 - Each token lasts 8 hours, and `proxy.ts` re-issues it after an hour of use.
 - It carries only the user id and email. Roles are always re-read from SQL by `getCurrentUser()`, so revoking a role takes effect on the next request.
 - `SESSION_SECRET` (32 characters or more) is required in production. Rotating it signs everyone out.
@@ -55,6 +55,8 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 - It links to an existing account by Entra `oid`, then by email. Otherwise it provisions a new profile with `SSO_DEFAULT_ROLES`.
 
 **Magic-link sign-in** was removed with Supabase Auth.
+
+**Profile search.** `/api/profiles/search` backs both the Team Leader and the Team member pickers in the idea wizard. Any signed-in user can call it, and it returns only id, full name and email (top 10 matches, at least 2 characters).
 
 **Route protection.**
 - `proxy.ts` redirects signed-out visitors to `/sign-in`. It only verifies the cookie signature and makes no database call.
@@ -90,7 +92,7 @@ Voting results follow the same principle:
 ## Known limitations
 
 - **Email is not actually sent** in this build. The only implementation in `lib/email/adapter.ts` queues to `email_outbox` (status `pending`) and logs to the console.
-- **The voting-notifications cron route is not scheduled anywhere in this repo.** It is protected by `CRON_SECRET`; see `COMPANY_SERVER_DEPLOYMENT.md` for scheduling it.
+- **The voting-notifications cron route is not scheduled anywhere in this repo.** It is protected by `CRON_SECRET`. See `COMPANY_SERVER_DEPLOYMENT.md` §4 (Linux cron) or `SELF_HOSTING_WINDOWS.md` §9d (Windows Task Scheduler) for scheduling it.
 - **No column-level redaction in the audit log viewer.** It shows the full `prior_value`/`new_value` JSON to any admin, including internal-only fields such as `internal_reason`.
 - **Sign-in throttling is per process and in memory.** Put a shared rate limiter (or the reverse proxy's) in front if the app ever runs as multiple replicas.
 - **No database-level safety net.** Because authorization lives in the application, a new query that forgets its scope filter would not be caught by the database. Review new data-access code against `lib/permissions/scopes.ts`. The integration tests (`tests/integration/`) exercise the ownership and locking rules against real SQL.
