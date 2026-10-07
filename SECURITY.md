@@ -63,10 +63,27 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 - The `(admin)`, `(mentor)` and `(participant)` layouts check roles server-side.
 - `redirect_to` only accepts same-origin paths.
 
+## User management and the Developer role
+
+Accounts sit on one tier: User < Mentor < Admin < Developer. `employee_voter` is an extra that tier changes never touch. All changes go through `lib/services/users.ts`, which re-checks the caller on every action and applies `canManageUser()` (`lib/permissions`).
+
+| Actor | Can manage |
+| --- | --- |
+| Developer | every tier, including other admins and Developers |
+| Admin | User and Mentor accounts only. Cannot create, promote, demote, reset or remove an admin or Developer. |
+| Mentor / User | nobody |
+
+- A Developer passes every admin check: `isAdmin()` in the app and `dbo.fn_has_role(u, 'admin')` in SQL (migration `0005`). The "Routing required" notification (`0003_procedures.sql`) still goes to `admin` role holders only, so a Developer who isn't also an Admin doesn't receive it.
+- Server-enforced locks: you cannot change, deactivate, delete or reset your own account here; the last active Developer and the last active admin-level account cannot be demoted, deactivated or deleted.
+- "Remove" means deactivate (`profiles.active = 0`), which blocks sign-in on the next request and keeps history. Permanent delete works only for accounts with no ideas, votes, reviews, decisions or audit entries, because those foreign keys do not cascade.
+- Created and reset accounts get a temporary password shown once, `users.must_change_password = 1`, and are redirected to `/profile/password` by every layout until they choose their own (12+ characters).
+- Every create, tier change, deactivate/reactivate, reset and delete is written to the audit log (`entity_type = 'users'`). Passwords are never logged.
+- The four platform Developers are created by `npm run db:seed` (`scripts/seed.ts`). The password is only applied when the account is first created and is hard-coded there, so treat it as compromised-by-design and change it after first sign-in.
+
 ## File uploads
 
-- **Where files live:** showcase images and program resources are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
-- **Uploads** go through `POST /api/files/[bucket]`, which is admin-only.
+- **Where files live:** showcase images, program resources, mentor photos and final presentation decks are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
+- **Uploads** go through `POST /api/files/[bucket]`, which is admin-only. The one exception is final presentation decks (`idea-presentations`, 25 MB max, `.pptx` or `.pdf` checked by content). A team uploads its deck through `POST /api/ideas/[ideaId]/presentation` once its qualifier Build is published. Only the team, mentors and admins can download it.
   - Keys are server-generated (`<uuid>/<uuid>.<ext>`), and every key is validated against a strict pattern, so path traversal is impossible.
   - Showcase images are validated by their actual bytes (PNG, JPEG or WebP signature), not the browser-supplied type. The limit is 5 MB.
   - Program resources are limited to 10 MB, and HTML, SVG, script and executable types are refused.

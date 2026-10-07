@@ -62,7 +62,7 @@ export function Stepper({ steps, currentStep, onStepClick, className }: StepperP
         </p>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
-            className="h-full rounded-full bg-primary transition-all"
+            className="h-full rounded-full bg-primary transition-[width]"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>

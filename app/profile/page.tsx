@@ -1,7 +1,9 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser } from '@/lib/auth/session';
+import { requireCurrentPassword } from '@/lib/auth/password-gate';
 import { ProfileForm } from './profile-form';
 
 export const metadata = { title: 'Profile' };
@@ -9,6 +11,7 @@ export const metadata = { title: 'Profile' };
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
+  requireCurrentPassword(user);
 
   return (
     <div>
@@ -22,6 +25,11 @@ export default async function ProfilePage() {
           <ProfileForm profile={user.profile} />
         </CardContent>
       </Card>
+      <p className="mt-4 text-sm">
+        <Link href="/profile/password" className="text-primary hover:underline">
+          Change password
+        </Link>
+      </p>
     </div>
   );
 }

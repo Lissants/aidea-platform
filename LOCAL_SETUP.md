@@ -62,6 +62,8 @@ Other database scripts:
 
 The demo password comes from `DEMO_PASSWORD`, or defaults to the value shown in `README.md`.
 
+The seed also creates the platform Developers (Christopher Gerard, Janice Ong, Jose Siahaan, Yudha Bhakti Nugraha). They can manage every user at `/roles`. Their password is set only when the account is first created, so re-seeding never reverts a changed one.
+
 > **Running ad-hoc SQL with `sqlcmd`:** pass `-I` (`QUOTED_IDENTIFIER ON`), for example `sqlcmd -S . -E -C -I -d aidea -Q "..."`. The schema uses filtered indexes, and SQL Server rejects writes to those tables when `QUOTED_IDENTIFIER` is off, which is `sqlcmd`'s default. The app's ODBC and TDS connections have it on by default.
 
 ## 6. Run the app
@@ -78,18 +80,17 @@ If you use Claude Code's preview, `.claude/launch.json` defines an `aidea-dev` c
 
 ### Opening the dev server from another device (LAN / VM host)
 
-By default the dev server only fully works at `http://localhost:3000`. To open it from a phone, another laptop, or the host of a VM:
+By default you browse to `http://localhost:3000`. To open the app from a phone, another laptop, or the host of a VM:
 
 1. Find this machine's IPv4 address: `ipconfig` (Windows) or `ip -4 addr` (Linux), on the adapter you're connected with.
-2. In `next.config.mjs`, replace the address in `allowedDevOrigins` (it ships with `'192.168.48.128'`, the original developer's machine) with yours. You can list several: `['192.168.1.25', 'my-pc.corp.local']`.
-3. Set `NEXT_PUBLIC_APP_URL=http://<your-IP>:3000` in `.env.local`.
-4. Restart with `npm run dev -- -H 0.0.0.0` and allow inbound TCP 3000 through the firewall.
+2. Set `NEXT_PUBLIC_APP_URL=http://<your-IP>:3000` in `.env.local`.
+3. Start with `npm run dev -- -H 0.0.0.0`, allow inbound TCP 3000 through the firewall, and browse to `http://<your-IP>:3000`.
 
-If your IP is missing from `allowedDevOrigins`, Next.js blocks its dev scripts for that origin. The page renders but never becomes interactive. The setting has no effect in production (`npm run start`). Full details, including keeping the IP stable, are in [SELF_HOSTING_WINDOWS.md §5](./SELF_HOSTING_WINDOWS.md#5-find-your-ip-address-and-add-it-to-the-config).
+You don't need to edit `next.config.mjs`. In dev mode Next.js only serves its scripts to origins on the `allowedDevOrigins` list, and `next.config.mjs` fills that list with every IPv4 address this machine has whenever the dev server starts. No address is hard-coded, so the same code works on every machine. If you reach the machine through an address it doesn't own (a DNS name, a VM behind NAT), add that address to `DEV_ALLOWED_ORIGINS` in `.env.local` (comma-separated, `*` wildcards allowed, for example `DEV_ALLOWED_ORIGINS=aidea-pc.corp.local,192.168.48.*`). Without it, the page renders but never becomes interactive. Production (`npm run start`) ignores this setting. More detail: [SELF_HOSTING_WINDOWS.md §5](./SELF_HOSTING_WINDOWS.md#5-find-your-ip-address-and-add-it-to-the-config).
 
 ### What to try first
 
-Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wizard requires a team name and a **Team Leader**, accepts up to **5 team members**, and lets you **Save draft** at any point. Missing fields are only reported when you click **Submit idea**.
+Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wizard requires a team name and a **Team Leader**, accepts up to **5 team members**, and lets you **Save draft** at any point. Missing fields are only reported when you click **Submit idea**. Then try `demo.admin1@godrejcp.com` (**User Management**, **Voting Management**) and `demo.voter1@godrejcp.com` (**Voting**).
 
 ### Optional: Microsoft sign-in (Entra ID)
 

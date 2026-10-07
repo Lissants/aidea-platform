@@ -1,9 +1,10 @@
-import { Vote } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
-import { EmptyState } from '@/components/layout/empty-state';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { VotingPeriodForm } from '@/components/admin/voting-period-form';
 import { TurnoutPanel } from '@/components/admin/turnout-panel';
-import { fetchVotingPeriods } from '@/lib/services/voting-management';
+import { PublishVotingBar } from '@/components/admin/publish-voting-bar';
+import { VoteCandidatesPanel } from '@/components/admin/vote-candidates-panel';
+import { fetchVoteCandidates, fetchVotingPeriods } from '@/lib/services/voting-management';
 import { db } from '@/lib/db';
 
 export const metadata = { title: 'Voting Management' };
@@ -17,19 +18,23 @@ export default async function VotingManagementPage() {
     return (
       <div>
         <PageHeader title="Voting Management" />
-        <EmptyState icon={Vote} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }
 
-  const periods = await fetchVotingPeriods(program.id);
+  const [periods, candidates] = await Promise.all([fetchVotingPeriods(program.id), fetchVoteCandidates(program.id)]);
   const current = periods[0] ?? null;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Voting Management" description="Open and close the Favorite Project voting window and publish results." />
+      <PageHeader title="Voting Management" description="Schedule the Favorite Project vote, publish it to every employee and publish results." />
 
-      <VotingPeriodForm programId={program.id} period={current} />
+      <PublishVotingBar programId={program.id} period={current} candidateCount={candidates.length} />
+
+      <VotingPeriodForm key={current?.id ?? 'new'} programId={program.id} period={current} />
+
+      <VoteCandidatesPanel candidates={candidates} />
 
       {current && <TurnoutPanel programId={program.id} period={current} />}
 

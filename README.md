@@ -4,20 +4,21 @@
 
 ## What it does
 
-Employees submit AI innovation ideas as a team. Each idea is routed to a mentor for review, screened by admins, assessed at a "qualifier" gate (Build / No Build), assigned a project mentor if it moves to build, presented at a final round (winner / runner-up), and — if selected — published to a public Project Showcase where every employee can vote for their favorite. Every publish step (screening result, qualifier result, mentor assignment, final result, showcase entry, voting result) is a deliberate, audited action separate from saving or finalizing a decision, so nothing reaches a participant before an admin explicitly publishes it.
+Employees submit AI innovation ideas as a team. Each idea is routed to a mentor for review, screened by admins, assessed at a "qualifier" gate (Build / No Build), assigned a project mentor if it moves to build, presented at a final round (winner / runner-up), and — if selected — published as a voting candidate where every employee can vote for their favorite. Every publish step (screening result, qualifier result, mentor assignment, final result, showcase entry, voting result) is a deliberate, audited action separate from saving or finalizing a decision, so nothing reaches a participant before an admin explicitly publishes it.
 
 ## Feature summary
 
-- **Participant**: idea submission wizard, My Ideas dashboard, Project Showcase, voting, notifications. The wizard collects:
+- **Participant**: idea submission wizard, My Ideas (each idea's screening, qualifier and project-mentor results, plus the final presentation deck upload once the idea is a Build), Favorite Project voting and its results, Mentor Profile directory, notifications. The wizard collects:
   - **Team & idea information**: team name, a required **Team Leader** (any colleague, picked by name/email search), up to **5 team members**, idea title, problem/opportunity, proposed solution and target users.
-  - **Business impact**: a primary and an optional secondary impact (revenue growth, time efficiency, cost efficiency, governance improvement), each with an explanation and an optional measurable result.
+  - **Business impact**: a primary and an optional secondary impact (Revenue growth, Time efficiency, Cost Optimization, Governance Excellence), each with an explanation and an optional measurable result.
   - **Support needed** (optional): tools, budget (IDR) and/or data access, with guidance text for each.
-  - **Preferred mentors**: first and second choice, used to route the idea for review.
+  - **Preferred mentors**: first and second choice (must differ), used to route the idea for review.
 
-  **Save draft** works at any point, even with empty sections. The full validation runs only on **Submit idea**.
-- **Mentor**: reviewer dashboard, structured review form (desirability / viability / realistic implementation + recommendation), My Reviews queue.
-- **Admin**: Review Assignment (routing + manual reassignment), Screening, Qualifier, Project Mentor Assignment, Final Presentation — each with Save → Finalize → Publish as three distinct steps; Showcase Content curation; Voting Management (schedule voting, live turnout, publish results); Idea Management (search/filter/export/drill-in); Program Configuration (cycle dates, eligibility text, FAQ, resource files); Mentor Directory (capacity management); Role Management (grant/revoke roles, audited); Reports (funnel, workload, turnout, winners); Audit Log viewer; CSV exports.
-- **Cross-cutting**: email/password sign-in plus optional Microsoft Entra ID SSO (company-domain gated), server-side row-level authorization, an in-app notification center, a pluggable email-adapter stub, dark/light/system theme.
+  **Save draft** works at any point, even with empty sections. The full validation runs only on **Submit idea**. Anyone can be on several ideas until screening; a person on two or more ideas that pass screening must commit to one and is dropped from the others.
+- **Mentor**: Idea Dashboard and My Reviews queue (with each idea's published screening, qualifier and project-mentor status), structured review form (desirability / viability / realistic implementation + recommendation), Mentor Profile.
+- **Admin**: Review Assignment (routing + manual reassignment), Screening, Qualifier, Project Mentor Assignment, Final Presentation — each with Save → Finalize → Publish as three distinct steps; Showcase Content curation; Voting Management (candidates come automatically from the final presentation stage; schedule, **publish voting**, live turnout, publish results); Idea Management (search/filter/export/drill-in); Program Configuration (cycle dates, eligibility text, FAQ, resource files); Mentor Directory (capacity management); Mentor Profile editing (photo, title, expertise); User Management (add users with a temporary password, change tier, reset password, deactivate/reactivate, delete; all audited); team changes on submitted ideas (remove a member, assign a replacement or new leader); Reports (funnel, workload, turnout, winners); Audit Log viewer; CSV exports.
+- **Developer** (top role): everything an Admin can do, plus managing Admin and Developer accounts and bulk-deleting test ideas from Idea Management (for clearing test data before UAT). See [SECURITY.md](./SECURITY.md#user-management-and-the-developer-role).
+- **Cross-cutting**: email/password sign-in plus optional Microsoft Entra ID SSO (company-domain gated), server-side row-level authorization, forced password change for new and reset accounts, an in-app notification center, a pluggable email-adapter stub, a monochrome GIG-branded UI with dark/light/system theme.
 
 ## Tech stack
 
@@ -43,7 +44,7 @@ npm run db:reset             # migrations + demo seed
 npm run dev
 ```
 
-To open the dev server from another device on your network, add your PC's IPv4 address (from `ipconfig`) to `allowedDevOrigins` in `next.config.mjs` and start with `npm run dev -- -H 0.0.0.0`. See [SELF_HOSTING_WINDOWS.md §5](./SELF_HOSTING_WINDOWS.md#5-find-your-ip-address-and-add-it-to-the-config).
+To open the dev server from another device on your network, start it with `npm run dev -- -H 0.0.0.0` and browse to `http://<this PC's IP>:3000`. The PC's own IP addresses are allowed automatically; nothing machine-specific is stored in the repo. See [SELF_HOSTING_WINDOWS.md §5](./SELF_HOSTING_WINDOWS.md#5-find-your-ip-address-and-add-it-to-the-config).
 
 ## Demo credentials
 
@@ -57,6 +58,8 @@ Seeded by `npm run db:seed` / `npm run db:reset` (see `scripts/seed.ts` / `db/se
 | Participant | `demo.participant1@godrejcp.com` | `AideaDemo!2026` |
 | Employee voter | `demo.voter1@godrejcp.com` | `AideaDemo!2026` |
 
+The seed also creates the four real platform **Developer** accounts (see `scripts/seed.ts`). Their initial password is hard-coded there, so change it right after the first sign-in.
+
 ## Other documentation
 
 - **[LOCAL_SETUP.md](./LOCAL_SETUP.md)** — local development setup end to end.
@@ -67,6 +70,7 @@ Seeded by `npm run db:seed` / `npm run db:reset` (see `scripts/seed.ts` / `db/se
 - **[ASSUMPTIONS.md](./ASSUMPTIONS.md)** — every deviation from spec and every assumption made, across all build phases.
 - **[docs/ERD.md](./docs/ERD.md)** — database entity-relationship diagram.
 - **[docs/WORKFLOW.md](./docs/WORKFLOW.md)** — idea lifecycle workflow diagram.
+- **[design-audit/README.md](./design-audit/README.md)** — the UI/UX and accessibility audit behind the Godrej redesign, and its design system.
 
 ## Testing
 
@@ -76,4 +80,8 @@ npm run test:e2e     # end-to-end (Playwright) — requires npm run db:reset + a
 npm run typecheck
 npm run lint
 npm run build
+npm run audit:design   # validates design-audit/audit-manifest.json
+npm run audit:capture  # re-captures the UI baseline screenshots (Playwright)
 ```
+
+`.github/workflows/playwright.yml` runs Playwright on pushes and PRs to `main`. The runner has no SQL Server, so the database-backed e2e specs fail there; run them locally against a seeded `aidea` database.

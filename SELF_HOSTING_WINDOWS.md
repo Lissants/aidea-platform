@@ -41,7 +41,7 @@ It takes about 45–60 minutes the first time, and most of that is waiting for i
 
 - **One process** (Node.js) serves the whole app: pages, APIs, sign-in and file downloads.
 - **One database** (`aidea` on the default SQL Server instance). The app connects with *your Windows login* through the `msnodesqlv8` driver, so there are no SQL passwords to manage.
-- **One folder of uploaded files** (`.\uploads`). It holds showcase images and program resources and must be backed up along with the database.
+- **One folder of uploaded files** (`.\uploads`). It holds showcase images, program resources, mentor photos and final presentation decks, and must be backed up along with the database.
 - No cloud services. Sign-in, permissions and file storage are all handled by the app.
 
 ---
@@ -131,6 +131,7 @@ Set these values (leave the rest as they are):
 | Variable | Set it to | Why |
 | --- | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | `http://<your-IP>:3000`, for example `http://192.168.1.25:3000` | Used to build sign-in redirects and links in emails. You'll find your IP in [step 5](#5-find-your-ip-address-and-add-it-to-the-config). |
+| `DEV_ALLOWED_ORIGINS` | Leave empty | Only for extra host names; see [step 5b](#5b-put-it-in-the-config). |
 | `MSSQL_DRIVER` | `msnodesqlv8` (already set) | Windows authentication over shared memory. |
 | `MSSQL_SERVER` | `.` (already set) | The default instance on this PC. Use `.\SQLEXPRESS` if you installed a named Express instance. |
 | `MSSQL_DATABASE` | `aidea` (already set) | |
@@ -152,7 +153,7 @@ node -e "console.log(crypto.randomBytes(48).toString('base64url'))"
 
 ## 5. Find your IP address and add it to the config
 
-Other devices reach the app through your PC's **local IP address**. Every machine and network has a different one, so this step is specific to you.
+Other devices reach the app through your PC's **local IP address**. Every machine and network has a different one, which is why **no IP address is stored in the repository**: the dev server detects this PC's addresses by itself. You only need the IP for the URL people type and for `NEXT_PUBLIC_APP_URL`.
 
 ### 5a. Find the IP
 
@@ -170,40 +171,36 @@ Get-NetIPAddress -AddressFamily IPv4 |
   Select-Object InterfaceAlias, IPAddress
 ```
 
-### 5b. Put it in `next.config.mjs`
+### 5b. Put it in the config
 
-Open `next.config.mjs` and find `allowedDevOrigins`. It currently contains the IP of the machine the app was developed on:
+Open `.env.local` and set the app URL to your IP:
 
-```js
-allowedDevOrigins: ['192.168.48.128'],
+```ini
+NEXT_PUBLIC_APP_URL=http://192.168.1.25:3000
 ```
 
-Replace it with **your** IP. You can list several addresses or host names, for example if the PC has both Wi-Fi and Ethernet, or a DNS name:
+That's the only place the IP goes. You don't need to edit `next.config.mjs`.
 
-```js
-allowedDevOrigins: ['192.168.1.25'],
-// or
-allowedDevOrigins: ['192.168.1.25', '10.0.0.14', 'aidea-pc.corp.local'],
+**How the dev server allows your IP (`allowedDevOrigins`).** In development mode (`npm run dev`), Next.js blocks its live-reload and JavaScript chunks for any origin other than `localhost` unless the origin is on an allow-list. If it's missing, the page **loads but never becomes interactive**: buttons do nothing and forms don't submit. `next.config.mjs` builds that list automatically from **every IPv4 address this PC currently has** (`os.networkInterfaces()`), so a fresh clone works on any machine, and a new IP is picked up the next time you start `npm run dev`.
+
+Add something to the list yourself only when people reach the PC through an address it doesn't own, such as a DNS name, a VM behind NAT, or a port-forward. Put it in `DEV_ALLOWED_ORIGINS` in `.env.local`, comma-separated, with `*` wildcards allowed:
+
+```ini
+DEV_ALLOWED_ORIGINS=aidea-pc.corp.local,192.168.48.*
 ```
 
-Save the file and **restart** the dev server if it's running. Next.js only reads this file at startup.
+Restart `npm run dev` after changing it. Production mode (`npm run start`, [step 9](#9-run-it-for-real-production-mode-as-a-windows-service)) doesn't use this list at all.
 
-**What this setting does:** in development mode (`npm run dev`), Next.js blocks its live-reload and JavaScript chunks for any origin other than `localhost` unless that origin is listed here. If your IP is missing, the page **loads but never becomes interactive**: buttons do nothing and forms don't submit. It has no effect in production mode (`npm run start`, [step 9](#9-run-it-for-real-production-mode-as-a-windows-service)), but keep it correct anyway.
-
-### 5c. Update `NEXT_PUBLIC_APP_URL`
-
-Back in `.env.local`, make sure `NEXT_PUBLIC_APP_URL` uses the same IP: `http://192.168.1.25:3000`.
-
-### 5d. Keep the IP from changing (recommended)
+### 5c. Keep the IP from changing (recommended)
 
 Home and office routers hand out addresses dynamically, so your IP can change after a reboot and every bookmark breaks. Either:
 
 - ask IT (or use your router's admin page) to create a **DHCP reservation** for this PC, or
 - set a **static IP** in *Settings → Network & internet → (adapter) → IP assignment → Edit*.
 
-If the IP does change, repeat 5b and 5c and restart the app.
+If the IP does change, update `NEXT_PUBLIC_APP_URL` (5b), then restart the app. In production mode, also run `npm run build` again first.
 
-**✅ Checkpoint.** `next.config.mjs` and `NEXT_PUBLIC_APP_URL` both contain the IPv4 address `ipconfig` shows for your active adapter.
+**✅ Checkpoint.** `NEXT_PUBLIC_APP_URL` in `.env.local` contains the IPv4 address `ipconfig` shows for your active adapter.
 
 ---
 
@@ -227,7 +224,7 @@ This one command:
 sqlcmd -S . -E -C -d aidea -Q "SELECT COUNT(*) AS users FROM dbo.users; SELECT name FROM dbo.schema_migrations"
 ```
 
-shows a non-zero user count and three migrations (`0001_schema.sql`, `0002_triggers.sql`, `0003_procedures.sql`).
+shows a non-zero user count and every file in `db/migrations` (`0001_schema.sql` up to the newest, currently `0011_vote_candidates.sql`).
 
 ---
 
@@ -249,6 +246,8 @@ npm run dev -- -H 0.0.0.0
 
 These accounts are fake and meant only for demos and testing. Set `DEMO_PASSWORD` in `.env.local` before seeding if you want a different password.
 
+The seed also creates the four real platform **Developer** accounts (the top role: everything an Admin can do, plus managing admins). Their starting password is hard-coded in `scripts/seed.ts`, so each Developer should sign in and change it straight away on the change-password page (`/profile/password`). Accounts that an admin creates or resets get a temporary password and are sent to the change-password page on first sign-in.
+
 **Take a quick tour to prove everything works:**
 
 1. As **Participant**, open **Submit New Idea** and walk through the idea wizard:
@@ -258,8 +257,9 @@ These accounts are fake and meant only for demos and testing. Set `DEMO_PASSWORD
    - **Preferred mentors:** first and second choice.
 
    Click **Save draft** halfway through. Drafts save even with empty sections, and the full checks only run when you click **Submit idea**.
-2. As **Admin**, open **Overview**, **Idea Management** and **Review Assignment** and confirm you can see the submitted idea.
-3. As **Mentor**, open **Idea Dashboard** and **My Reviews**.
+2. As **Admin**, open **Overview**, **Idea Management** and **Review Assignment** and confirm you can see the submitted idea. Then open **User Management** and **Voting Management**.
+3. As **Mentor**, open **Idea Dashboard** and **My Reviews**. Each idea shows its screening, qualifier and project-mentor status once those are published.
+4. As **Employee voter**, open **Voting**. The seeded vote has a candidate from the final presentation stage.
 
 **✅ Checkpoint.** You can sign in, the wizard saves a draft, and the admin pages load.
 
@@ -276,7 +276,7 @@ New-NetFirewallRule -DisplayName "AIdea (TCP 3000)" -Direction Inbound `
 
 Then make sure Windows treats your network as **Private** or **Domain**, not Public: *Settings → Network & internet → (your network) → Network profile type → Private*.
 
-**✅ Checkpoint.** On a phone or another laptop on the **same network**, open `http://<your-IP>:3000`. The sign-in page appears and the buttons work. If the page appears but is frozen, revisit [step 5b](#5b-put-it-in-nextconfigmjs).
+**✅ Checkpoint.** On a phone or another laptop on the **same network**, open `http://<your-IP>:3000`. The sign-in page appears and the buttons work. If the page appears but is frozen, revisit [step 5b](#5b-put-it-in-the-config).
 
 ---
 
@@ -297,7 +297,12 @@ Don't put `NODE_ENV` in `.env.local`: `npm run start` sets it to `production` by
 
 > Why `SESSION_COOKIE_SECURE=false`? In production the sign-in cookie is **Secure** by default, and browsers only send Secure cookies over `https://`. Over plain `http://<IP>:3000`, you'd sign in and immediately land back on the sign-in page. Remove this line once you put HTTPS in front ([step 10](#10-optional-extras-microsoft-sign-in-and-https)).
 
-If real users will use this machine, now is also the time to decide whether to keep the demo data. For a clean program, run `npm run db:reset` once more **before** go-live, then enable Microsoft sign-in (or create real accounts), grant the admin role to the real program owners on the **Role Management** page (`/roles`, admin only), and revoke the roles of the `demo.*` accounts there. There's no in-app "delete user". Revoking roles is how you retire an account.
+If real users will use this machine, now is also the time to decide whether to keep the demo data. Before go-live, open **User Management** (`/roles`) as a Developer:
+
+- add the real program owners (or enable Microsoft sign-in), and give them the **Admin** tier;
+- **deactivate** the `demo.*` accounts. That blocks sign-in and keeps their history. Permanent delete only works for accounts with no ideas, votes, reviews, decisions or audit entries.
+
+A Developer can also bulk-delete test ideas from **Idea Management**.
 
 ### 9b. Build and test once by hand
 
@@ -387,7 +392,7 @@ Day-to-day commands:
 
 1. Ask IT to register a **Web** app in Entra ID with the redirect URI `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft`, for example `http://192.168.1.25:3000/auth/callback/microsoft`. Entra only accepts plain `http://` redirect URIs for `localhost`, so a LAN deployment with SSO normally needs HTTPS and a host name (next section).
 2. Put `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET` in `.env.local` and restart the service.
-3. A **Sign in with Microsoft** button appears. First-time users get the roles in `SSO_DEFAULT_ROLES` (default `participant,employee_voter`). An admin grants mentor and admin roles in **Role Management**.
+3. A **Sign in with Microsoft** button appears. First-time users get the roles in `SSO_DEFAULT_ROLES` (default `participant,employee_voter`). An admin raises users to Mentor in **User Management**; only a Developer can make someone an Admin.
 
 ### HTTPS with IIS as a reverse proxy
 
@@ -397,7 +402,7 @@ To serve `https://aidea.yourcompany.local` instead of `http://IP:3000`:
 2. Enable **IIS** (*Turn Windows features on or off → Internet Information Services*), then install the **URL Rewrite** and **Application Request Routing (ARR)** modules.
 3. In IIS Manager, select the server node → **Application Request Routing Cache → Server Proxy Settings** → tick **Enable proxy**.
 4. Create a site bound to **https / 443** with your certificate, and add a URL Rewrite **Reverse Proxy** rule to `localhost:3000`. Under the rule's server variables, allow and set `HTTP_X_FORWARDED_PROTO` to `https`.
-5. Raise the request size limit to at least 12 MB (program resources can be 10 MB): *Request Filtering → Edit Feature Settings → Maximum allowed content length = 12582912*.
+5. Raise the request size limit to at least 30 MB (final presentation decks can be 25 MB): *Request Filtering → Edit Feature Settings → Maximum allowed content length = 31457280*.
 6. Update `.env.local`: `NEXT_PUBLIC_APP_URL=https://aidea.yourcompany.local`, **remove** `SESSION_COOKIE_SECURE=false`, then rebuild and restart (`npm run build`, `nssm restart AIdea`).
 7. Close port 3000 to the network again (`Remove-NetFirewallRule -DisplayName "AIdea (TCP 3000)"`) and open 443 instead, so everyone goes through IIS.
 
@@ -431,8 +436,6 @@ npm run build
 nssm restart AIdea          # admin PowerShell
 ```
 
-Check `next.config.mjs` after `git pull`. If the update overwrote `allowedDevOrigins` with someone else's IP, put yours back (this only matters for `npm run dev`).
-
 **Rolling back:** `git checkout <previous-commit>`, `npm install`, `npm run build`, restart. If the release included a migration the old code can't handle, restore the database backup you took first (`RESTORE DATABASE aidea FROM DISK = '...' WITH REPLACE`). There are no "down" migrations.
 
 ---
@@ -445,14 +448,14 @@ Check `next.config.mjs` after `git pull`. If the update overwrote `allowedDevOri
 | `Login failed for user 'NT AUTHORITY\SYSTEM'` (service only) | The service account has no database access | See [9c](#9c-install-as-a-service-with-nssm): run the service as your account or grant the login. |
 | `Login failed for user '<you>'` / `Cannot open database "aidea"` | Database not created, or wrong instance | Re-run [step 3](#3-create-the-database). For a named instance, set `MSSQL_SERVER=.\SQLEXPRESS`. |
 | `INSERT failed because ... QUOTED_IDENTIFIER` when running SQL by hand | `sqlcmd` defaults to `QUOTED_IDENTIFIER OFF` | Add `-I` to your `sqlcmd` command. |
-| Page loads but buttons do nothing (dev mode, from another device) | Your IP isn't in `allowedDevOrigins` | [Step 5b](#5b-put-it-in-nextconfigmjs), then restart `npm run dev`. |
+| Page loads but buttons do nothing (dev mode, from another device) | The address in the browser isn't one this PC owns (DNS name, VM/NAT address) | Add it to `DEV_ALLOWED_ORIGINS` ([step 5b](#5b-put-it-in-the-config)), then restart `npm run dev`. |
 | Works on the PC, unreachable from other devices | Firewall, Public network profile, or server bound to localhost | [Step 8](#8-let-other-devices-in-windows-firewall). Start with `-H 0.0.0.0`. |
 | Sign-in "succeeds" but you land back on the sign-in page (production over http) | Secure cookie over plain HTTP | Set `SESSION_COOKIE_SECURE=false` ([9a](#9a-production-settings)) or use HTTPS. |
 | `SESSION_SECRET must be set (at least 32 characters) in production.` | Missing or short secret | Generate one ([step 4](#4-configure-the-environment)). |
 | `Refusing to reset in production` | `db:reset` with `NODE_ENV=production` | Intentional. Use `npm run db:migrate`. Only pass `--force` if you truly want to wipe the database. |
 | `EADDRINUSE: address already in use :::3000` | Something else (often a forgotten dev server or the service) is on port 3000 | `Get-NetTCPConnection -LocalPort 3000` to find it, stop it, or use `-p 3001` (and update the firewall rule and `NEXT_PUBLIC_APP_URL`). |
 | `npm install` fails building `msnodesqlv8` | Missing C++ build tools | Re-run the Node.js installer with "necessary tools" ticked, or install *Visual Studio Build Tools* (Desktop development with C++). |
-| Bookmarks stopped working after a reboot | The PC's IP changed | [Step 5d](#5d-keep-the-ip-from-changing-recommended). |
+| Bookmarks stopped working after a reboot | The PC's IP changed | [Step 5c](#5c-keep-the-ip-from-changing-recommended). |
 | "Email sent" but nothing arrives | Expected: emails are queued in `email_outbox`, not delivered | See "Deferred / stubbed work" in [ASSUMPTIONS.md](./ASSUMPTIONS.md). |
 
 Still stuck? `GET /api/health` tells you whether the Node process is up (it never touches the database). Then check `logs\aidea.err.log`, or the terminal in dev mode, for the first red error. It's almost always more telling than the last one.

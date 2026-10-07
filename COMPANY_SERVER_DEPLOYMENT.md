@@ -85,11 +85,11 @@ Required values in `.env`:
 
 The `migrate` service runs `scripts/migrate.ts` (`npm run db:migrate`) with the same environment as `web`, so run it with the `db_owner` login's credentials, e.g. `docker compose run --rm -e MSSQL_USER=aidea_migrator -e MSSQL_PASSWORD=... migrate`. Never run `npm run db:reset` against this database — it drops every object (it refuses in production unless forced).
 
-**✅ Checkpoint:** `docker compose ps` shows `web` as `healthy`, the migrate run prints the three `db/migrations/*.sql` files as applied, and `curl http://127.0.0.1:3000/api/health` returns `{"status":"ok",...}`.
+**✅ Checkpoint:** `docker compose ps` shows `web` as `healthy`, the migrate run lists every `db/migrations/*.sql` file as applied (`0001_schema.sql` up to the newest), and `curl http://127.0.0.1:3000/api/health` returns `{"status":"ok",...}`.
 
 To try the app with demo data on a **non-production** database, run the seed once: `docker compose run --rm migrate npx tsx scripts/seed.ts`. Never seed a real program's database.
 
-> `allowedDevOrigins` in `next.config.mjs` only affects `next dev`, so the production container ignores it. The container listens on all interfaces already, so no IP needs to be configured.
+> `allowedDevOrigins` in `next.config.mjs` (and `DEV_ALLOWED_ORIGINS`) only affects `next dev`, so the production container ignores it. The container listens on all interfaces already, so no IP needs to be configured.
 
 Or without compose:
 
@@ -131,8 +131,8 @@ server {
     ssl_certificate     /etc/letsencrypt/live/aidea.yourcompany.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/aidea.yourcompany.com/privkey.pem;
 
-    # Program resources can be up to 10 MB.
-    client_max_body_size 12m;
+    # Final presentation decks can be up to 25 MB (program resources 10 MB).
+    client_max_body_size 30m;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -178,7 +178,13 @@ server {
 
 ## 10. Uploaded files are stored on the server's disk
 
-Showcase images (`showcase-images`) and program resource files (`program-resources`) are uploaded by admins via `POST /api/files/[bucket]` and written under `UPLOAD_DIR` (`lib/storage/local.ts`), then served by `GET /api/files/[bucket]/[...key]`: showcase images are public, program resources require a signed-in session. This has two consequences for a containerized deployment:
+Four kinds of file are written under `UPLOAD_DIR` (`lib/storage/local.ts`) and served by `GET /api/files/[bucket]/[...key]`:
+
+- showcase images (`showcase-images`, public) and program resources (`program-resources`, signed-in users), uploaded by admins via `POST /api/files/[bucket]`;
+- mentor photos (`mentor-photos`, signed-in users), uploaded by admins on the Mentor Profile page;
+- final presentation decks (`idea-presentations`, team, mentors and admins only), uploaded by a team from My Ideas via `POST /api/ideas/[ideaId]/presentation` once its qualifier result is a published Build.
+
+Storing files on disk has two consequences for a containerized deployment:
 
 - `/app/uploads` **must** be a persistent volume (the compose file's `uploads` volume). Without it, every redeploy loses all uploaded files.
 - The app is not horizontally scalable as-is: multiple replicas would each see a different disk. Running more than one replica requires pointing every replica's `UPLOAD_DIR` at the same shared storage (e.g. an SMB/NFS mount).

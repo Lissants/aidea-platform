@@ -18,8 +18,9 @@ export interface QualifierQueueRow {
 }
 
 const LOCKED_MESSAGE = 'This assessment has already been published and can no longer be edited.';
+const NOT_ELIGIBLE_MESSAGE = "This idea doesn't have a published screening Pass yet.";
 
-/** Ideas that passed screening — eligible for qualifier assessment. Admin-only. */
+/** Ideas whose screening Pass is published — eligible for qualifier assessment. Admin-only. */
 export async function fetchQualifierQueue(programId: string): Promise<QualifierQueueRow[]> {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return [];
@@ -29,7 +30,7 @@ export async function fetchQualifierQueue(programId: string): Promise<QualifierQ
             qa.final_score, qa.overall_comment, qa.build_decision, qa.status,
             CAST(ISNULL(qa.published, 0) AS BIT) AS published
        FROM ideas i
-       JOIN screening_decisions sd ON sd.idea_id = i.id AND sd.decision = 'pass_to_qualifier'
+       JOIN screening_decisions sd ON sd.idea_id = i.id AND sd.decision = 'pass_to_qualifier' AND sd.published = 1
        LEFT JOIN qualifier_assessments qa ON qa.idea_id = i.id
       WHERE i.program_id = @programId`,
     { programId }
@@ -37,6 +38,13 @@ export async function fetchQualifierQueue(programId: string): Promise<QualifierQ
 }
 
 async function assertEditable(ideaId: string) {
+  const eligible = await db.queryOne<{ ok: number }>(
+    `SELECT 1 AS ok FROM screening_decisions
+      WHERE idea_id = @ideaId AND decision = 'pass_to_qualifier' AND published = 1`,
+    { ideaId }
+  );
+  if (!eligible) return NOT_ELIGIBLE_MESSAGE;
+
   const row = await db.queryOne<{ published: boolean }>(
     'SELECT published FROM qualifier_assessments WHERE idea_id = @ideaId',
     { ideaId }
@@ -149,5 +157,6 @@ export async function publishQualifierResults(programId: string) {
   if (error) return { error } as const;
   revalidatePath('/qualifier');
   revalidatePath('/dashboard');
+  revalidatePath('/my-ideas');
   return { ok: true, count: data?.[0]?.published_count ?? 0 } as const;
 }

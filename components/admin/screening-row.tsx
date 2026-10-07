@@ -55,11 +55,11 @@ export function ScreeningRow({ row }: { row: ScreeningQueueRow }) {
           <div className="font-medium">
             Mentor recommendation:{' '}
             <Badge variant={row.mentor_recommendation === 'recommend_pass' ? 'success' : 'destructive'}>
-              {row.mentor_recommendation === 'recommend_pass' ? 'Recommend Pass' : 'Recommend Not Pass'}
+              {row.mentor_recommendation === 'recommend_pass' ? 'Recommends pass' : 'Recommends not pass'}
             </Badge>
           </div>
           <p className="mt-1 text-muted-foreground">{row.mentor_comment}</p>
-          {row.mentor_name && <p className="mt-1 text-xs text-muted-foreground">— {row.mentor_name}</p>}
+          {row.mentor_name && <p className="mt-1 text-xs text-muted-foreground">Reviewer: {row.mentor_name}</p>}
         </div>
 
         <div className="space-y-1.5">
