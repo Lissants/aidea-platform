@@ -97,6 +97,8 @@ export interface Program {
   showcase_open_at: string | null;
   voting_open_at: string | null;
   voting_close_at: string | null;
+  /** JSON per-stage date masking, see lib/program/timeline.ts. */
+  timeline_tba: string | null;
   status: ProgramStatus;
   created_at: string;
   updated_at: string;

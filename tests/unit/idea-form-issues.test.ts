@@ -12,11 +12,11 @@ function valid(): IdeaFormValues {
       idea_title: 'Demand forecast copilot',
       problem_opportunity: 'Planners rebuild the weekly forecast by hand from five spreadsheets.',
       proposed_solution: 'A model drafts the forecast and explains each change for planner review.',
-      target_users: '',
+      target_users: 'Demand planners',
     },
     team_leader_id: LEADER,
     team_members: [],
-    impacts: [{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves a day per week of planner time.', measurable_result: '' }],
+    impacts: [{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves a day per week of planner time.', measurable_result: '1 day/week saved' }],
     support_requests: [],
     mentor_preferences: [
       { priority: 1, mentor_profile_id: MENTOR_A },
@@ -35,7 +35,7 @@ describe('collectIdeaIssues', () => {
       basics: { team_name: '', idea_title: '', problem_opportunity: '', proposed_solution: '', target_users: '' },
       team_leader_id: undefined,
       team_members: [],
-      impacts: [{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: '', measurable_result: '' }],
+      impacts: [{ impact_kind: 'primary', impact_type: '', explanation: '', measurable_result: '' }],
       support_requests: [],
       mentor_preferences: [],
     };
@@ -44,19 +44,25 @@ describe('collectIdeaIssues', () => {
       'idea_title',
       'problem_opportunity',
       'proposed_solution',
+      'target_users',
       'team_name',
       'team_leader',
+      'impacts.0.impact_type',
       'impacts.0.explanation',
+      'impacts.0.measurable_result',
       'mentor_preferences',
     ]);
     expect(issues.map((i) => i.section)).toEqual([
       'Your idea',
       'Your idea',
       'Your idea',
+      'Your idea',
       'Team',
       'Team',
-      'Business impact',
-      'Preferred mentors',
+      'Business Impact',
+      'Business Impact',
+      'Business Impact',
+      'Preferred Mentors',
     ]);
   });
 

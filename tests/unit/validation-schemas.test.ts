@@ -48,6 +48,17 @@ describe('ideaBasicsSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('rejects blank target users', () => {
+    const result = ideaBasicsSchema.safeParse({
+      idea_title: 'Smart inventory bot',
+      team_name: 'Team Alpha',
+      problem_opportunity: 'Warehouses run out of stock unexpectedly.',
+      proposed_solution: 'Use demand forecasting to flag shortages early.',
+      target_users: '   ',
+    });
+    expect(result.success).toBe(false);
+  });
+
   it('rejects a missing title', () => {
     const result = ideaBasicsSchema.safeParse({
       idea_title: '',
@@ -120,6 +131,12 @@ describe('ideaImpactsSchema', () => {
       impacts: [{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves time weekly', measurable_result: '2 hrs/week' }],
     });
     expect(result.success).toBe(true);
+  });
+
+  it('rejects a blank impact type or measurable result', () => {
+    const base = { impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves time weekly', measurable_result: '2 hrs/week' };
+    expect(ideaImpactsSchema.safeParse({ impacts: [{ ...base, impact_type: '' }] }).success).toBe(false);
+    expect(ideaImpactsSchema.safeParse({ impacts: [{ ...base, measurable_result: '' }] }).success).toBe(false);
   });
 
   it('rejects more than 4 impacts', () => {

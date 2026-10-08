@@ -9,6 +9,7 @@ import type { SessionUser } from '@/lib/auth/session';
 import { fetchMyMembershipConflicts } from '@/lib/services/team-membership';
 import { fetchMyIdeas } from '@/lib/ideas/my-ideas';
 import { participantIdeaStatusKey, participantNextStep } from '@/lib/overview/next-step';
+import { stageDateMask } from '@/lib/program/timeline';
 import type { Program } from '@/types/database';
 
 const RECENT_IDEAS = 5;
@@ -35,9 +36,17 @@ export async function ParticipantOverview({ user }: { user: SessionUser }) {
 
   const next = participantNextStep({
     conflictCount: conflicts.length,
-    ideas: ideas.map((i) => ({ status: i.status, screening: i.screening, qualifier: i.qualifier })),
+    ideas: ideas.map((i) => ({
+      id: i.id,
+      status: i.status,
+      screening: i.screening,
+      qualifier: i.qualifier,
+      editable: i.status === 'draft' && i.created_by === user.id,
+    })),
     submissionOpen,
-    submissionCloseLabel: program?.submission_close_at ? longDate(program.submission_close_at) : null,
+    submissionCloseLabel: program
+      ? (stageDateMask(program, 'submission_close_at') ?? (program.submission_close_at ? longDate(program.submission_close_at) : null))
+      : null,
     votingOpen,
     votingCloseLabel: votingPeriod ? longDate(votingPeriod.closes_at) : null,
   });

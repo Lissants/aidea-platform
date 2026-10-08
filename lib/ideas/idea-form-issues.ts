@@ -11,9 +11,9 @@ import {
 export const IDEA_FORM_SECTIONS = [
   { id: 'idea-section-basics', label: 'Your idea' },
   { id: 'idea-section-team', label: 'Team' },
-  { id: 'idea-section-impact', label: 'Business impact' },
-  { id: 'idea-section-support', label: 'Support needed' },
-  { id: 'idea-section-mentors', label: 'Preferred mentors' },
+  { id: 'idea-section-impact', label: 'Business Impact' },
+  { id: 'idea-section-support', label: 'Support Needed' },
+  { id: 'idea-section-mentors', label: 'Preferred Mentors' },
 ] as const;
 
 export interface IdeaFormValues {
@@ -85,17 +85,17 @@ export function collectIdeaIssues(values: IdeaFormValues): IdeaFormIssue[] {
   );
 
   const impacts = ideaImpactsSchema.safeParse({ impacts: values.impacts });
-  push(issues, impacts.success ? undefined : impacts.error, 'Business impact', (p) =>
+  push(issues, impacts.success ? undefined : impacts.error, 'Business Impact', (p) =>
     p.length >= 3 ? `impacts.${p[1]}.${p[2]}` : 'impacts'
   );
 
   const support = ideaSupportRequestsSchema.safeParse({ support_requests: values.support_requests });
-  push(issues, support.success ? undefined : support.error, 'Support needed', (p) =>
+  push(issues, support.success ? undefined : support.error, 'Support Needed', (p) =>
     p.length >= 3 ? `support_requests.${p[1]}.${p[2]}` : 'support_requests'
   );
 
   const mentors = ideaMentorPreferencesRequiredSchema.safeParse({ mentor_preferences: values.mentor_preferences });
-  push(issues, mentors.success ? undefined : mentors.error, 'Preferred mentors', () => 'mentor_preferences');
+  push(issues, mentors.success ? undefined : mentors.error, 'Preferred Mentors', () => 'mentor_preferences');
 
   // team_name is validated with the basics but is shown in the Team section.
   for (const issue of issues) if (issue.field === 'team_name') issue.section = 'Team';

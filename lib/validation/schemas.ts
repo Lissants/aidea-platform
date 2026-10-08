@@ -40,7 +40,7 @@ export const ideaBasicsSchema = z.object({
   idea_title: z.string().min(5, 'Idea title is required').max(200),
   problem_opportunity: z.string().min(20, 'Please describe the problem or opportunity').max(4000),
   proposed_solution: z.string().min(20, 'Please describe the proposed solution').max(4000),
-  target_users: z.string().max(2000).optional().nullable(),
+  target_users: z.string().trim().min(2, 'Target users / beneficiaries are required').max(2000),
 });
 
 export const ideaTeamMemberSchema = z.object({
@@ -81,13 +81,13 @@ export const impactTypeEnum = z.enum([
   'time_efficiency',
   'cost_optimization',
   'governance_excellence',
-]);
+], { errorMap: () => ({ message: 'Choose an impact type' }) });
 
 export const ideaImpactSchema = z.object({
   impact_kind: z.enum(['primary', 'secondary']),
   impact_type: impactTypeEnum,
   explanation: z.string().min(10, 'Impact explanation must be at least 10 characters (remove the secondary impact if unused)').max(2000),
-  measurable_result: z.string().max(1000).optional().nullable(),
+  measurable_result: z.string().trim().min(2, 'Measurable result is required').max(1000),
 });
 
 export const ideaImpactsSchema = z.object({
@@ -167,7 +167,15 @@ export const ideaDraftSaveSchema = z.object({
   target_users: z.string().max(2000).optional().nullable(),
   team_leader_id: z.string().uuid().optional(),
   team_members: ideaTeamObject.shape.team_members.optional(),
-  impacts: z.array(ideaImpactSchema.extend({ explanation: z.string().max(2000).optional().nullable() })).max(4).optional(),
+  impacts: z
+    .array(
+      ideaImpactSchema.extend({
+        explanation: z.string().max(2000).optional().nullable(),
+        measurable_result: z.string().max(1000).optional().nullable(),
+      })
+    )
+    .max(4)
+    .optional(),
   support_requests: ideaSupportRequestsSchema.shape.support_requests.optional(),
   mentor_preferences: ideaMentorPreferencesSchema.shape.mentor_preferences.optional(),
 }).superRefine(refineTeam);
