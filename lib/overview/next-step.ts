@@ -74,7 +74,7 @@ export function participantNextStep(input: ParticipantNextStepInput): NextStep {
   if (votingOpen) {
     return {
       title: votingCloseLabel ? `Voting is open until ${votingCloseLabel}` : 'Voting is open',
-      body: 'Vote for the showcased ideas you think deserve to win.',
+      body: 'Vote for the Build ideas you think deserve to win.',
       action: { label: 'Cast your vote', href: '/voting' },
     };
   }

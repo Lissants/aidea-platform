@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     default: 'AIdea Submission Platform',
     template: '%s · AIdea Submission Platform',
   },
-  description: 'AI Innovation Challenge — submit, review, and showcase AI innovation ideas.',
+  description: 'AI Innovation Challenge — submit, review, and vote on AI innovation ideas.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

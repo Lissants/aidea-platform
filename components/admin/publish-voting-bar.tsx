@@ -42,7 +42,7 @@ export function PublishVotingBar({
     : closed
       ? 'This voting period has already closed — change its dates first.'
       : candidateCount === 0
-        ? 'No ideas have reached final presentation yet.'
+        ? 'No ideas have a published Build result yet.'
         : `${candidateCount} candidate(s) will be on the ballot. Every active user is notified.`;
 
   async function handlePublish() {

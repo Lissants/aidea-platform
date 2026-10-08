@@ -1,11 +1,11 @@
 /**
  * Full journey through the real UI: participant submits → mentor recommends
  * Pass → admin screening Pass (published) → qualifier Build (published) →
- * final presentation draft (no winner published) → the idea is a voting
- * candidate → admin publishes site-wide voting → employees vote → admin
- * publishes results → voters see them.
+ * the idea is a voting candidate (no final presentation needed) → admin
+ * publishes site-wide voting → employees vote → admin publishes results →
+ * voters see them.
  *
- * REQUIRES: the local SQL Server `aidea` database migrated through 0011 and
+ * REQUIRES: the local SQL Server `aidea` database migrated through 0013 and
  * seeded (demo.admin1), plus `npm run dev` on :3000. Each run creates its
  * own throwaway users and a temporary "E2E Program <run>" that becomes the
  * newest active program, so every Publish button only touches this run's
@@ -204,6 +204,9 @@ test('4. qualifier Build only reaches final presentation once published', async 
 
   await page.goto('/final-presentation');
   await expect(page.getByRole('heading', { name: IDEA_TITLE })).toHaveCount(0);
+  await page.goto('/voting-management');
+  await expect(page.getByRole('list', { name: 'Voting candidates' })).toHaveCount(0);
+  await expect(page.getByText('No ideas have a published Build result yet.').first()).toBeVisible();
 
   await page.goto('/qualifier');
   await page.getByRole('button', { name: 'Publish All Qualifier Results' }).click();
@@ -214,12 +217,12 @@ test('4. qualifier Build only reaches final presentation once published', async 
   await expect(page.getByRole('heading', { name: IDEA_TITLE })).toBeVisible();
 });
 
-test('5. a draft final presentation makes the idea a voting candidate', async ({ page }) => {
+test('5. a published Build makes the idea a voting candidate', async ({ page }) => {
   await signIn(page, DEMO_USERS.admin);
   await page.goto('/voting-management');
-  await expect(page.getByRole('list', { name: 'Voting candidates' })).toHaveCount(0);
-  await expect(page.getByText('No ideas have reached final presentation yet.').first()).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Voting candidates' }).getByText(IDEA_TITLE)).toBeVisible();
 
+  // A final presentation draft doesn't change that.
   await page.goto('/final-presentation');
   await page.getByLabel(/Final score/).fill('74');
   await page.getByRole('button', { name: 'Save Draft' }).click();

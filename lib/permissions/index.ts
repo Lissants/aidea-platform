@@ -25,8 +25,6 @@ export type Action =
   | 'qualifier:decide'
   | 'project_mentor:assign'
   | 'final_presentation:decide'
-  | 'showcase:manage'
-  | 'showcase:view_published'
   | 'voting:cast'
   | 'voting:manage'
   | 'reports:view'
@@ -38,7 +36,6 @@ export interface PermissionContext {
   isOwner?: boolean;
   isTeamMember?: boolean;
   isAssignedMentor?: boolean;
-  entityPublished?: boolean;
 }
 
 /**
@@ -83,11 +80,6 @@ export function can(action: Action, actingRole: AppRole, context: PermissionCont
       return role === 'admin';
     case 'final_presentation:decide':
       return role === 'admin';
-    case 'showcase:manage':
-      return role === 'admin';
-    case 'showcase:view_published':
-      // Mirrors RLS: "anyone_select_published_showcase_projects"
-      return context.entityPublished ?? true;
     case 'voting:cast':
       // Mirrors RLS: "voters_insert_single_vote" + fn_submit_vote guard
       return role === 'employee_voter' || role === 'participant' || role === 'mentor' || role === 'admin';

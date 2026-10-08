@@ -74,7 +74,7 @@ npm run dev
 
 Visit `http://localhost:3000` and sign in with a seeded demo account using email and password.
 
-Uploaded files (showcase images and program resources) are written to `./uploads` (`UPLOAD_DIR`).
+Uploaded files (program resources) are written to `./uploads` (`UPLOAD_DIR`).
 
 If you use Claude Code's preview, `.claude/launch.json` defines an `aidea-dev` configuration that runs `npm run dev` on port 3000.
 

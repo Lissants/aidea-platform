@@ -1,5 +1,5 @@
 /**
- * The four public program stages shown on the participant timeline, each fed
+ * The three public program stages shown on the participant timeline, each fed
  * by an existing programs date column. Any stage's date can be masked behind
  * an editable message (programs.timeline_tba, migration 0012).
  */
@@ -7,7 +7,6 @@ export const TIMELINE_STAGES = [
   { key: 'submission_close_at', label: 'Submissions Close' },
   { key: 'screening_close_at', label: 'Team Pitch to Judge Committee' },
   { key: 'final_presentation_close_at', label: 'Final Presentation to ILT' },
-  { key: 'showcase_open_at', label: 'Project Showcase in Townhall' },
 ] as const;
 
 export type TimelineStageKey = (typeof TIMELINE_STAGES)[number]['key'];

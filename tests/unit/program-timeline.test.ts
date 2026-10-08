@@ -2,12 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_TBA_TEXT, TBA_TEXT_MAX, TIMELINE_STAGES, parseTimelineTba, sanitizeTimelineTba, stageDateMask } from '@/lib/program/timeline';
 
 describe('TIMELINE_STAGES', () => {
-  it('lists the four public stages in order', () => {
+  it('lists the three public stages in order', () => {
     expect(TIMELINE_STAGES.map((s) => s.label)).toEqual([
       'Submissions Close',
       'Team Pitch to Judge Committee',
       'Final Presentation to ILT',
-      'Project Showcase in Townhall',
     ]);
   });
 });
@@ -28,8 +27,8 @@ describe('parseTimelineTba', () => {
 
 describe('sanitizeTimelineTba', () => {
   it('drops unknown stages and coerces hidden', () => {
-    expect(sanitizeTimelineTba({ voting_close_at: { hidden: true, text: 'x' }, showcase_open_at: { hidden: 'yes', text: 'Soon' } })).toEqual({
-      showcase_open_at: { hidden: false, text: 'Soon' },
+    expect(sanitizeTimelineTba({ voting_close_at: { hidden: true, text: 'x' }, screening_close_at: { hidden: 'yes', text: 'Soon' } })).toEqual({
+      screening_close_at: { hidden: false, text: 'Soon' },
     });
   });
 

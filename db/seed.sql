@@ -65,12 +65,12 @@ WHEN NOT MATCHED THEN INSERT (id, profile_id, expertise, bio, max_capacity)
 IF NOT EXISTS (SELECT 1 FROM programs WHERE id = @program)
   INSERT INTO programs (
     id, title, description, submission_open_at, submission_close_at, screening_close_at,
-    qualifier_close_at, final_presentation_close_at, showcase_open_at, voting_open_at, voting_close_at, status
+    qualifier_close_at, final_presentation_close_at, voting_open_at, voting_close_at, status
   ) VALUES (
     @program, 'AI Innovation Challenge 2026',
     'Godrej Industries Group''s flagship internal AI innovation program.',
     DATEADD(day, -20, @now), DATEADD(day, 10, @now), DATEADD(day, 20, @now),
-    DATEADD(day, 35, @now), DATEADD(day, 50, @now), DATEADD(day, 55, @now),
+    DATEADD(day, 35, @now), DATEADD(day, 50, @now),
     DATEADD(day, 60, @now), DATEADD(day, 67, @now), 'active'
   );
 ELSE
@@ -84,7 +84,6 @@ USING (VALUES
   ('qualifier',          'Qualifier',                  20, 35, 'draft'),
   ('project_mentor',     'Project Mentor Assignment',  35, 40, 'draft'),
   ('final_presentation', 'Final Presentation',         40, 50, 'draft'),
-  ('showcase',           'Showcase',                   55, 90, 'draft'),
   ('voting',             'Voting',                     60, 67, 'draft')
 ) AS s (stage_key, label, start_offset, end_offset, status)
 ON t.program_id = @program AND t.stage_key = s.stage_key
@@ -212,21 +211,8 @@ ELSE
    WHERE idea_id = '77777777-7777-7777-7777-777777777004';
 
 -- ---------------------------------------------------------------------
--- Showcase projects.
--- ---------------------------------------------------------------------
-IF NOT EXISTS (SELECT 1 FROM showcase_projects WHERE idea_id = '77777777-7777-7777-7777-777777777004')
-  INSERT INTO showcase_projects (idea_id, program_id, image_url, short_description, published, published_at)
-  VALUES ('77777777-7777-7777-7777-777777777004', @program, NULL,
-          'A copilot that blends historical and market signal forecasting for regional planners.', 1, @now);
-ELSE
-  UPDATE showcase_projects
-     SET short_description = 'A copilot that blends historical and market signal forecasting for regional planners.',
-         published = 1
-   WHERE idea_id = '77777777-7777-7777-7777-777777777004';
-
--- ---------------------------------------------------------------------
--- Final presentation (draft) for the built idea: makes it a voting
--- candidate (v_vote_candidates) before any winner is published.
+-- Final presentation (draft) for the built idea. (Its published Pass +
+-- Build already make it a voting candidate, see v_vote_candidates.)
 -- ---------------------------------------------------------------------
 IF NOT EXISTS (SELECT 1 FROM final_presentation_assessments WHERE idea_id = '77777777-7777-7777-7777-777777777004')
   INSERT INTO final_presentation_assessments (idea_id, status, decided_by)

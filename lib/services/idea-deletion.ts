@@ -15,7 +15,7 @@ const idsSchema = z.array(z.string().uuid()).min(1, 'Select at least one idea').
  * Every child table cascades from ideas except votes (fk_votes_ideas is NO
  * ACTION) and reviews (removed via review_assignments, deleted explicitly
  * here so the order never depends on cascade timing). Stored files
- * (showcase image, presentation) are removed after commit, best-effort.
+ * (presentations) are removed after commit, best-effort.
  */
 export async function deleteIdeas(ideaIds: string[]) {
   const user = await getCurrentUser();
@@ -37,10 +37,9 @@ export async function deleteIdeas(ideaIds: string[]) {
         team_name: string;
         status: string;
         presentation_url: string | null;
-        showcase_image_url: string | null;
       }>(
-        `SELECT i.id, i.program_id, i.idea_title, i.team_name, i.status, i.presentation_url, sp.image_url AS showcase_image_url
-           FROM ideas i LEFT JOIN showcase_projects sp ON sp.idea_id = i.id
+        `SELECT i.id, i.program_id, i.idea_title, i.team_name, i.status, i.presentation_url
+           FROM ideas i
           WHERE i.id IN (${inList})`,
         params
       );
@@ -56,7 +55,6 @@ export async function deleteIdeas(ideaIds: string[]) {
 
   for (const idea of ideas) {
     await removeByUrl(idea.presentation_url);
-    await removeByUrl(idea.showcase_image_url);
     await logAudit({
       programId: idea.program_id,
       entityType: 'idea',
@@ -68,7 +66,7 @@ export async function deleteIdeas(ideaIds: string[]) {
     });
   }
 
-  for (const path of ['/ideas', '/my-ideas', '/dashboard', '/reviews', '/screening', '/qualifier', '/review-assignment', '/project-mentor', '/final-presentation', '/reports', '/overview', '/voting', '/voting-management', '/showcase-content', '/']) {
+  for (const path of ['/ideas', '/my-ideas', '/dashboard', '/reviews', '/screening', '/qualifier', '/review-assignment', '/project-mentor', '/final-presentation', '/reports', '/overview', '/voting', '/voting-management', '/']) {
     revalidatePath(path);
   }
   return { ok: true, deleted: ideas.length } as const;

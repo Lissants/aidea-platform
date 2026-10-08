@@ -82,18 +82,18 @@ Accounts sit on one tier: User < Mentor < Admin < Developer. `employee_voter` is
 
 ## File uploads
 
-- **Where files live:** showcase images, program resources, mentor photos and final presentation decks are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
+- **Where files live:** program resources, mentor photos and final presentation decks are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
 - **Uploads** go through `POST /api/files/[bucket]`, which is admin-only. The one exception is final presentation decks (`idea-presentations`, 25 MB max, `.pptx` or `.pdf` checked by content). A team uploads its deck through `POST /api/ideas/[ideaId]/presentation` once its qualifier Build is published. Only the team, mentors and admins can download it.
   - Keys are server-generated (`<uuid>/<uuid>.<ext>`), and every key is validated against a strict pattern, so path traversal is impossible.
-  - Showcase images are validated by their actual bytes (PNG, JPEG or WebP signature), not the browser-supplied type. The limit is 5 MB.
+  - Mentor photos must be PNG, JPEG or WebP, 5 MB max.
   - Program resources are limited to 10 MB, and HTML, SVG, script and executable types are refused.
 - **Serving** goes through `GET /api/files/[bucket]/[...key]`.
-  - Showcase images are public, as the old public bucket was. Program resources require a signed-in session.
+  - Every bucket requires a signed-in session.
   - Responses send `X-Content-Type-Options: nosniff` and a sandboxing `Content-Security-Policy`. Anything that isn't an image, PDF or plain text is served as an attachment.
 
 ## Publication gating ("Save ≠ Finalize ≠ Publish")
 
-Every admin decision screen (Screening, Qualifier, Project Mentor Assignment, Final Presentation, Showcase Content), and Voting Management too, separates three distinct actions:
+Every admin decision screen (Screening, Qualifier, Project Mentor Assignment, Final Presentation), and Voting Management too, separates three distinct actions:
 
 1. **Save:** a working draft. It stays editable and isn't visible to anyone outside the admin or mentor working on it.
 2. **Finalize** (where applicable, e.g. Qualifier and Final Presentation): locks the assessment's content as complete. It is still not visible to the participant.

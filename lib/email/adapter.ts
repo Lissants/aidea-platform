@@ -54,8 +54,7 @@ export function getEmailAdapter(): EmailAdapter {
 
 /**
  * IMPORTANT: build `body` only from data the recipient is already allowed
- * to see — published decisions, their own submission, public showcase
- * content. Never pass an internal_reason, a raw mentor comment, or any
+ * to see — published decisions, their own submission. Never pass an internal_reason, a raw mentor comment, or any
  * unpublished row into an email body. Callers in lib/services/* should
  * construct the body from the same role-safe fields the corresponding
  * notification/UI already shows, not from a raw table row.

@@ -5,7 +5,7 @@ import { isBucket, saveFile } from '@/lib/storage/local';
 
 /**
  * Admin-only upload: multipart form with `file` and `prefix` (the owning
- * idea id for showcase-images, program id for program-resources, mentor
+ * program id for program-resources, mentor
  * profile id for mentor-photos).
  * Responds with { key, url }.
  */

@@ -7,11 +7,9 @@ import { BUCKETS, isBucket, readStoredFile } from '@/lib/storage/local';
 const INLINE_TYPES = /^(image\/(png|jpeg|webp|gif)|application\/pdf|text\/plain)$/;
 
 /**
- * Serves stored files. showcase-images are public (like the old public
- * bucket); the others require a signed-in session, and idea-presentations
- * additionally require read access to the owning idea (team, mentors,
- * admins — see canReadIdea). Files are
- * immutable (keys are random per upload), so they cache aggressively.
+ * Serves stored files. Every bucket requires a signed-in session, and
+ * idea-presentations additionally require read access to the owning idea
+ * (team, mentors, admins — see canReadIdea). Files are immutable (keys are random per upload), so they cache aggressively.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ bucket: string; key: string[] }> }) {
   const { bucket, key } = await params;

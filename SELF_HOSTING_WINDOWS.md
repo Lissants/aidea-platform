@@ -41,7 +41,7 @@ It takes about 45–60 minutes the first time, and most of that is waiting for i
 
 - **One process** (Node.js) serves the whole app: pages, APIs, sign-in and file downloads.
 - **One database** (`aidea` on the default SQL Server instance). The app connects with *your Windows login* through the `msnodesqlv8` driver, so there are no SQL passwords to manage.
-- **One folder of uploaded files** (`.\uploads`). It holds showcase images, program resources, mentor photos and final presentation decks, and must be backed up along with the database.
+- **One folder of uploaded files** (`.\uploads`). It holds program resources, mentor photos and final presentation decks, and must be backed up along with the database.
 - No cloud services. Sign-in, permissions and file storage are all handled by the app.
 
 ---
@@ -259,7 +259,7 @@ The seed also creates the four real platform **Developer** accounts (the top rol
    Click **Save draft** halfway through. Drafts save even with empty sections, and the full checks only run when you click **Submit idea**.
 2. As **Admin**, open **Overview**, **Idea Management** and **Review Assignment** and confirm you can see the submitted idea. Then open **User Management** and **Voting Management**.
 3. As **Mentor**, open **Idea Dashboard** and **My Reviews**. Each idea shows its screening, qualifier and project-mentor status once those are published.
-4. As **Employee voter**, open **Voting**. The seeded vote has a candidate from the final presentation stage.
+4. As **Employee voter**, open **Voting**. The seeded vote has a Build idea as a candidate.
 
 **✅ Checkpoint.** You can sign in, the wizard saves a draft, and the admin pages load.
 

@@ -49,7 +49,7 @@ export default async function VotingPage() {
     );
   }
 
-  // Candidates are every idea in the final presentation stage (v_vote_candidates).
+  // Candidates are every idea with a published Build result (v_vote_candidates).
   const candidates = await fetchVoteCandidates(period.program_id);
 
   // Only the caller's own ballot — never anyone else's.
@@ -62,9 +62,9 @@ export default async function VotingPage() {
 
   return (
     <div>
-      <PageHeader title="Voting" description="Cast one vote for your favorite final presentation project." action={<StatusBadge status="voting_open" />} />
+      <PageHeader title="Voting" description="Cast one vote for your favorite Build project." action={<StatusBadge status="voting_open" />} />
       {candidates.length === 0 ? (
-        <EmptyState icon={VoteIcon} title="No candidates yet" description="No ideas have reached the final presentation stage for this cycle." />
+        <EmptyState icon={VoteIcon} title="No candidates yet" description="No ideas have a published Build result for this cycle." />
       ) : (
         <VoteForm
           votingPeriodId={period.id}

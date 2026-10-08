@@ -24,8 +24,6 @@ export interface VoteCandidateRow {
   idea_id: string;
   idea_title: string;
   team_name: string;
-  image_url: string | null;
-  short_description: string | null;
 }
 
 export interface TurnoutRow {
@@ -47,22 +45,18 @@ export async function fetchVotingPeriods(programId: string): Promise<VotingPerio
 }
 
 /**
- * Every idea in the final presentation stage (v_vote_candidates, migration
- * 0011), with its published showcase image/description when there is one.
- * Live: an idea that enters final presentation joins an open vote at once.
- * Readable by any signed-in user.
+ * Every idea with a published screening Pass and a published qualifier Build
+ * (v_vote_candidates, migration 0013). Live: an idea whose Build result is
+ * published joins an open vote at once. Readable by any signed-in user.
  */
 export async function fetchVoteCandidates(programId: string): Promise<VoteCandidateRow[]> {
   const user = await getCurrentUser();
   if (!user) return [];
 
   const rows = await db.query<VoteCandidateRow>(
-    `SELECT c.idea_id, i.idea_title, i.team_name,
-            CASE WHEN sp.published = 1 THEN sp.image_url END AS image_url,
-            CASE WHEN sp.published = 1 THEN sp.short_description END AS short_description
+    `SELECT c.idea_id, i.idea_title, i.team_name
        FROM v_vote_candidates c
        JOIN ideas i ON i.id = c.idea_id
-       LEFT JOIN showcase_projects sp ON sp.idea_id = c.idea_id
       WHERE c.program_id = @programId
       ORDER BY i.idea_title`,
     { programId }
@@ -158,7 +152,7 @@ export async function publishVoting(votingPeriodId: string, programId: string) {
     'SELECT COUNT(*) AS n FROM v_vote_candidates WHERE program_id = @programId',
     { programId }
   );
-  if (!candidates?.n) return { error: 'No ideas have reached final presentation yet — there is nothing to vote on.' } as const;
+  if (!candidates?.n) return { error: 'No ideas have a published Build result yet — there is nothing to vote on.' } as const;
 
   const opensNow = new Date(period.opens_at) <= new Date();
   const body = opensNow

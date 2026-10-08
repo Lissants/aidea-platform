@@ -2,7 +2,7 @@ import 'server-only';
 
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/validation/showcase-image';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/validation/image';
 import { MAX_PRESENTATION_BYTES, sniffPresentationType } from '@/lib/validation/presentation';
 
 /**
@@ -18,13 +18,13 @@ import { MAX_PRESENTATION_BYTES, sniffPresentationType } from '@/lib/validation/
  * /api/files/{bucket}/{key}.
  */
 
-export type Bucket = 'showcase-images' | 'program-resources' | 'mentor-photos' | 'idea-presentations';
+export type Bucket = 'program-resources' | 'mentor-photos' | 'idea-presentations';
 
 interface BucketConfig {
   maxBytes: number;
   /** Allowed MIME types; null = any type not in BLOCKED_TYPES. */
   types: string[] | null;
-  /** Whether anonymous visitors may read (showcase) or a session is required. */
+  /** Whether anonymous visitors may read, or a session is required. */
   publicRead: boolean;
   /**
    * Custom byte-level check run instead of `types`; returns the content type
@@ -34,9 +34,8 @@ interface BucketConfig {
 }
 
 export const BUCKETS: Record<Bucket, BucketConfig> = {
-  'showcase-images': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: true },
   'program-resources': { maxBytes: 10 * 1024 * 1024, types: null, publicRead: false },
-  'mentor-photos': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: false },
+  'mentor-photos': { maxBytes: MAX_IMAGE_BYTES, types: ALLOWED_IMAGE_TYPES, publicRead: false },
   // Written only via app/api/ideas/[ideaId]/presentation; read access is
   // checked per idea in app/api/files/[bucket]/[...key]/route.ts.
   'idea-presentations': { maxBytes: MAX_PRESENTATION_BYTES, types: null, publicRead: false, validate: sniffPresentationType },

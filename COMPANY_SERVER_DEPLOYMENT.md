@@ -167,7 +167,7 @@ server {
 
 - **App logs**: the Next.js server logs to stdout/stderr inside the container — collect via your platform's usual container log pipeline (`docker logs`, journald, or a log shipper like Fluent Bit/Vector pointed at the Docker log driver). This app writes no logs to the local filesystem.
 - **Database backups**: use SQL Server's native backups (SQL Server Agent job, a maintenance plan, or your existing company backup tooling), e.g. `BACKUP DATABASE aidea TO DISK = '...\aidea_full.bak' WITH COMPRESSION, CHECKSUM;` nightly. If the database uses the FULL recovery model, also schedule `BACKUP LOG aidea ...` (e.g. every 15–60 minutes) so point-in-time restore is possible and the log doesn't grow unbounded; under SIMPLE recovery, full (plus optional differential) backups are enough.
-- **Upload backups**: showcase images and program resources are files in the `uploads` Docker volume (`/app/uploads` in the container). Back the volume up on the same schedule as the database — the DB stores only `/api/files/...` URLs, so a DB restore without the matching files leaves broken images/links, and vice versa.
+- **Upload backups**: program resources, mentor photos and presentation decks are files in the `uploads` Docker volume (`/app/uploads` in the container). Back the volume up on the same schedule as the database — the DB stores only `/api/files/...` URLs, so a DB restore without the matching files leaves broken images/links, and vice versa.
 
 ## 9. Migration & rollback procedure
 
@@ -180,7 +180,7 @@ server {
 
 Four kinds of file are written under `UPLOAD_DIR` (`lib/storage/local.ts`) and served by `GET /api/files/[bucket]/[...key]`:
 
-- showcase images (`showcase-images`, public) and program resources (`program-resources`, signed-in users), uploaded by admins via `POST /api/files/[bucket]`;
+- program resources (`program-resources`) and mentor photos (`mentor-photos`), signed-in users only, uploaded by admins via `POST /api/files/[bucket]`;
 - mentor photos (`mentor-photos`, signed-in users), uploaded by admins on the Mentor Profile page;
 - final presentation decks (`idea-presentations`, team, mentors and admins only), uploaded by a team from My Ideas via `POST /api/ideas/[ideaId]/presentation` once its qualifier result is a published Build.
 

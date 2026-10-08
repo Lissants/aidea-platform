@@ -1,8 +1,8 @@
 /**
  * Favorite Project voting candidates against the real aidea_test database
- * (migration 0011):
- *  - an idea is a candidate once it has a final presentation row and its
- *    screening Pass + qualifier Build are published — no winner publication;
+ * (migrations 0011 + 0013):
+ *  - an idea is a candidate once its screening Pass + qualifier Build are
+ *    published — no final presentation row is needed;
  *  - final presentation / qualifier refuse ideas whose earlier stage isn't
  *    published;
  *  - publishVoting gates voters (usp_submit_vote refuses unpublished periods
@@ -64,7 +64,6 @@ async function createIdea(
 const candidateIds = async () => (await fetchVoteCandidates(SEED.program)).map((c) => c.idea_id);
 
 let draftFp: string;
-let noWinnerFp: string;
 let buildNoFp: string;
 let qualifierUnpublished: string;
 let screeningUnpublished: string;
@@ -72,7 +71,6 @@ let screeningUnpublished: string;
 beforeAll(async () => {
   await resetTestDb();
   draftFp = await createIdea('Draft FP', { screening: 'published', qualifier: 'published', finalPresentation: true });
-  noWinnerFp = await createIdea('No winner FP', { screening: 'published', qualifier: 'published' });
   buildNoFp = await createIdea('Build no FP', { screening: 'published', qualifier: 'published' });
   qualifierUnpublished = await createIdea('Qualifier unpublished', { screening: 'published', qualifier: 'unpublished' });
   screeningUnpublished = await createIdea('Screening unpublished', { screening: 'unpublished' });
@@ -89,29 +87,29 @@ beforeEach(() => {
 });
 
 describe('voting candidates', () => {
-  it('includes an idea with only a draft final presentation assessment', async () => {
-    expect(await candidateIds()).toContain(draftFp);
+  it('includes a published Build without a final presentation row', async () => {
+    expect(await candidateIds()).toContain(buildNoFp);
   });
 
-  it('includes an idea finalized as no_winner that is not published', async () => {
-    const result = await finalizeFinalPresentation(noWinnerFp, {
+  it('includes a published Build with a final presentation, whatever its outcome', async () => {
+    const result = await finalizeFinalPresentation(draftFp, {
       final_score: 55,
       overall_comment: 'Solid pitch, not a winner.',
       winner_decision: 'no_winner',
       winner_category: null,
     });
     expect(result).toEqual({ ok: true });
-    expect(await candidateIds()).toContain(noWinnerFp);
+    expect(await candidateIds()).toContain(draftFp);
   });
 
-  it('excludes a published Build without a final presentation row', async () => {
-    expect(await candidateIds()).not.toContain(buildNoFp);
+  it('excludes a Build that is not published yet', async () => {
+    expect(await candidateIds()).not.toContain(qualifierUnpublished);
   });
 
   it('never exposes score or decision to voters', async () => {
     currentUser = sessionUser(SEED.voter1, ['employee_voter']);
     const [first] = await fetchVoteCandidates(SEED.program);
-    expect(Object.keys(first).sort()).toEqual(['idea_id', 'idea_title', 'image_url', 'short_description', 'team_name']);
+    expect(Object.keys(first).sort()).toEqual(['idea_id', 'idea_title', 'team_name']);
   });
 });
 
@@ -149,7 +147,7 @@ describe('publishVoting', () => {
     expect('error' in (await publishVoting(PERIOD, SEED.program))).toBe(true);
   });
 
-  it('refuses when no idea has reached final presentation', async () => {
+  it('refuses when no idea has a published Build', async () => {
     const otherProgram = randomUUID();
     const otherPeriod = randomUUID();
     await db.execute(
@@ -159,7 +157,7 @@ describe('publishVoting', () => {
       { id: otherProgram, period: otherPeriod }
     );
     const result = await publishVoting(otherPeriod, otherProgram);
-    expect('error' in result && result.error).toMatch(/final presentation/i);
+    expect('error' in result && result.error).toMatch(/published Build/i);
   });
 
   it('publishes, notifies every active profile and writes a publication', async () => {
@@ -187,13 +185,13 @@ describe('casting votes once published', () => {
   it('accepts a vote for a candidate, then refuses a second vote', async () => {
     currentUser = sessionUser(SEED.voter2, ['employee_voter']);
     expect(await castVote({ voting_period_id: PERIOD, idea_id: draftFp })).toEqual({ ok: true });
-    const again = await castVote({ voting_period_id: PERIOD, idea_id: noWinnerFp });
+    const again = await castVote({ voting_period_id: PERIOD, idea_id: buildNoFp });
     expect('error' in again).toBe(true);
   });
 
   it('refuses a vote for an idea that is not a candidate', async () => {
     currentUser = sessionUser(SEED.voter3, ['employee_voter']);
-    const result = await castVote({ voting_period_id: PERIOD, idea_id: buildNoFp });
+    const result = await castVote({ voting_period_id: PERIOD, idea_id: qualifierUnpublished });
     expect('error' in result && result.error).toMatch(/not a candidate/i);
   });
 
@@ -203,18 +201,15 @@ describe('casting votes once published', () => {
     expect('error' in result && result.error).toMatch(/own team/i);
   });
 
-  it('adds an idea that enters final presentation while voting is open', async () => {
-    const result = await saveFinalPresentationDraft(buildNoFp, {
-      final_score: null,
-      overall_comment: '',
-      winner_decision: null,
-      winner_category: null,
-    });
-    expect(result).toEqual({ ok: true });
-    expect(await candidateIds()).toContain(buildNoFp);
+  it('adds an idea whose Build result is published while voting is open', async () => {
+    await db.execute(
+      'UPDATE qualifier_assessments SET published = 1, published_at = SYSDATETIMEOFFSET() WHERE idea_id = @id',
+      { id: qualifierUnpublished }
+    );
+    expect(await candidateIds()).toContain(qualifierUnpublished);
 
     currentUser = sessionUser(SEED.voter3, ['employee_voter']);
-    expect(await castVote({ voting_period_id: PERIOD, idea_id: buildNoFp })).toEqual({ ok: true });
+    expect(await castVote({ voting_period_id: PERIOD, idea_id: qualifierUnpublished })).toEqual({ ok: true });
   });
 });
 
@@ -235,6 +230,6 @@ describe('results visibility', () => {
     });
     expect(await publishVotingResults(PERIOD, SEED.program)).toMatchObject({ ok: true });
     const result = await talliesAs(sessionUser(SEED.voter1, ['employee_voter']));
-    expect('rows' in result && result.rows.map((r) => r.idea_id).sort()).toEqual([buildNoFp, draftFp].sort());
+    expect('rows' in result && result.rows.map((r) => r.idea_id).sort()).toEqual([draftFp, qualifierUnpublished].sort());
   });
 });

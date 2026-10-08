@@ -12,9 +12,6 @@ interface Candidate {
   idea_id: string;
   idea_title: string;
   team_name: string;
-  /** Published showcase content, when there is any. */
-  image_url?: string | null;
-  short_description?: string | null;
 }
 
 export function VoteForm({ votingPeriodId, candidates, alreadyVotedIdeaId, canDelete = false }: {
@@ -46,16 +43,9 @@ export function VoteForm({ votingPeriodId, candidates, alreadyVotedIdeaId, canDe
         {candidates.map((c) => (
           <div key={c.idea_id} className="flex items-center gap-3 rounded-md border p-3">
             <RadioGroupItem value={c.idea_id} id={c.idea_id} />
-            {c.image_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={c.image_url} alt="" className="h-12 w-16 shrink-0 rounded object-cover" />
-            )}
             <Label htmlFor={c.idea_id} className="flex-1 cursor-pointer">
               <span className="font-medium">{c.idea_title}</span>
               <span className="ml-2 text-sm text-muted-foreground">{c.team_name}</span>
-              {c.short_description && (
-                <span className="mt-1 block text-sm font-normal text-muted-foreground">{c.short_description}</span>
-              )}
             </Label>
             {canDelete && <DeleteIdeaButton ideaId={c.idea_id} ideaTitle={c.idea_title} compact />}
           </div>

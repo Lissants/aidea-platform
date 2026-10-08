@@ -1,8 +1,8 @@
 import { STATUS_META, stageStatusKey } from '@/lib/constants/status';
 
-export type DerivedStage = 'draft' | 'submitted' | 'screened_pass' | 'screened_fail' | 'build' | 'no_build' | 'showcased';
+export type DerivedStage = 'draft' | 'submitted' | 'screened_pass' | 'screened_fail' | 'build' | 'no_build';
 
-const STAGES: DerivedStage[] = ['draft', 'submitted', 'screened_pass', 'screened_fail', 'build', 'no_build', 'showcased'];
+const STAGES: DerivedStage[] = ['draft', 'submitted', 'screened_pass', 'screened_fail', 'build', 'no_build'];
 
 /**
  * Deliberately NOT in lib/services/idea-management.ts: that file has a

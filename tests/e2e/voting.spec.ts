@@ -1,7 +1,7 @@
 /**
  * REQUIRES: the local SQL Server `aidea` database, `npm run db:reset`, an open voting_period
  * (Voting Management → opens_at in the past, closes_at in the future), and
- * at least one showcased project NOT submitted by demo.voter1's own team
+ * at least one Build idea (finalized qualifier assessment) NOT submitted by demo.voter1's own team
  * (employee voters have no team anyway, but the same idea should also be
  * used for the "own project" block test with a participant account that
  * IS on that idea's team). Could not be executed in this sandbox — see
@@ -19,7 +19,7 @@ test('an employee can vote exactly once', async ({ page }) => {
 });
 
 test('an employee cannot vote for their own team\'s project', async ({ page }) => {
-  // demo.participant1 is on a team with a showcased idea — the Vote button
+  // demo.participant1 is on a team with a Build idea — the Vote button
   // for that specific card must be absent or disabled for them.
   await signIn(page, DEMO_USERS.participant1);
   await page.goto('/voting');

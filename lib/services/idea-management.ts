@@ -34,7 +34,6 @@ export interface IdeaListFilters {
 
 interface StageSource {
   status: string;
-  showcase_published: boolean | null;
   qualifier_published: boolean | null;
   build_decision: string | null;
   screening_published: boolean | null;
@@ -42,7 +41,6 @@ interface StageSource {
 }
 
 function deriveStage(idea: StageSource): DerivedStage {
-  if (idea.showcase_published) return 'showcased';
   if (idea.qualifier_published) return idea.build_decision === 'build' ? 'build' : 'no_build';
   if (idea.screening_published) return idea.screening_decision === 'pass_to_qualifier' ? 'screened_pass' : 'screened_fail';
   if (idea.status === 'submitted') return 'submitted';
@@ -61,8 +59,8 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { rows: [], total: 0 };
 
-  // review_assignments / screening_decisions / qualifier_assessments /
-  // showcase_projects are each unique per idea, so plain LEFT JOINs are 1:1.
+  // review_assignments / screening_decisions / qualifier_assessments are
+  // each unique per idea, so plain LEFT JOINs are 1:1.
   const ideas = await db.query<
     StageSource & {
       id: string;
@@ -85,15 +83,13 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
             ) THEN 1 ELSE 0 END AS BIT) AS membership_conflict,
             p.full_name AS reviewer_name,
             sd.decision AS screening_decision, sd.published AS screening_published,
-            qa.build_decision, qa.published AS qualifier_published,
-            sp.published AS showcase_published
+            qa.build_decision, qa.published AS qualifier_published
        FROM ideas i
        LEFT JOIN review_assignments ra ON ra.idea_id = i.id
        LEFT JOIN mentor_profiles mp ON mp.id = ra.mentor_profile_id
        LEFT JOIN profiles p ON p.id = mp.profile_id
        LEFT JOIN screening_decisions sd ON sd.idea_id = i.id
        LEFT JOIN qualifier_assessments qa ON qa.idea_id = i.id
-       LEFT JOIN showcase_projects sp ON sp.idea_id = i.id
       WHERE i.program_id = @programId`,
     { programId }
   );

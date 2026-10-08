@@ -23,7 +23,6 @@ const ADMIN_PREFIXES = [
   '/roles',
   '/settings',
   '/voting-management',
-  '/showcase-content',
 ];
 // Shared across roles, only requires *some* authenticated role:
 const SHARED_PROTECTED_PREFIXES = ['/voting', '/notifications', '/profile', '/mentor-profile'];

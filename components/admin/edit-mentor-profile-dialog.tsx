@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MentorAvatar } from '@/components/mentors/mentor-avatar';
 import { updateMentorProfile, type MentorDirectoryRow } from '@/lib/services/mentors';
 import { uploadFile } from '@/lib/storage/upload-client';
-import { validateShowcaseImage } from '@/lib/validation/showcase-image';
+import { validateImage } from '@/lib/validation/image';
 import { MAX_MENTOR_EXPERTISE_CHARS, mentorProfileSchema, type MentorProfileInput } from '@/lib/validation/schemas';
 
 function defaults(mentor: MentorDirectoryRow): MentorProfileInput {
@@ -37,7 +37,7 @@ export function EditMentorProfileDialog({ mentor }: { mentor: MentorDirectoryRow
   }
 
   async function handleFile(file: File) {
-    const validationError = validateShowcaseImage({ size: file.size, type: file.type });
+    const validationError = validateImage({ size: file.size, type: file.type });
     if (validationError) return toast.error(validationError);
     setUploading(true);
     const result = await uploadFile('mentor-photos', mentor.mentor_profile_id, file);
