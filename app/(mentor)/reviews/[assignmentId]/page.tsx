@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { IdeaDetailReadonly } from '@/components/ideas/idea-detail-readonly';
@@ -83,41 +85,57 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ a
   const reviewStatus: 'not_started' | 'draft' | 'submitted' | 'reopened' = review?.status ?? 'not_started';
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div>
-        <PageHeader title="Review" description={`${idea.idea_title} — ${idea.team_name}`} />
-        <IdeaDetailReadonly
-          idea={{
-            idea_title: idea.idea_title,
-            team_name: idea.team_name,
-            problem_opportunity: idea.problem_opportunity,
-            proposed_solution: idea.proposed_solution,
-            target_users: idea.target_users,
-            team_members: teamMembers.map((m) => ({ full_name: m.full_name ?? 'Unknown' })),
-            impacts,
-            support_requests: supportRequests,
-            mentor_preferences: mentorPrefs.map((p) => ({
-              priority: p.priority,
-              mentor_name: p.full_name ?? 'Unknown',
-            })),
-          }}
-        />
-      </div>
-      <div>
-        <div className="mb-6 hidden lg:block" aria-hidden style={{ height: '2.75rem' }} />
-        <ReviewForm
-          assignmentId={assignment.id}
-          ideaId={assignment.idea_id}
-          initial={{
-            desirability: review?.desirability ?? null,
-            viability: review?.viability ?? null,
-            realistic_implementation: review?.realistic_implementation ?? null,
-            recommendation: review?.recommendation ?? null,
-            comment: review?.comment ?? null,
-          }}
-          reviewStatus={reviewStatus}
-          reopenReason={review?.reopen_reason ?? null}
-        />
+    <div>
+      <PageHeader
+        title={idea.idea_title}
+        description={`${idea.team_name}. Read the idea, then record your assessment.`}
+        breadcrumbs={
+          <Link
+            href="/reviews"
+            className="focus-ring inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back to My Reviews
+          </Link>
+        }
+      />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
+        <div>
+          <IdeaDetailReadonly
+            idea={{
+              idea_title: idea.idea_title,
+              team_name: idea.team_name,
+              problem_opportunity: idea.problem_opportunity,
+              proposed_solution: idea.proposed_solution,
+              target_users: idea.target_users,
+              team_members: teamMembers.map((m) => ({ full_name: m.full_name ?? 'Unknown' })),
+              impacts,
+              support_requests: supportRequests,
+              mentor_preferences: mentorPrefs.map((p) => ({
+                priority: p.priority,
+                mentor_name: p.full_name ?? 'Unknown',
+              })),
+              presentation: idea.presentation_url
+                ? { url: idea.presentation_url, name: idea.presentation_name, uploaded_at: idea.presentation_uploaded_at }
+                : null,
+            }}
+          />
+        </div>
+        <div>
+          <ReviewForm
+            assignmentId={assignment.id}
+            ideaId={assignment.idea_id}
+            initial={{
+              desirability: review?.desirability ?? null,
+              viability: review?.viability ?? null,
+              business_impact: review?.business_impact ?? null,
+              realistic_implementation: review?.realistic_implementation ?? null,
+              recommendation: review?.recommendation ?? null,
+              comment: review?.comment ?? null,
+            }}
+            reviewStatus={reviewStatus}
+            reopenReason={review?.reopen_reason ?? null}
+          />
+        </div>
       </div>
     </div>
   );

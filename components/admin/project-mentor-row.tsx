@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Badge } from '@/components/ui/badge';
 import { saveProjectMentorAssignment } from '@/lib/services/project-mentor';
 import type { ProjectMentorQueueRow, MentorOption } from '@/lib/services/project-mentor';
 
@@ -21,7 +20,7 @@ export function ProjectMentorRow({ row, mentors }: { row: ProjectMentorQueueRow;
             <CardTitle className="text-base">{row.idea_title}</CardTitle>
             <p className="text-sm text-muted-foreground">{row.team_name}</p>
           </div>
-          <Badge variant="secondary">Not Applicable</Badge>
+          <p className="text-sm text-muted-foreground">No project mentor needed: not qualified to build</p>
         </CardHeader>
       </Card>
     );
@@ -50,7 +49,8 @@ export function ProjectMentorRow({ row, mentors }: { row: ProjectMentorQueueRow;
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
           disabled={row.published}
-          className="h-9 min-w-[14rem] rounded-md border border-input bg-background px-3 text-sm shadow-sm"
+          aria-label={`Project mentor for ${row.idea_title}`}
+          className="h-11 min-w-[14rem] rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:h-9"
         >
           <option value="">Select a mentor…</option>
           {mentors.map((m) => (

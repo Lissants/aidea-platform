@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Lightbulb } from 'lucide-react';
 import { SidebarNav } from '@/components/navigation/sidebar-nav';
 import { MobileBottomNav } from '@/components/navigation/mobile-bottom-nav';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -17,12 +16,19 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+/**
+ * Text wordmark. "AI" is set bold and "dea" regular so the capital I can't
+ * be read as a lowercase l ("Aldea") in Arial — a legibility fix for the
+ * logo, not a headline accent.
+ */
 const Logo = () => (
-  <Link href="/overview" className="flex items-center gap-2 text-sm font-semibold text-foreground">
-    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-      <Lightbulb className="h-4 w-4" />
-    </div>
-    <span className="truncate">AIdea</span>
+  <Link
+    href="/overview"
+    aria-label="AIdea home"
+    className="focus-ring inline-flex items-baseline font-display text-xl leading-none tracking-tight text-foreground"
+  >
+    <span className="font-bold">AI</span>
+    <span className="font-normal">dea</span>
   </Link>
 );
 
@@ -37,23 +43,35 @@ export function AppShell({ role, allRoles, isSeededDemoAccount, user, children }
 
   return (
     <div className="flex min-h-screen bg-background">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        Skip to main content
+      </a>
+
       <SidebarNav role={role} logoSlot={<Logo />} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-4 sm:px-6">
           <div className="lg:hidden">
             <Logo />
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1 sm:gap-2">
             {showDevSwitcher && <DevRoleSwitcher availableRoles={allRoles} />}
             <RoleSwitcher roles={allRoles} activeRole={role} />
             <NotificationBell />
-            <ThemeToggle />
+            {/* On phones the theme choice lives in the account menu to keep the bar uncluttered. */}
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
             <AvatarMenu name={user.name} email={user.email} avatarUrl={user.avatarUrl} />
           </div>
         </header>
 
-        <main className="flex-1 px-4 pb-20 pt-6 sm:px-6 lg:pb-10">{children}</main>
+        <main id="main" tabIndex={-1} className="flex-1 px-4 pb-28 pt-6 outline-none sm:px-6 lg:pb-10">
+          {children}
+        </main>
 
         <MobileBottomNav role={role} />
       </div>

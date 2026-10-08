@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { PresentationLink } from '@/components/ideas/presentation-link';
 import { saveFinalPresentationDraft, finalizeFinalPresentation } from '@/lib/services/final-presentation';
 import type { FinalPresentationQueueRow } from '@/lib/services/final-presentation';
 import type { WinnerCategory, WinnerDecision } from '@/types/database';
@@ -68,6 +69,13 @@ export function FinalPresentationRow({ row, takenCategories }: Props) {
         <div>
           <CardTitle className="text-base">{row.idea_title}</CardTitle>
           <p className="text-sm text-muted-foreground">{row.team_name}</p>
+          <div className="mt-1.5">
+            {row.presentation_url ? (
+              <PresentationLink url={row.presentation_url} name={row.presentation_name} />
+            ) : (
+              <p className="text-xs text-muted-foreground">No presentation uploaded yet</p>
+            )}
+          </div>
         </div>
         {row.published ? (
           <StatusBadge status="published" />

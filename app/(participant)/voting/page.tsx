@@ -1,46 +1,56 @@
+import Link from 'next/link';
 import { Vote as VoteIcon } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/layout/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { Button } from '@/components/ui/button';
 import { VoteForm } from '@/components/voting/vote-form';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
+import { isDeveloper } from '@/lib/permissions';
+import { fetchVoteCandidates } from '@/lib/services/voting-management';
 
 export const metadata = { title: 'Voting' };
 
 export default async function VotingPage() {
   const user = await getCurrentUser();
+  // Same program the admin manages; a period is only visible once published.
   const period = await db.queryOne<{ id: string; program_id: string }>(
-    `SELECT TOP (1) * FROM voting_periods
-      WHERE opens_at <= SYSDATETIMEOFFSET() AND closes_at >= SYSDATETIMEOFFSET()
-      ORDER BY opens_at DESC`
+    `SELECT TOP (1) vp.id, vp.program_id
+       FROM voting_periods vp
+      WHERE vp.voting_published = 1
+        AND vp.opens_at <= SYSDATETIMEOFFSET() AND vp.closes_at >= SYSDATETIMEOFFSET()
+        AND vp.program_id = (SELECT TOP (1) id FROM programs WHERE status = 'active' ORDER BY created_at DESC)
+      ORDER BY vp.opens_at DESC`
   );
 
   if (!period) {
+    const results = await db.queryOne<{ id: string }>(
+      `SELECT TOP (1) vp.id FROM voting_periods vp
+        WHERE vp.results_published = 1
+          AND vp.program_id = (SELECT TOP (1) id FROM programs WHERE status = 'active' ORDER BY created_at DESC)`
+    );
     return (
       <div>
         <PageHeader title="Voting" />
-        <EmptyState icon={VoteIcon} title="Voting isn't open right now" description="Check back once a voting window opens." />
+        <EmptyState
+          icon={VoteIcon}
+          title="Voting isn't open right now"
+          description={results ? 'The latest Favorite Project results are published.' : 'Check back once a voting window opens.'}
+          action={
+            results ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/voting/results">See results</Link>
+              </Button>
+            ) : undefined
+          }
+        />
       </div>
     );
   }
 
-  // Candidates are every idea in the program whose qualifier assessment is
-  // finalized as Build (usp_submit_vote enforces the same rule).
-  const candidates = (
-    await db.query<{ idea_id: string; idea_title: string | null; team_name: string | null }>(
-      `SELECT i.id AS idea_id, i.idea_title, i.team_name
-         FROM ideas i
-         JOIN qualifier_assessments qa ON qa.idea_id = i.id
-        WHERE i.program_id = @programId AND qa.status = 'finalized' AND qa.build_decision = 'build'
-        ORDER BY i.idea_title`,
-      { programId: period.program_id }
-    )
-  ).map((p) => ({
-    idea_id: p.idea_id,
-    idea_title: p.idea_title ?? 'Untitled',
-    team_name: p.team_name ?? '',
-  }));
+  // Candidates are every idea with a published Build result (v_vote_candidates).
+  const candidates = await fetchVoteCandidates(period.program_id);
 
   // Only the caller's own ballot — never anyone else's.
   const existingVote = user
@@ -54,9 +64,14 @@ export default async function VotingPage() {
     <div>
       <PageHeader title="Voting" description="Cast one vote for your favorite Build project." action={<StatusBadge status="voting_open" />} />
       {candidates.length === 0 ? (
-        <EmptyState icon={VoteIcon} title="No candidates yet" description="No ideas have been marked Build for this cycle yet." />
+        <EmptyState icon={VoteIcon} title="No candidates yet" description="No ideas have a published Build result for this cycle." />
       ) : (
-        <VoteForm votingPeriodId={period.id} candidates={candidates} alreadyVotedIdeaId={existingVote?.idea_id} />
+        <VoteForm
+          votingPeriodId={period.id}
+          candidates={candidates}
+          alreadyVotedIdeaId={existingVote?.idea_id}
+          canDelete={!!user && isDeveloper(user.roles)}
+        />
       )}
     </div>
   );

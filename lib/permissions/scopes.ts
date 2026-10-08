@@ -33,8 +33,7 @@ function assertAlias(alias: string) {
 /**
  * ideas readable by `user` — mirrors participants_select_own_or_team,
  * mentors_select_submitted_ideas, admins_full_access_ideas and
- * anyone_select_showcased_ideas (now: voting candidates, i.e. ideas with a
- * finalized Build qualifier assessment).
+ * anyone_select_showcased_ideas (now: voting candidates, v_vote_candidates).
  */
 export function ideaReadFilter(user: SessionUser, alias = 'i'): Scope {
   assertAlias(alias);
@@ -42,7 +41,7 @@ export function ideaReadFilter(user: SessionUser, alias = 'i'): Scope {
   const parts = [
     `${alias}.created_by = @scope_uid`,
     `dbo.fn_is_idea_team_member(${alias}.id, @scope_uid) = 1`,
-    `EXISTS (SELECT 1 FROM qualifier_assessments scope_qa WHERE scope_qa.idea_id = ${alias}.id AND scope_qa.status = 'finalized' AND scope_qa.build_decision = 'build')`,
+    `EXISTS (SELECT 1 FROM dbo.v_vote_candidates scope_vc WHERE scope_vc.idea_id = ${alias}.id)`,
   ];
   if (isMentor(user.roles)) parts.push(`${alias}.status = 'submitted'`);
   return { sql: `(${parts.join(' OR ')})`, params: { scope_uid: user.id } };
@@ -81,7 +80,7 @@ export function reviewReadFilter(user: SessionUser, alias = 'r'): Scope {
 
 /**
  * profiles readable by `user` — self, admin, teammates, and team members
- * of voting candidates — finalized Build ideas (profiles_select_self_or_admin,
+ * of voting candidates — v_vote_candidates (profiles_select_self_or_admin,
  * profiles_select_teammates, anyone_select_showcased_team_profiles).
  *
  * Two additions over the Supabase-era policies, which left the mentor
@@ -104,9 +103,9 @@ export function profileReadFilter(user: SessionUser, alias = 'p'): Scope {
       OR EXISTS (SELECT 1 FROM mentor_profiles scope_m WHERE scope_m.profile_id = ${alias}.id)${mentorClause}
       OR EXISTS (SELECT 1 FROM idea_team_members scope_a JOIN idea_team_members scope_b ON scope_a.idea_id = scope_b.idea_id
                  WHERE scope_a.profile_id = @scope_uid AND scope_b.profile_id = ${alias}.id)
-      OR EXISTS (SELECT 1 FROM ideas scope_i JOIN qualifier_assessments scope_qa ON scope_qa.idea_id = scope_i.id AND scope_qa.status = 'finalized' AND scope_qa.build_decision = 'build'
+      OR EXISTS (SELECT 1 FROM ideas scope_i JOIN dbo.v_vote_candidates scope_vc ON scope_vc.idea_id = scope_i.id
                  WHERE scope_i.team_leader_id = ${alias}.id)
-      OR EXISTS (SELECT 1 FROM idea_team_members scope_t JOIN qualifier_assessments scope_qa2 ON scope_qa2.idea_id = scope_t.idea_id AND scope_qa2.status = 'finalized' AND scope_qa2.build_decision = 'build'
+      OR EXISTS (SELECT 1 FROM idea_team_members scope_t JOIN dbo.v_vote_candidates scope_vc2 ON scope_vc2.idea_id = scope_t.idea_id
                  WHERE scope_t.profile_id = ${alias}.id))`,
     params: { scope_uid: user.id },
   };

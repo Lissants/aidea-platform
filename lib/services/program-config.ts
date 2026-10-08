@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/permissions';
 import { logAudit } from '@/lib/audit/log';
 import { parseFileUrl, removeByUrl } from '@/lib/storage/local';
+import { sanitizeTimelineTba, type TimelineTba } from '@/lib/program/timeline';
 
 export interface ProgramRow {
   id: string;
@@ -18,6 +19,7 @@ export interface ProgramRow {
   final_presentation_close_at: string | null;
   voting_open_at: string | null;
   voting_close_at: string | null;
+  timeline_tba: string | null;
   status: string;
 }
 
@@ -47,7 +49,7 @@ export async function fetchActiveProgram(): Promise<ProgramRow | null> {
  * per-field before/after so a shifted deadline is traceable later. */
 export async function saveProgramConfig(
   programId: string,
-  input: { title: string; description: string | null } & Partial<Record<DateField, string | null>>
+  input: { title: string; description: string | null; timelineTba?: TimelineTba } & Partial<Record<DateField, string | null>>
 ) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
@@ -58,6 +60,10 @@ export async function saveProgramConfig(
   const patch: Record<string, unknown> = { title: input.title, description: input.description, updated_at: new Date().toISOString() };
   for (const field of DATE_FIELDS) {
     if (field in input) patch[field] = input[field] ?? null;
+  }
+  if (input.timelineTba !== undefined) {
+    const tba = sanitizeTimelineTba(input.timelineTba);
+    patch.timeline_tba = Object.keys(tba).length ? JSON.stringify(tba) : null;
   }
 
   const { error } = await attempt(() => db.update('programs', patch, 'id = @programId', { programId }));
@@ -74,6 +80,8 @@ export async function saveProgramConfig(
   });
 
   revalidatePath('/program');
+  revalidatePath('/overview');
+  revalidatePath('/submit');
   return { ok: true } as const;
 }
 

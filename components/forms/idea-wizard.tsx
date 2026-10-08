@@ -3,27 +3,30 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
 import { ContextualActionBar } from '@/components/layout/contextual-action-bar';
+import { ConfirmDialog } from '@/components/layout/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ConfirmDialog } from '@/components/layout/confirm-dialog';
-import { saveIdeaDraft, submitIdeaDraft } from '@/lib/services/ideas';
+import { FormField } from '@/components/forms/form-field';
+import { ProfilePicker } from '@/components/forms/profile-picker';
 import {
-  ideaBasicsSchema,
-  ideaImpactsSchema,
-  ideaMentorPreferencesSchema,
-  ideaSupportRequestsSchema,
-  ideaTeamSchema,
-  type IdeaDraftInput,
-} from '@/lib/validation/schemas';
-import type { ImpactKind, ImpactType, SupportArea } from '@/types/database';
-
-const SECTION_LABELS = ['Idea basics', 'Team members', 'Impact', 'Support needed', 'Mentor preference'];
+  ErrorSummary,
+  FormSection,
+  ImpactFieldset,
+  RemoveButton,
+  SectionIndex,
+  SupportRequestFieldset,
+  makeFieldLookup,
+  type ImpactValue,
+  type SupportRequestValue,
+} from '@/components/forms/idea-form-parts';
+import { saveIdeaDraft, submitIdeaDraft } from '@/lib/services/ideas';
+import { IDEA_FORM_SECTIONS, collectIdeaIssues, type IdeaFormValues } from '@/lib/ideas/idea-form-issues';
+import type { IdeaDraftInput } from '@/lib/validation/schemas';
+import type { IdeaDraftInitial } from '@/lib/ideas/idea-draft';
+import type { ImpactType } from '@/types/database';
 
 interface TeamMemberEntry {
   profile_id: string;
@@ -34,165 +37,74 @@ interface TeamMemberEntry {
 interface MentorOption {
   mentor_profile_id: string;
   full_name: string;
+  job_title: string | null;
   expertise: string | null;
 }
 
-const IMPACT_TYPE_OPTIONS: { value: ImpactType; label: string }[] = [
-  { value: 'revenue_growth', label: 'Revenue growth' },
-  { value: 'time_efficiency', label: 'Time efficiency' },
-  { value: 'cost_efficiency', label: 'Cost efficiency' },
-  { value: 'governance_improvement', label: 'Governance improvement' },
-];
-
-const SUPPORT_AREA_OPTIONS: { value: SupportArea; label: string }[] = [
-  { value: 'tools', label: 'Tools' },
-  { value: 'budget', label: 'Budget' },
-  { value: 'data_access', label: 'Data access' },
-];
-
-/** Label + placeholder for the two support fields (details, estimate), per support area. */
-const SUPPORT_FIELD_COPY: Record<
-  SupportArea,
-  { details: { label: string; placeholder: string }; estimate: { label: string; placeholder: string } }
-> = {
-  tools: {
-    details: { label: 'Support Details', placeholder: 'Tools, licenses, or technology' },
-    estimate: { label: 'Why is this support needed?', placeholder: 'Explain how it supports project development' },
-  },
-  budget: {
-    details: { label: 'Estimated Amount', placeholder: 'IDR' },
-    estimate: { label: 'Support Details', placeholder: 'Provide the main cost assumptions' },
-  },
-  data_access: {
-    details: { label: 'Support Details', placeholder: 'Required data and level of access' },
-    estimate: { label: 'Why is this support needed?', placeholder: 'Explain how the data will be used' },
-  },
-};
-
 const MAX_TEAM_MEMBERS = 5;
+const MAX_SUPPORT_REQUESTS = 5;
+const [SECTION_BASICS, SECTION_TEAM, SECTION_IMPACT, SECTION_SUPPORT, SECTION_MENTORS] = IDEA_FORM_SECTIONS;
 
-function RequiredMark() {
-  return (
-    <span className="ml-0.5 text-destructive" aria-hidden="true">
-      *
-    </span>
-  );
-}
-
-/** Debounced colleague search; calls onSelect with the picked profile. */
-function ProfilePicker({
-  onSelect,
-  excludeIds,
-  disabled,
-  placeholder = 'Type at least 2 characters…',
+export function IdeaWizard({
+  programId,
+  mentors,
+  initial,
 }: {
-  onSelect: (profile: { id: string; full_name: string }) => void;
-  excludeIds: string[];
-  disabled?: boolean;
-  placeholder?: string;
+  programId: string;
+  mentors: MentorOption[];
+  /** A saved draft to continue (from /submit?draft=<id>). */
+  initial?: IdeaDraftInitial;
 }) {
-  const [search, setSearch] = React.useState('');
-  const [results, setResults] = React.useState<{ id: string; full_name: string; email: string }[]>([]);
-
-  React.useEffect(() => {
-    if (search.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/profiles/search?q=${encodeURIComponent(search)}`, {
-          signal: controller.signal,
-        });
-        const data = await res.json();
-        setResults(data.profiles ?? []);
-      } catch {
-        // Aborted or transient — ignore.
-      }
-    }, 250);
-    return () => {
-      controller.abort();
-      clearTimeout(timer);
-    };
-  }, [search]);
-
-  const visible = results.filter((p) => !excludeIds.includes(p.id));
-
-  return (
-    <>
-      <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={placeholder} disabled={disabled} />
-      {visible.length > 0 && (
-        <div className="rounded-md border">
-          {visible.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent"
-              onClick={() => {
-                onSelect(p);
-                setSearch('');
-                setResults([]);
-              }}
-            >
-              <span>{p.full_name}</span>
-              <span className="text-xs text-muted-foreground">{p.email}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-export function IdeaWizard({ programId, mentors }: { programId: string; mentors: MentorOption[] }) {
   const router = useRouter();
-  const [ideaId, setIdeaId] = React.useState<string | null>(null);
+  const [ideaId, setIdeaId] = React.useState<string | null>(initial?.ideaId ?? null);
   const [pending, setPending] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [showErrors, setShowErrors] = React.useState(false);
+  const [savedAt, setSavedAt] = React.useState<Date | null>(null);
+  const summaryRef = React.useRef<HTMLDivElement>(null);
 
-  const [basics, setBasics] = React.useState({
-    team_name: '',
-    idea_title: '',
-    problem_opportunity: '',
-    proposed_solution: '',
-    target_users: '',
-  });
-  const [teamLeader, setTeamLeader] = React.useState<{ profile_id: string; full_name: string } | null>(null);
-  const [teamMembers, setTeamMembers] = React.useState<TeamMemberEntry[]>([]);
-  const [impacts, setImpacts] = React.useState<
-    { impact_kind: ImpactKind; impact_type: ImpactType; explanation: string; measurable_result: string }[]
-  >([{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: '', measurable_result: '' }]);
-  const [supportRequests, setSupportRequests] = React.useState<
-    { support_area: SupportArea; details: string; reason: string; estimate: string }[]
-  >([]);
-  const [mentorPrefs, setMentorPrefs] = React.useState<{ priority: 1 | 2; mentor_profile_id: string }[]>([]);
+  const [basics, setBasics] = React.useState(
+    initial?.basics ?? {
+      team_name: '',
+      idea_title: '',
+      problem_opportunity: '',
+      proposed_solution: '',
+      target_users: '',
+    }
+  );
+  const [teamLeader, setTeamLeader] = React.useState<{ profile_id: string; full_name: string } | null>(
+    initial?.teamLeader ?? null
+  );
+  const [teamMembers, setTeamMembers] = React.useState<TeamMemberEntry[]>(initial?.teamMembers ?? []);
+  const [impacts, setImpacts] = React.useState<ImpactValue[]>(
+    initial?.impacts ?? [{ impact_kind: 'primary', impact_type: '', explanation: '', measurable_result: '' }]
+  );
+  const [supportRequests, setSupportRequests] = React.useState<SupportRequestValue[]>(initial?.supportRequests ?? []);
+  const [mentorPrefs, setMentorPrefs] = React.useState<{ priority: 1 | 2; mentor_profile_id: string }[]>(
+    initial?.mentorPrefs ?? []
+  );
 
   const teamMemberRows = teamMembers.map(({ profile_id, member_order }) => ({ profile_id, member_order }));
 
-  /** Validates one group of fields; returns the first error message, if any. */
-  function validateStep(index: number): string | null {
-    const result =
-      index === 0
-        ? ideaBasicsSchema.safeParse(basics)
-        : index === 1
-          ? ideaTeamSchema.safeParse({ team_leader_id: teamLeader?.profile_id, team_members: teamMemberRows })
-          : index === 2
-            ? ideaImpactsSchema.safeParse({ impacts })
-            : index === 3
-              ? ideaSupportRequestsSchema.safeParse({ support_requests: supportRequests })
-              : index === 4
-                ? ideaMentorPreferencesSchema.safeParse({ mentor_preferences: mentorPrefs })
-                : null;
-    if (!result || result.success) return null;
-    return result.error.issues[0]?.message ?? 'Please check this section';
-  }
+  const values: IdeaFormValues = {
+    basics,
+    team_leader_id: teamLeader?.profile_id,
+    team_members: teamMemberRows,
+    impacts,
+    support_requests: supportRequests,
+    mentor_preferences: mentorPrefs,
+  };
+
+  // Errors appear after the first submit attempt, then update live as fields are fixed.
+  const issues = showErrors ? collectIdeaIssues(values) : [];
+  const field = makeFieldLookup(issues);
 
   const draftPayload = () => ({
     ...basics,
     team_leader_id: teamLeader?.profile_id,
     team_members: teamMemberRows,
-    impacts,
+    // impact_type is NOT NULL in the DB, so an impact is stored once its type is chosen.
+    impacts: impacts.filter((i): i is ImpactValue & { impact_type: ImpactType } => i.impact_type !== ''),
     support_requests: supportRequests,
     mentor_preferences: mentorPrefs,
   });
@@ -206,18 +118,23 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
       toast.error(result.error);
       return;
     }
+    // A new draft gets its own URL, so a refresh reopens it instead of starting a duplicate.
+    // Native replaceState is synced with the Next router and skips a server re-render.
+    if (!ideaId && result.ideaId) window.history.replaceState(null, '', `/submit?draft=${result.ideaId}`);
     setIdeaId(result.ideaId ?? null);
+    setSavedAt(new Date());
     toast.success('Draft saved');
   }
 
   function openSubmitConfirm() {
-    // All fields are validated only on submit.
-    for (let i = 0; i < SECTION_LABELS.length; i++) {
-      const error = validateStep(i);
-      if (error) {
-        toast.error(`${SECTION_LABELS[i]}: ${error}`);
-        return;
-      }
+    if (collectIdeaIssues(values).length > 0) {
+      setShowErrors(true);
+      // Move focus to the summary once it has rendered.
+      requestAnimationFrame(() => {
+        summaryRef.current?.scrollIntoView({ block: 'start' });
+        summaryRef.current?.focus({ preventScroll: true });
+      });
+      return;
     }
     setConfirmOpen(true);
   }
@@ -235,53 +152,126 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
     router.push('/my-ideas');
   }
 
+  const title = field('idea_title');
+  const problem = field('problem_opportunity', true);
+  const solution = field('proposed_solution', true);
+  const targetUsers = field('target_users', true);
+  const teamName = field('team_name');
+  const leader = field('team_leader', true);
+  const members = field('team_members', true);
+  const mentorField = field('mentor_preferences');
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Team &amp; Idea Information</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Describe the opportunity, proposed solution, and intended users.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>
-              Team name
-              <RequiredMark />
-            </Label>
-            <Input value={basics.team_name} onChange={(e) => setBasics({ ...basics, team_name: e.target.value })} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Team leader
-              <RequiredMark />
-            </Label>
-            <p className="text-xs text-muted-foreground">Search colleagues by name or email</p>
+    <div className="lg:grid lg:grid-cols-[minmax(0,48rem)_13rem] lg:gap-12">
+      <div className="space-y-8">
+        <p className="text-sm text-muted-foreground">
+          Fields marked <span aria-hidden="true">*</span>
+          <span className="sr-only">as required</span> are needed to submit. You can save a draft at any time.
+        </p>
+
+        {issues.length > 0 && <ErrorSummary issues={issues} summaryRef={summaryRef} />}
+
+        <FormSection section={SECTION_BASICS} description="Describe the opportunity, your solution and who benefits.">
+          <FormField id={title.id} label="Idea Title" required error={title.error}>
+            <Input
+              {...title.a11y}
+              aria-required
+              placeholder="A short, specific title"
+              value={basics.idea_title}
+              onChange={(e) => setBasics({ ...basics, idea_title: e.target.value })}
+            />
+          </FormField>
+          <FormField
+            id={problem.id}
+            label="Problem / Opportunity"
+            required
+            hint="What problem or opportunity does the idea address, and why does it matter?"
+            error={problem.error}
+          >
+            <Textarea
+              {...problem.a11y}
+              aria-required
+              rows={4}
+              value={basics.problem_opportunity}
+              onChange={(e) => setBasics({ ...basics, problem_opportunity: e.target.value })}
+            />
+          </FormField>
+          <FormField
+            id={solution.id}
+            label="Proposed Solution & AI Use"
+            required
+            hint="Describe the solution and how AI will be used."
+            error={solution.error}
+          >
+            <Textarea
+              {...solution.a11y}
+              aria-required
+              rows={4}
+              value={basics.proposed_solution}
+              onChange={(e) => setBasics({ ...basics, proposed_solution: e.target.value })}
+            />
+          </FormField>
+          <FormField
+            id={targetUsers.id}
+            label="Target Users / Beneficiaries"
+            required
+            hint="Who will use or benefit from the solution?"
+            error={targetUsers.error}
+          >
+            <Textarea
+              {...targetUsers.a11y}
+              aria-required
+              rows={2}
+              value={basics.target_users}
+              onChange={(e) => setBasics({ ...basics, target_users: e.target.value })}
+            />
+          </FormField>
+        </FormSection>
+
+        <FormSection
+          section={SECTION_TEAM}
+          description={`Name your team and choose a leader. You can add up to ${MAX_TEAM_MEMBERS} members.`}
+        >
+          <FormField id={teamName.id} label="Team Name" required error={teamName.error}>
+            <Input
+              {...teamName.a11y}
+              aria-required
+              value={basics.team_name}
+              onChange={(e) => setBasics({ ...basics, team_name: e.target.value })}
+            />
+          </FormField>
+
+          <FormField id={leader.id} label="Team Leader" required hint="Search colleagues by name or email." error={leader.error}>
             {teamLeader ? (
-              <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                {teamLeader.full_name}
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setTeamLeader(null)}>
-                  <X className="h-3.5 w-3.5" />
-                </Button>
+              <div className="flex items-center justify-between gap-2 rounded-md border pl-3 text-sm">
+                <span className="font-semibold">{teamLeader.full_name}</span>
+                <RemoveButton label={`Remove ${teamLeader.full_name} as team leader`} onClick={() => setTeamLeader(null)} />
               </div>
             ) : (
               <ProfilePicker
+                programId={programId}
+                inputProps={{ ...leader.a11y, 'aria-required': true }}
                 excludeIds={teamMembers.map((m) => m.profile_id)}
                 onSelect={(p) => setTeamLeader({ profile_id: p.id, full_name: p.full_name })}
               />
             )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Team members</Label>
-            <p className="text-xs text-muted-foreground">
-              Search colleagues by name or email (maximum {MAX_TEAM_MEMBERS} members)
-            </p>
+          </FormField>
+
+          <FormField
+            id={members.id}
+            label="Team Members"
+            hint={`Optional. Up to ${MAX_TEAM_MEMBERS} colleagues, searched by name or email.`}
+            error={members.error}
+          >
             <ProfilePicker
+              programId={programId}
+              inputProps={members.a11y}
               disabled={teamMembers.length >= MAX_TEAM_MEMBERS}
               excludeIds={[...teamMembers.map((m) => m.profile_id), ...(teamLeader ? [teamLeader.profile_id] : [])]}
               placeholder={
-                teamMembers.length >= MAX_TEAM_MEMBERS ? 'Maximum of 5 members reached' : 'Type at least 2 characters…'
+                teamMembers.length >= MAX_TEAM_MEMBERS
+                  ? `Maximum of ${MAX_TEAM_MEMBERS} members reached`
+                  : 'Type at least 2 characters…'
               }
               onSelect={(p) =>
                 setTeamMembers((prev) =>
@@ -291,285 +281,165 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                 )
               }
             />
-          </div>
-          <div className="space-y-2">
-            {teamMembers.map((m) => (
-              <div key={m.profile_id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                {m.full_name}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() =>
-                    setTeamMembers((prev) =>
-                      prev.filter((x) => x.profile_id !== m.profile_id).map((x, i) => ({ ...x, member_order: i + 1 }))
-                    )
-                  }
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-            {teamMembers.length === 0 && <p className="text-sm text-muted-foreground">No additional members added.</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Idea title
-              <RequiredMark />
-            </Label>
-            <Input
-              placeholder="Enter a concise idea title"
-              value={basics.idea_title}
-              onChange={(e) => setBasics({ ...basics, idea_title: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Problem / opportunity
-              <RequiredMark />
-            </Label>
-            <Textarea
-              rows={4}
-              placeholder="What problem or opportunity does the idea address, and why is it relevant?"
-              value={basics.problem_opportunity}
-              onChange={(e) => setBasics({ ...basics, problem_opportunity: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Proposed Solution &amp; AI Use
-              <RequiredMark />
-            </Label>
-            <Textarea
-              rows={4}
-              placeholder="Describe the proposed solution and how AI will be used"
-              value={basics.proposed_solution}
-              onChange={(e) => setBasics({ ...basics, proposed_solution: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Target Users / Beneficiaries</Label>
-            <Textarea
-              rows={2}
-              placeholder="Who will use or benefit from the solution?"
-              value={basics.target_users}
-              onChange={(e) => setBasics({ ...basics, target_users: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="block">Business Impact</Label>
-            <p className="text-xs text-muted-foreground">
-              Define the primary impact and add a secondary impact only when it provides distinct additional value.
-            </p>
-          </div>
+            {teamMembers.length > 0 && (
+              <ul aria-label="Team members added" className="divide-y rounded-md border">
+                {teamMembers.map((m) => (
+                  <li key={m.profile_id} className="flex items-center justify-between gap-2 pl-3 text-sm">
+                    {m.full_name}
+                    <RemoveButton
+                      label={`Remove ${m.full_name} from the team`}
+                      onClick={() =>
+                        setTeamMembers((prev) =>
+                          prev.filter((x) => x.profile_id !== m.profile_id).map((x, i) => ({ ...x, member_order: i + 1 }))
+                        )
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </FormField>
+        </FormSection>
+
+        <FormSection
+          section={SECTION_IMPACT}
+          description="Choose the main business outcome. Add a secondary impact only when it adds distinct value."
+        >
           {impacts.map((impact, idx) => (
-            <div key={idx} className="space-y-3 rounded-md border p-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-sm font-medium">
-                    {impact.impact_kind === 'primary' ? 'Primary impact' : 'Secondary impact'}
-                    {impact.impact_kind === 'primary' && <RequiredMark />}
-                  </span>
-                  <p className="text-xs text-muted-foreground">
-                    {impact.impact_kind === 'primary'
-                      ? 'Select the main business outcome expected from this idea.'
-                      : 'Select an additional business outcome that adds distinct value.'}
-                  </p>
-                </div>
-                {idx > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setImpacts((prev) => prev.filter((_, i) => i !== idx))}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-              <Select
-                value={impact.impact_type}
-                onValueChange={(v) =>
-                  setImpacts((prev) => prev.map((it, i) => (i === idx ? { ...it, impact_type: v as ImpactType } : it)))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {IMPACT_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="space-y-1.5">
-                <Label>
-                  How will the idea create this impact?
-                  <RequiredMark />
-                </Label>
-                <Textarea
-                  placeholder="Explain the expected business value"
-                  value={impact.explanation}
-                  onChange={(e) =>
-                    setImpacts((prev) => prev.map((it, i) => (i === idx ? { ...it, explanation: e.target.value } : it)))
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>What measurable result would indicate success?</Label>
-                <Input
-                  placeholder="Define the expected result or indicator"
-                  value={impact.measurable_result}
-                  onChange={(e) =>
-                    setImpacts((prev) =>
-                      prev.map((it, i) => (i === idx ? { ...it, measurable_result: e.target.value } : it))
-                    )
-                  }
-                />
-              </div>
-            </div>
+            <ImpactFieldset
+              key={idx}
+              index={idx}
+              impact={impact}
+              field={field}
+              onChange={(patch) => setImpacts((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)))}
+              onRemove={idx > 0 ? () => setImpacts((prev) => prev.filter((_, i) => i !== idx)) : undefined}
+            />
           ))}
           {impacts.length < 2 && (
             <Button
+              type="button"
               variant="outline"
-              size="sm"
               onClick={() =>
                 setImpacts((prev) => [
                   ...prev,
-                  { impact_kind: 'secondary', impact_type: 'cost_efficiency', explanation: '', measurable_result: '' },
+                  { impact_kind: 'secondary', impact_type: '', explanation: '', measurable_result: '' },
                 ])
               }
             >
-              Add secondary impact
+              Add Secondary Impact
             </Button>
           )}
-          <div className="space-y-1">
-            <Label className="block">Support needed (optional)</Label>
-            <p className="text-xs text-muted-foreground">
-              Identify the resources required to develop the project and complete its final output.
-            </p>
-          </div>
-          {supportRequests.map((req, idx) => {
-            const copy = SUPPORT_FIELD_COPY[req.support_area];
+        </FormSection>
+
+        <FormSection
+          section={SECTION_SUPPORT}
+          description="Optional. Resources the project needs to reach its final output: tools, budget or data access."
+        >
+          {supportRequests.map((req, idx) => (
+            <SupportRequestFieldset
+              key={idx}
+              index={idx}
+              request={req}
+              field={field}
+              onChange={(patch) =>
+                setSupportRequests((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
+              }
+              onRemove={() => setSupportRequests((prev) => prev.filter((_, i) => i !== idx))}
+            />
+          ))}
+          {supportRequests.length < MAX_SUPPORT_REQUESTS && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                setSupportRequests((prev) => [...prev, { support_area: 'tools', details: '', reason: '', estimate: '' }])
+              }
+            >
+              Add Support Request
+            </Button>
+          )}
+        </FormSection>
+
+        <FormSection
+          section={SECTION_MENTORS}
+          description="Choose two different mentors and rank them. Admins use your ranking when assigning a reviewer."
+        >
+          {([1, 2] as const).map((priority) => {
+            const id = priority === 1 ? mentorField.id : `${mentorField.id}-2`;
+            const selected = mentorPrefs.find((p) => p.priority === priority)?.mentor_profile_id ?? '';
+            const other = mentorPrefs.find((p) => p.priority !== priority)?.mentor_profile_id;
             return (
-              <div key={idx} className="space-y-3 rounded-md border p-3">
-                <div className="flex items-center justify-between">
-                  <Select
-                    value={req.support_area}
-                    onValueChange={(v) =>
-                      setSupportRequests((prev) =>
-                        prev.map((it, i) => (i === idx ? { ...it, support_area: v as SupportArea } : it))
-                      )
-                    }
+              <FormField key={priority} id={id} label={`Mentor Priority ${priority}`} required>
+                <Select
+                  value={selected}
+                  onValueChange={(v) =>
+                    setMentorPrefs((prev) => [
+                      ...prev.filter((p) => p.priority !== priority),
+                      { priority, mentor_profile_id: v },
+                    ])
+                  }
+                >
+                  <SelectTrigger
+                    id={id}
+                    aria-required
+                    aria-invalid={(!!mentorField.error && !selected) || undefined}
+                    aria-describedby={mentorField.error ? `${mentorField.id}-error` : undefined}
+                    className="[&>span:first-child]:truncate [&>span:first-child]:text-left"
                   >
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORT_AREA_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
+                    <SelectValue placeholder="Select a mentor" />
+                  </SelectTrigger>
+                  <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
+                    {mentors.map((m) => {
+                      const takenByOther = m.mentor_profile_id === other;
+                      return (
+                        <SelectItem
+                          key={m.mentor_profile_id}
+                          value={m.mentor_profile_id}
+                          disabled={takenByOther}
+                          description={takenByOther ? `Already your priority ${priority === 1 ? 2 : 1}` : undefined}
+                        >
+                          <span className="font-medium">{m.full_name}</span>
+                          {m.job_title && <span className="text-muted-foreground">, {m.job_title}</span>}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setSupportRequests((prev) => prev.filter((_, i) => i !== idx))}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>{copy.details.label}</Label>
-                  <Textarea
-                    placeholder={copy.details.placeholder}
-                    value={req.details}
-                    onChange={(e) =>
-                      setSupportRequests((prev) =>
-                        prev.map((it, i) => (i === idx ? { ...it, details: e.target.value } : it))
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>{copy.estimate.label}</Label>
-                  <Input
-                    placeholder={copy.estimate.placeholder}
-                    value={req.estimate}
-                    onChange={(e) =>
-                      setSupportRequests((prev) =>
-                        prev.map((it, i) => (i === idx ? { ...it, estimate: e.target.value } : it))
-                      )
-                    }
-                  />
-                </div>
-              </div>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </FormField>
             );
           })}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSupportRequests((prev) => [...prev, { support_area: 'tools', details: '', reason: '', estimate: '' }])}
-          >
-            Add support request
-          </Button>
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold">Preferred Mentors</h3>
-            <p className="text-xs text-muted-foreground">
-              Choose exactly two different mentors and clearly rank them as Priority 1 and Priority 2.
+          {mentorField.error && (
+            <p id={`${mentorField.id}-error`} className="text-sm font-semibold text-destructive">
+              {mentorField.error}
             </p>
-          </div>
-          {[1, 2].map((priority) => (
-            <div key={priority} className="space-y-1.5">
-              <Label>
-                Mentor Priority {priority}
-                <RequiredMark />
-              </Label>
-              <Select
-                value={mentorPrefs.find((p) => p.priority === priority)?.mentor_profile_id ?? ''}
-                onValueChange={(v) =>
-                  setMentorPrefs((prev) => [
-                    ...prev.filter((p) => p.priority !== priority),
-                    { priority: priority as 1 | 2, mentor_profile_id: v },
-                  ])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a mentor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mentors.map((m) => (
-                    <SelectItem key={m.mentor_profile_id} value={m.mentor_profile_id}>
-                      {m.full_name} {m.expertise ? `· ${m.expertise}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+          )}
+        </FormSection>
 
-      <ContextualActionBar>
-        <Button variant="secondary" type="button" onClick={persistDraft} disabled={pending}>
-          Save draft
-        </Button>
-        <Button type="button" onClick={openSubmitConfirm} disabled={pending}>
-          Submit idea
-        </Button>
-      </ContextualActionBar>
+        <ContextualActionBar className="justify-between">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {savedAt
+              ? `Draft saved at ${savedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}. You can continue it later from My Ideas.`
+              : ''}
+          </p>
+          <div className="flex flex-1 justify-end gap-2 sm:flex-none">
+            <Button variant="secondary" type="button" onClick={persistDraft} disabled={pending} className="flex-1 sm:flex-none">
+              {pending ? 'Saving…' : 'Save draft'}
+            </Button>
+            <Button type="button" onClick={openSubmitConfirm} disabled={pending} className="flex-1 sm:flex-none">
+              Submit idea
+            </Button>
+          </div>
+        </ContextualActionBar>
+      </div>
+
+      <SectionIndex issues={issues} />
 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Submit this idea?"
         description="Submitting locks your idea for editing and routes it to a mentor for review. This cannot be undone."
-        confirmLabel="Submit"
+        confirmLabel="Submit idea"
         onConfirm={handleFinalSubmit}
       />
     </div>

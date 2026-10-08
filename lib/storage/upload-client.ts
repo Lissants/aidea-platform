@@ -1,6 +1,6 @@
 /** Browser-side upload to app/api/files/[bucket] (admin only). */
 export async function uploadFile(
-  bucket: 'program-resources',
+  bucket: 'program-resources' | 'mentor-photos',
   prefix: string,
   file: File
 ): Promise<{ url: string; key: string } | { error: string }> {

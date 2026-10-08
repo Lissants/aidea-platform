@@ -3,17 +3,34 @@ import { ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/layout/empty-state';
 import { RoleManagementRow } from '@/components/admin/role-management-row';
-import { fetchUsersWithRoles } from '@/lib/services/roles';
+import { AddUserDialog } from '@/components/admin/add-user-dialog';
+import { fetchManagedUsers } from '@/lib/services/users';
 
-export const metadata = { title: 'Role Management' };
+export const metadata = { title: 'User Management' };
+
+function pageHref(q: string | undefined, page: number) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (page > 1) params.set('page', String(page));
+  const qs = params.toString();
+  return qs ? `/roles?${qs}` : '/roles';
+}
 
 export default async function RolesPage(props: { searchParams: Promise<Record<string, string | undefined>> }) {
   const searchParams = await props.searchParams;
-  const users = await fetchUsersWithRoles(searchParams.q);
+  const { users, total, page, pageSize, creatableTiers } = await fetchManagedUsers(
+    searchParams.q,
+    Number(searchParams.page) || 1
+  );
+  const lastPage = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div>
-      <PageHeader title="Role Management" description="Grant or revoke platform roles. Every change is written to the audit log." />
+      <PageHeader
+        title="User Management"
+        description="Add and deactivate users and change their role. Every change is written to the audit log."
+        action={<AddUserDialog tiers={creatableTiers} />}
+      />
 
       <form method="get" className="mb-6 flex gap-2">
         <input
@@ -41,6 +58,16 @@ export default async function RolesPage(props: { searchParams: Promise<Record<st
             <RoleManagementRow key={u.user_id} user={u} />
           ))}
         </div>
+      )}
+
+      {lastPage > 1 && (
+        <nav className="mt-6 flex items-center justify-between text-sm" aria-label="Pagination">
+          {page > 1 ? <Link href={pageHref(searchParams.q, page - 1)}>Previous</Link> : <span />}
+          <span className="text-muted-foreground">
+            Page {page} of {lastPage} ({total} users)
+          </span>
+          {page < lastPage ? <Link href={pageHref(searchParams.q, page + 1)}>Next</Link> : <span />}
+        </nav>
       )}
     </div>
   );

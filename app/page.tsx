@@ -16,6 +16,7 @@ export default async function RootPage() {
   }
 
   const ROLE_HOME: Record<string, string> = {
+    developer: '/overview',
     admin: '/overview',
     mentor: '/overview',
     participant: '/overview',

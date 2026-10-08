@@ -19,7 +19,7 @@ export default async function OverviewPage() {
 
   const activeRole = await getActiveRole(user);
 
-  if (activeRole === 'admin') return <AdminOverview />;
+  if (activeRole === 'admin' || activeRole === 'developer') return <AdminOverview />;
   if (activeRole === 'mentor') return <MentorOverview user={user} />;
   if (activeRole === 'participant') return <ParticipantOverview user={user} />;
 

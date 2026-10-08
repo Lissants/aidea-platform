@@ -18,18 +18,36 @@ test.describe('Participant idea submission', () => {
     await page.goto('/submit');
   });
 
-  test('saves a draft without submitting', async ({ page }) => {
-    await page.getByLabel('Team name').fill(`Draft Team ${Date.now()}`);
-    await page.getByLabel('Idea title').fill('Automated expense reconciliation');
-    await page.getByLabel('Problem / opportunity').fill('Finance spends days reconciling expense reports manually every month.');
-    await page.getByLabel('Proposed solution').fill('An AI agent matches receipts to ledger entries and flags exceptions.');
+  test('saves a draft, then continues it from My Ideas', async ({ page }) => {
+    test.setTimeout(90_000); // several round trips; the dev server compiles on first hit
+    const title = `Expense reconciliation ${Date.now()}`;
+    await page.getByLabel('Team Name').fill(`Draft Team ${Date.now()}`);
+    await page.getByLabel('Idea Title').fill(title);
+    await page.getByLabel('Problem / Opportunity').fill('Finance spends days reconciling expense reports manually every month.');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByText(/draft saved/i)).toBeVisible();
+    await expect(page.getByText(/draft saved at/i)).toBeVisible({ timeout: 20_000 });
+    // The draft now has its own URL, so a refresh reopens it.
+    await expect(page).toHaveURL(/\/submit\?draft=/);
+    await page.reload();
+    await expect(page.getByLabel('Idea Title')).toHaveValue(title);
 
     await page.goto('/my-ideas');
-    await expect(page.getByText('Automated expense reconciliation')).toBeVisible();
-    await expect(page.getByText('Draft')).toBeVisible();
+    await page.getByRole('link', { name: `Continue editing ${title}` }).click();
+    await expect(page.getByRole('heading', { name: 'Continue Draft' })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByLabel('Problem / Opportunity')).toHaveValue(
+      'Finance spends days reconciling expense reports manually every month.'
+    );
+
+    await page.getByLabel('Idea Title').fill(`${title} v2`);
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page.getByText(/draft saved at/i)).toBeVisible({ timeout: 20_000 });
+
+    // Saving again updated the same draft rather than creating a second one.
+    await page.goto('/my-ideas');
+    // My Ideas renders a desktop table and mobile cards; count only what is visible.
+    await expect(page.getByText(`${title} v2`).filter({ visible: true })).toHaveCount(1);
+    await expect(page.getByText(title, { exact: true }).filter({ visible: true })).toHaveCount(0);
   });
 
   test('submits a fully valid idea through every wizard step', async ({ page }) => {

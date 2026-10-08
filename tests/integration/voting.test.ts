@@ -51,7 +51,7 @@ describe('castVote', () => {
   it('rejects a vote for an idea that is not marked Build', async () => {
     currentUser = sessionUser(SEED.voter2, ['employee_voter']);
     const result = await castVote({ voting_period_id: SEED.openPeriod, idea_id: SEED.ideaBeacon });
-    expect('error' in result && result.error).toMatch(/not a voting candidate/i);
+    expect('error' in result && result.error).toMatch(/not a candidate/i);
     expect(await votesBy(SEED.voter2)).toHaveLength(0);
   });
 

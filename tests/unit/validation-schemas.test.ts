@@ -4,6 +4,7 @@ import {
   ideaTeamSchema,
   ideaImpactsSchema,
   ideaMentorPreferencesSchema,
+  ideaMentorPreferencesRequiredSchema,
   reviewSchema,
   reopenReviewSchema,
   screeningDecisionSchema,
@@ -11,7 +12,29 @@ import {
   finalPresentationAssessmentSchema,
   voteSchema,
   votingPeriodSchema,
+  createUserSchema,
 } from '@/lib/validation/schemas';
+
+describe('createUserSchema', () => {
+  const form = { email: 'New.User@godrejcp.com', fullName: 'New User', tier: 'participant' as const };
+
+  it('turns blank optional fields into null / undefined (what the Add user form sends)', () => {
+    const out = createUserSchema.parse({ ...form, employeeId: '', tempPassword: '' });
+    expect(out).toEqual({ ...form, email: 'new.user@godrejcp.com', employeeId: null, tempPassword: undefined });
+  });
+
+  it('accepts its own output again, since the browser and the server both parse it', () => {
+    const once = createUserSchema.parse({ ...form, employeeId: '', tempPassword: '' });
+    expect(createUserSchema.safeParse(once).success).toBe(true);
+    const filled = createUserSchema.parse({ ...form, employeeId: ' EMP-9 ', tempPassword: 'Long-enough-pass-1' });
+    expect(createUserSchema.parse(filled)).toEqual(filled);
+    expect(filled.employeeId).toBe('EMP-9');
+  });
+
+  it('still rejects a short non-blank temporary password', () => {
+    expect(createUserSchema.safeParse({ ...form, tempPassword: 'short' }).success).toBe(false);
+  });
+});
 
 describe('ideaBasicsSchema', () => {
   it('accepts a well-formed idea', () => {
@@ -23,6 +46,17 @@ describe('ideaBasicsSchema', () => {
       target_users: 'Warehouse managers',
     });
     expect(result.success).toBe(true);
+  });
+
+  it('rejects blank target users', () => {
+    const result = ideaBasicsSchema.safeParse({
+      idea_title: 'Smart inventory bot',
+      team_name: 'Team Alpha',
+      problem_opportunity: 'Warehouses run out of stock unexpectedly.',
+      proposed_solution: 'Use demand forecasting to flag shortages early.',
+      target_users: '   ',
+    });
+    expect(result.success).toBe(false);
   });
 
   it('rejects a missing title', () => {
@@ -62,6 +96,28 @@ describe('ideaTeamSchema', () => {
   it('requires a team leader', () => {
     expect(ideaTeamSchema.safeParse({ team_members: [] }).success).toBe(false);
   });
+
+  it('rejects the same person listed twice', () => {
+    const member = '11111111-1111-1111-1111-111111111111';
+    const result = ideaTeamSchema.safeParse({
+      team_leader_id: leader,
+      team_members: [
+        { profile_id: member, member_order: 1 },
+        { profile_id: member, member_order: 2 },
+      ],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toMatch(/more than once/);
+  });
+
+  it('rejects a team leader who is also listed as a member', () => {
+    const result = ideaTeamSchema.safeParse({
+      team_leader_id: leader,
+      team_members: [{ profile_id: leader, member_order: 1 }],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toMatch(/leader cannot also be listed/);
+  });
 });
 
 describe('ideaImpactsSchema', () => {
@@ -75,6 +131,12 @@ describe('ideaImpactsSchema', () => {
       impacts: [{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves time weekly', measurable_result: '2 hrs/week' }],
     });
     expect(result.success).toBe(true);
+  });
+
+  it('rejects a blank impact type or measurable result', () => {
+    const base = { impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves time weekly', measurable_result: '2 hrs/week' };
+    expect(ideaImpactsSchema.safeParse({ impacts: [{ ...base, impact_type: '' }] }).success).toBe(false);
+    expect(ideaImpactsSchema.safeParse({ impacts: [{ ...base, measurable_result: '' }] }).success).toBe(false);
   });
 
   it('rejects more than 4 impacts', () => {
@@ -99,6 +161,23 @@ describe('ideaMentorPreferencesSchema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('rejects the same mentor chosen for both priorities (matches the DB unique constraint)', () => {
+    const result = ideaMentorPreferencesSchema.safeParse({
+      mentor_preferences: [
+        { priority: 1, mentor_profile_id: '11111111-1111-1111-1111-111111111111' },
+        { priority: 2, mentor_profile_id: '11111111-1111-1111-1111-111111111111' },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0].message).toBe('Choose two different mentors for Priority 1 and Priority 2');
+  });
+
+  it('lets a draft keep fewer than two preferences, but the submit form requires two', () => {
+    const one = { mentor_preferences: [{ priority: 1, mentor_profile_id: '11111111-1111-1111-1111-111111111111' }] };
+    expect(ideaMentorPreferencesSchema.safeParse(one).success).toBe(true);
+    expect(ideaMentorPreferencesRequiredSchema.safeParse(one).success).toBe(false);
+  });
+
   it('accepts two distinct priorities', () => {
     const result = ideaMentorPreferencesSchema.safeParse({
       mentor_preferences: [
@@ -115,6 +194,7 @@ describe('reviewSchema', () => {
     const result = reviewSchema.safeParse({
       desirability: true,
       viability: true,
+      business_impact: true,
       realistic_implementation: true,
       comment: 'Looks good overall',
     });
@@ -125,6 +205,7 @@ describe('reviewSchema', () => {
     const result = reviewSchema.safeParse({
       desirability: true,
       viability: true,
+      business_impact: true,
       realistic_implementation: false,
       recommendation: 'recommend_pass',
       comment: 'Solid idea with clear impact.',

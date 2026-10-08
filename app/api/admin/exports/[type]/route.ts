@@ -103,6 +103,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ type:
         { key: 'reviewer_name', header: 'Reviewer' },
         { key: 'desirability', header: 'Desirability' },
         { key: 'viability', header: 'Viability' },
+        { key: 'business_impact', header: 'Business Impact' },
         { key: 'realistic_implementation', header: 'Realistic Implementation' },
         { key: 'recommendation', header: 'Recommendation' },
         { key: 'comment', header: 'Comment' },

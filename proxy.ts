@@ -25,7 +25,7 @@ const ADMIN_PREFIXES = [
   '/voting-management',
 ];
 // Shared across roles, only requires *some* authenticated role:
-const SHARED_PROTECTED_PREFIXES = ['/voting', '/results', '/notifications', '/profile'];
+const SHARED_PROTECTED_PREFIXES = ['/voting', '/notifications', '/profile', '/mentor-profile'];
 
 const PUBLIC_PREFIXES = ['/sign-in', '/auth/microsoft', '/auth/callback', '/access-denied', '/session-error'];
 

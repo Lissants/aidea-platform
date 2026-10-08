@@ -8,15 +8,15 @@ export const metadata = { title: 'Access denied' };
 export default function AccessDeniedPage() {
   return (
     <Card>
-      <CardHeader className="items-center text-center">
-        <ShieldAlert className="mb-2 h-10 w-10 text-destructive" />
+      <CardHeader>
+        <ShieldAlert className="mb-1 h-6 w-6 text-destructive" aria-hidden="true" />
         <CardTitle>Access denied</CardTitle>
         <CardDescription>
           Your account doesn&apos;t have the role required to view that page. If you believe this is a
           mistake, contact your program administrator.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex justify-center">
+      <CardContent>
         <Button asChild>
           <Link href="/">Back to home</Link>
         </Button>

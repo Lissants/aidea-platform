@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { castVote } from '@/lib/services/voting';
+import { DeleteIdeaButton } from '@/components/admin/idea-list';
 
 interface Candidate {
   idea_id: string;
@@ -13,10 +14,12 @@ interface Candidate {
   team_name: string;
 }
 
-export function VoteForm({ votingPeriodId, candidates, alreadyVotedIdeaId }: {
+export function VoteForm({ votingPeriodId, candidates, alreadyVotedIdeaId, canDelete = false }: {
   votingPeriodId: string;
   candidates: Candidate[];
   alreadyVotedIdeaId?: string | null;
+  /** Developer role: per-candidate delete, for clearing test ideas before UAT. */
+  canDelete?: boolean;
 }) {
   const [selected, setSelected] = React.useState<string | undefined>(alreadyVotedIdeaId ?? undefined);
   const [pending, setPending] = React.useState(false);
@@ -44,6 +47,7 @@ export function VoteForm({ votingPeriodId, candidates, alreadyVotedIdeaId }: {
               <span className="font-medium">{c.idea_title}</span>
               <span className="ml-2 text-sm text-muted-foreground">{c.team_name}</span>
             </Label>
+            {canDelete && <DeleteIdeaButton ideaId={c.idea_id} ideaTitle={c.idea_title} compact />}
           </div>
         ))}
       </RadioGroup>

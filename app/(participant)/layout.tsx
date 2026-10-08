@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
+import { requireCurrentPassword } from '@/lib/auth/password-gate';
 import { getCurrentUser, getActiveRole } from '@/lib/auth/session';
 
 /**
@@ -11,6 +12,7 @@ import { getCurrentUser, getActiveRole } from '@/lib/auth/session';
 export default async function ParticipantLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
+  requireCurrentPassword(user);
   if (user.roles.length === 0) redirect('/access-denied');
 
   const activeRole = (await getActiveRole(user)) ?? user.roles[0];

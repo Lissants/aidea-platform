@@ -2,6 +2,22 @@
 
 All tables and their key relationships in the SQL Server 2019 `aidea` database, as defined in `db/migrations/0001_schema.sql` (triggers in `0002_triggers.sql`, stored procedures in `0003_procedures.sql`). Types are SQL Server types: ids are `UNIQUEIDENTIFIER`, timestamps `DATETIMEOFFSET(3)`, flags `BIT`, text `NVARCHAR`. The former Postgres enums are `NVARCHAR` columns with a `CHECK` constraint (marked `"CHECK"` below) — see `0001_schema.sql` for the exact allowed values. Only key columns are listed. `supabase/migrations/` is kept only as historical reference.
 
+Later migrations (`0004`–`0013`) change the schema as follows. The diagram shows the base schema from `0001`.
+
+| Migration | Schema change |
+| --- | --- |
+| `0004_result_notifications.sql` | `usp_publish_batch` sends result-specific notifications (Pass, Build, mentor assigned) to the whole team. |
+| `0005_developer_role.sql` | Adds the `developer` role (`dbo.fn_has_role(u, 'admin')` is also true for developers) and `users.must_change_password`. |
+| `0006_remove_showcase_links.sql` | Showcase notifications link to `/my-ideas`, and old `/showcase` links are retargeted. |
+| `0007_mentor_photo.sql` | `mentor_profiles.photo_url`. |
+| `0008_rename_impact_types.sql` | `idea_impacts.impact_type`: `cost_efficiency` → `cost_optimization`, `governance_improvement` → `governance_excellence`. |
+| `0009_team_membership.sql` | `ideas.team_leader_id` becomes nullable (vacant leader slot). Adds views `v_idea_participants` and `v_approved_ideas`, and procedures `usp_commit_to_idea`, `usp_admin_remove_team_member` and `usp_admin_add_team_member`. |
+| `0010_idea_presentation.sql` | `ideas.presentation_url`, `presentation_name`, `presentation_uploaded_at` and `presentation_uploaded_by`. |
+| `0011_vote_candidates.sql` | `voting_periods.voting_published` and `voting_published_at`, plus the view `v_vote_candidates`. `usp_submit_vote` now refuses unpublished periods and non-candidates. |
+| `0012_reviews_business_impact.sql` | `reviews.business_impact`. |
+| `0012_timeline_tba.sql` | `programs.timeline_tba` (per-stage TBA masking on the participant timeline). |
+| `0013_remove_showcase.sql` | Drops `showcase_projects`, `programs.showcase_open_at` and the `showcase` stage. `v_vote_candidates` becomes every idea with a published Pass and a published Build. |
+
 ```mermaid
 erDiagram
     USERS ||--|| PROFILES : "has"
@@ -276,6 +292,7 @@ erDiagram
 ## Notes
 
 - `users` holds sign-in credentials and replaces Supabase's `auth.users`: `password_hash` (bcrypt) for email + password sign-in, `entra_oid` for a linked Microsoft Entra ID identity. `profiles.id` is both its primary key and a foreign key to `users.id` (one-to-one, `ON DELETE CASCADE`). Everything else references `profiles`, never `users`.
+- `ideas.team_leader_id` is chosen explicitly in the submission wizard (a required Team Leader picker) and can differ from `ideas.created_by`. It is nullable since migration `0009`, and `NULL` means the leader slot is vacant. The leader is not stored in `idea_team_members`, which holds up to 5 further members (limit enforced by the app, not the schema). Both creator and leader may submit the idea, but only the leader and members count as being on the team: `dbo.fn_is_idea_team_member` uses them for the own-team voting guard.
 - `audit_logs.prior_value` / `new_value` are JSON stored as `NVARCHAR(MAX)` with an `ISJSON` check constraint.
 - Nullable unique columns (`users.entra_oid`, `profiles.employee_id`) use filtered unique indexes, because a SQL Server `UNIQUE` constraint allows only one `NULL`. The one-grand-winner / one-runner-up-per-program rules are also filtered unique indexes on `final_presentation_assessments.program_id`, which `trg_final_presentation_program_id` keeps in sync with the idea's program.
 - SQL Server rejects multiple cascade paths into one table, so two foreign keys are `NO ACTION` instead of `ON DELETE CASCADE`: `reviews.idea_id` and `final_presentation_assessments.program_id`. Those rows are still deleted with their idea or program, through the other cascade path (via `review_assignments` or `ideas`).

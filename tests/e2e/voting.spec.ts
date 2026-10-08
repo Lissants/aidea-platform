@@ -36,15 +36,10 @@ test('a vote cannot be changed once cast', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^vote$/i })).toHaveCount(0);
 });
 
-test('live vote counts are visible only to admins, never to voters', async ({ page }) => {
+test('live vote counts are not shown to voters', async ({ page }) => {
   await signIn(page, DEMO_USERS.voter1);
   await page.goto('/voting');
   await expect(page.getByText(/\d+ votes?$/i)).toHaveCount(0);
-
-  await page.goto('/results');
-  // Before results_published, the participant-facing Results page must
-  // show nothing at all — never a live count.
-  await expect(page.getByText(/aren't published yet/i)).toBeVisible();
 });
 
 test('an admin can see live turnout before results are published', async ({ page }) => {

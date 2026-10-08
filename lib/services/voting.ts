@@ -6,9 +6,10 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { voteSchema } from '@/lib/validation/schemas';
 
 /**
- * Casts a vote via usp_submit_vote (db/migrations/0004_remove_showcase.sql),
- * which checks the voting window is open, that the idea is a Build candidate
- * (finalized qualifier assessment = build) and that the voter isn't on the
+ * Casts a vote via usp_submit_vote (db/migrations/0011_vote_candidates.sql),
+ * which checks the voting period is published and open, that the idea is a
+ * candidate (v_vote_candidates: published Pass + published Build, see
+ * migration 0013) and that the voter isn't on the
  * idea's own team, then relies on the uq_votes_period_voter constraint to
  * guarantee one vote per voter. The voter is always the signed-in user —
  * never taken from the input.

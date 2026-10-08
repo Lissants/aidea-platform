@@ -50,9 +50,9 @@ SELECT p.id, r.id
 
 MERGE mentor_profiles AS t
 USING (VALUES
-  ('55555555-5555-5555-5555-555555555001', '22222222-2222-2222-2222-222222222001', 'Data & AI, forecasting', 'Leads AI adoption in Data & AI.', 10),
-  ('55555555-5555-5555-5555-555555555002', '22222222-2222-2222-2222-222222222002', 'Digital product, UX', 'Product mentor for digital-first ideas.', 10),
-  ('55555555-5555-5555-5555-555555555003', '22222222-2222-2222-2222-222222222003', 'Platform engineering', 'Principal engineer mentoring technical builds.', 2)
+  ('55555555-5555-5555-5555-555555555001', '22222222-2222-2222-2222-222222222001', 'Vikram leads AI adoption across the Data & AI function, with a focus on demand forecasting, machine learning in production and turning analytics prototypes into tools business teams use every day. He can help shape a measurable problem statement and a realistic data plan.', 'Leads AI adoption in Data & AI.', 10),
+  ('55555555-5555-5555-5555-555555555002', '22222222-2222-2222-2222-222222222002', 'Priya mentors digital-first ideas from concept to pilot. Her strengths are product discovery, user research and UX design, and she helps teams test assumptions early, define a clear user journey and scope a minimum viable product.', 'Product mentor for digital-first ideas.', 10),
+  ('55555555-5555-5555-5555-555555555003', '22222222-2222-2222-2222-222222222003', 'Karan is a principal engineer specialising in platform engineering, cloud architecture and integration with enterprise systems such as SAP. He guides teams on technical feasibility, security and building solutions that can scale beyond a pilot.', 'Principal engineer mentoring technical builds.', 2)
 ) AS s (id, profile_id, expertise, bio, max_capacity)
 ON t.id = s.id
 WHEN MATCHED THEN UPDATE SET expertise = s.expertise, bio = s.bio, max_capacity = s.max_capacity
@@ -133,10 +133,10 @@ WHEN NOT MATCHED THEN INSERT (id, program_id, team_name, team_leader_id, idea_ti
 INSERT INTO idea_impacts (idea_id, impact_kind, impact_type, explanation, measurable_result)
 SELECT s.idea_id, 'primary', s.impact_type, s.explanation, s.measurable_result
   FROM (VALUES
-    ('77777777-7777-7777-7777-777777777002', 'cost_efficiency', 'Reduces manual audit hours.', '30% reduction in audit time'),
+    ('77777777-7777-7777-7777-777777777002', 'cost_optimization', 'Reduces manual audit hours.', '30% reduction in audit time'),
     ('77777777-7777-7777-7777-777777777003', 'time_efficiency', 'Cuts onboarding query resolution time.', '50% faster response'),
     ('77777777-7777-7777-7777-777777777004', 'revenue_growth', 'Improves forecast accuracy, reducing stockouts.', '12% forecast accuracy gain'),
-    ('77777777-7777-7777-7777-777777777005', 'governance_improvement', 'More consistent QC decisions.', '95% inspection consistency')
+    ('77777777-7777-7777-7777-777777777005', 'governance_excellence', 'More consistent QC decisions.', '95% inspection consistency')
   ) AS s (idea_id, impact_type, explanation, measurable_result)
  WHERE NOT EXISTS (SELECT 1 FROM idea_impacts x WHERE x.idea_id = s.idea_id);
 
@@ -157,14 +157,14 @@ WHEN NOT MATCHED THEN INSERT (id, idea_id, mentor_profile_id, status)
   VALUES (s.id, s.idea_id, s.mentor_profile_id, s.status);
 
 INSERT INTO reviews (review_assignment_id, idea_id, reviewer_id, desirability, viability,
-                     realistic_implementation, recommendation, comment, status, submitted_at)
-SELECT s.ra, s.idea_id, s.reviewer, s.d, s.v, s.r, s.rec, s.comment, 'submitted', DATEADD(day, s.offset_days, @now)
+                     business_impact, realistic_implementation, recommendation, comment, status, submitted_at)
+SELECT s.ra, s.idea_id, s.reviewer, s.d, s.v, s.b, s.r, s.rec, s.comment, 'submitted', DATEADD(day, s.offset_days, @now)
   FROM (VALUES
     ('88888888-8888-8888-8888-888888888003', '77777777-7777-7777-7777-777777777004', '22222222-2222-2222-2222-222222222002',
-     1, 1, 1, 'recommend_pass', 'Strong forecasting use case, clear ROI.', -5),
+     1, 1, 1, 1, 'recommend_pass', 'Strong forecasting use case, clear ROI.', -5),
     ('88888888-8888-8888-8888-888888888004', '77777777-7777-7777-7777-777777777005', '22222222-2222-2222-2222-222222222001',
-     1, 0, 1, 'recommend_not_pass', 'Vision hardware dependency is a risk this cycle.', -4)
-  ) AS s (ra, idea_id, reviewer, d, v, r, rec, comment, offset_days)
+     1, 0, 0, 1, 'recommend_not_pass', 'Vision hardware dependency is a risk this cycle.', -4)
+  ) AS s (ra, idea_id, reviewer, d, v, b, r, rec, comment, offset_days)
  WHERE NOT EXISTS (SELECT 1 FROM reviews x WHERE x.review_assignment_id = s.ra);
 
 -- ---------------------------------------------------------------------
@@ -211,17 +211,28 @@ ELSE
    WHERE idea_id = '77777777-7777-7777-7777-777777777004';
 
 -- ---------------------------------------------------------------------
+-- Final presentation (draft) for the built idea. (Its published Pass +
+-- Build already make it a voting candidate, see v_vote_candidates.)
+-- ---------------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM final_presentation_assessments WHERE idea_id = '77777777-7777-7777-7777-777777777004')
+  INSERT INTO final_presentation_assessments (idea_id, status, decided_by)
+  VALUES ('77777777-7777-7777-7777-777777777004', 'draft', '11111111-1111-1111-1111-111111111001');
+
+-- ---------------------------------------------------------------------
 -- Voting periods: one closed with published results, one currently open.
+-- Both are published to voters.
 -- ---------------------------------------------------------------------
 IF NOT EXISTS (SELECT 1 FROM voting_periods WHERE id = '99999999-9999-9999-9999-999999999001')
-  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages)
+  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages,
+                              voting_published, voting_published_at)
   VALUES ('99999999-9999-9999-9999-999999999001', @program, DATEADD(day, -30, @now), DATEADD(day, -25, @now),
-          1, DATEADD(day, -24, @now), 1);
+          1, DATEADD(day, -24, @now), 1, 1, DATEADD(day, -30, @now));
 
 IF NOT EXISTS (SELECT 1 FROM voting_periods WHERE id = '99999999-9999-9999-9999-999999999002')
-  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages)
+  INSERT INTO voting_periods (id, program_id, opens_at, closes_at, results_published, results_published_at, show_percentages,
+                              voting_published, voting_published_at)
   VALUES ('99999999-9999-9999-9999-999999999002', @program, DATEADD(hour, -1, @now), DATEADD(day, 7, @now),
-          0, NULL, 1);
+          0, NULL, 1, 1, DATEADD(hour, -1, @now));
 
 INSERT INTO votes (voting_period_id, voter_id, idea_id)
 SELECT s.period, s.voter, s.idea_id

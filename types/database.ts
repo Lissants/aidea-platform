@@ -11,7 +11,7 @@
 // Enums (mirrors CREATE TYPE ... AS ENUM statements in migrations)
 // ---------------------------------------------------------------------------
 
-export type RoleName = 'participant' | 'mentor' | 'admin' | 'employee_voter';
+export type RoleName = 'participant' | 'mentor' | 'admin' | 'employee_voter' | 'developer';
 
 export type ProgramStatus = 'draft' | 'active' | 'closed';
 
@@ -31,8 +31,8 @@ export type ImpactKind = 'primary' | 'secondary';
 export type ImpactType =
   | 'revenue_growth'
   | 'time_efficiency'
-  | 'cost_efficiency'
-  | 'governance_improvement';
+  | 'cost_optimization'
+  | 'governance_excellence';
 
 export type SupportArea = 'tools' | 'budget' | 'data_access';
 
@@ -95,6 +95,8 @@ export interface Program {
   final_presentation_close_at: string | null;
   voting_open_at: string | null;
   voting_close_at: string | null;
+  /** JSON per-stage date masking, see lib/program/timeline.ts. */
+  timeline_tba: string | null;
   status: ProgramStatus;
   created_at: string;
   updated_at: string;
@@ -134,13 +136,15 @@ export interface MentorProfile {
   expertise: string | null;
   bio: string | null;
   max_capacity: number;
+  photo_url: string | null;
 }
 
 export interface Idea {
   id: string;
   program_id: string;
   team_name: string;
-  team_leader_id: string;
+  /** null = leader slot vacant (leader committed elsewhere or was removed by an admin). */
+  team_leader_id: string | null;
   idea_title: string;
   problem_opportunity: string;
   proposed_solution: string;
@@ -151,6 +155,22 @@ export interface Idea {
   created_at: string;
   updated_at: string;
   created_by: string;
+  /** Uploaded presentation (Build ideas only) — /api/files/idea-presentations/... */
+  presentation_url: string | null;
+  presentation_name: string | null;
+  presentation_uploaded_at: string | null;
+  presentation_uploaded_by: string | null;
+}
+
+/** My Ideas row: published-only results; null means N/A (or not yet published). */
+export interface MyIdeaRow extends Idea {
+  screening: ScreeningDecisionValue | null;
+  qualifier: BuildDecision | null;
+  mentor_name: string | null;
+  /** The viewer's place on this idea; 'creator' = created it but is not on the team. */
+  my_role: 'leader' | 'member' | 'creator';
+  /** Screening Pass published. */
+  approved: boolean;
 }
 
 export interface IdeaTeamMember {
@@ -201,6 +221,7 @@ export interface Review {
   reviewer_id: string;
   desirability: boolean | null;
   viability: boolean | null;
+  business_impact: boolean | null;
   realistic_implementation: boolean | null;
   recommendation: ReviewRecommendation | null;
   comment: string | null;

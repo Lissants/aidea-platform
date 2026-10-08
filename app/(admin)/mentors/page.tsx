@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { MentorDirectoryRow } from '@/components/admin/mentor-directory-row';
 import { fetchMentorDirectory } from '@/lib/services/mentors';
@@ -16,7 +17,7 @@ export default async function MentorDirectoryPage() {
     return (
       <div>
         <PageHeader title="Mentor Directory" />
-        <EmptyState icon={Users} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }
