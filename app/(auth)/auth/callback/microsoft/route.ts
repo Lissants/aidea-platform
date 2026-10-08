@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import {
   MS_FLOW_COOKIE,
   MS_SCOPES,
+  appOrigin,
   findOrCreateSsoUser,
   isMicrosoftSsoEnabled,
   microsoftRedirectUri,
@@ -17,7 +18,8 @@ import { startSession } from '@/lib/auth/session';
  * provisions the local user, then issues the app session cookie.
  */
 export async function GET(request: NextRequest) {
-  const { origin, searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request.url);
   const fail = (reason: string) => {
     const res = NextResponse.redirect(`${origin}/session-error?reason=${encodeURIComponent(reason)}`);
     res.cookies.delete({ name: MS_FLOW_COOKIE, path: '/auth/callback/microsoft' });
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
   const account = await findOrCreateSsoUser({ oid, email, name });
   if (!account) return fail('account_deactivated');
 
-  await startSession(account.id, account.email);
+  await startSession(account.id, account.email, 'sso');
 
   const res = NextResponse.redirect(`${origin}${safeRedirectPath(flow.redirectTo)}`);
   res.cookies.delete({ name: MS_FLOW_COOKIE, path: '/auth/callback/microsoft' });

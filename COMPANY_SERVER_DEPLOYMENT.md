@@ -79,7 +79,7 @@ Required values in `.env`:
 | `MSSQL_ENCRYPT`, `MSSQL_TRUST_CERT` | Both default `true`. Set `MSSQL_TRUST_CERT=false` once SQL Server has a certificate the container trusts. |
 | `SESSION_SECRET` | 32+ random characters. The app refuses to start in production without it. Rotating it signs everyone out. |
 | `ALLOWED_EMAIL_DOMAIN` | e.g. `godrejcp.com` — applies to password and SSO sign-in. |
-| `MICROSOFT_TENANT_ID` / `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Optional Entra ID SSO (all three, or none). `SSO_DEFAULT_ROLES` sets the roles for first-time SSO users (default `participant,employee_voter`). |
+| `MICROSOFT_TENANT_ID` / `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Optional Entra ID SSO (all three, or none). `SSO_DEFAULT_ROLES` sets the roles for first-time SSO users (default `participant,employee_voter`). `PASSWORD_SIGNIN_ENABLED=false` turns off email + password sign-in once SSO works. |
 | `CRON_SECRET` | Required if you schedule `app/api/cron/voting-notifications`. |
 | `EMAIL_PROVIDER`, `EMAIL_FROM` | Email-outbox adapter settings. |
 
@@ -159,7 +159,8 @@ server {
 - [ ] DNS `A`/`CNAME` record for `aidea.yourcompany.com` points at the server.
 - [ ] TLS certificate issued (Let's Encrypt via certbot, or your company's internal CA) and auto-renewal scheduled (`certbot renew` cron, or your CA's equivalent).
 - [ ] `NEXT_PUBLIC_APP_URL` set to the final `https://` domain — used to build the Microsoft SSO redirect URI and email links.
-- [ ] If SSO is enabled: the Entra ID app registration has `https://aidea.yourcompany.com/auth/callback/microsoft` as a **Web** redirect URI. Without it, Microsoft rejects the sign-in with a redirect-URI mismatch.
+- [ ] If SSO is enabled: the Entra ID app registration has `https://aidea.yourcompany.com/auth/callback/microsoft` as a **Web** redirect URI and `https://aidea.yourcompany.com/sign-in` as the front-channel logout URL. Without the redirect URI, Microsoft rejects the sign-in with a redirect-URI mismatch. Full IT checklist: LOCAL_SETUP.md → "Optional: Microsoft sign-in".
+- [ ] If SSO is enabled: the client secret's expiry date is recorded and someone owns rotating it.
 - [ ] The `aidea_session` cookie is `Secure` in production, so the site must be served over HTTPS. Only for a plain-HTTP intranet deployment set `SESSION_COOKIE_SECURE=false`.
 - [ ] Firewall allows inbound 443 (and 80 for the redirect + ACME challenge) only; the app container itself is never exposed directly to the internet, only via Nginx. SQL Server's 1433 is reachable from the app server only.
 

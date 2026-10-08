@@ -55,5 +55,5 @@ export const SEED = {
 
 /** Builds the SessionUser shape getCurrentUser() returns, for mocking. */
 export function sessionUser(id: string, roles: AppRole[], email = `${id}@test.local`): SessionUser {
-  return { id, email, profile: null, roles, mustChangePassword: false };
+  return { id, email, profile: null, roles, mustChangePassword: false, hasPassword: true, signInMethod: 'pwd' };
 }

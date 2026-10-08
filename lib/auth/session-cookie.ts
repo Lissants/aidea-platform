@@ -2,7 +2,8 @@
  * App-owned session cookie (replaces Supabase Auth's session cookies).
  *
  * The cookie holds an HS256 JWT signed with SESSION_SECRET: `sub` is the
- * users.id, plus the email for display/logging. It carries no roles —
+ * users.id, plus the email for display/logging and `amr` (how the user signed
+ * in: 'sso' or 'pwd', used to also sign out of Microsoft). It carries no roles —
  * roles are always re-read from SQL by getCurrentUser(), so a role change
  * takes effect on the next request. Deliberately free of `next/headers` and
  * DB imports so proxy.ts can use it too.
@@ -28,15 +29,18 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
+export type SignInMethod = 'sso' | 'pwd';
+
 export interface SessionClaims {
   sub: string;
   email: string;
+  amr: SignInMethod;
   iat: number;
   exp: number;
 }
 
-export async function createSessionToken(userId: string, email: string) {
-  return new SignJWT({ email })
+export async function createSessionToken(userId: string, email: string, amr: SignInMethod) {
+  return new SignJWT({ email, amr })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setIssuedAt()
@@ -51,21 +55,29 @@ export async function verifySessionToken(token: string | undefined | null): Prom
   try {
     const { payload } = await jwtVerify(token, secretKey(), { issuer: 'aidea-platform', algorithms: ['HS256'] });
     if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') return null;
-    return { sub: payload.sub, email: payload.email, iat: payload.iat ?? 0, exp: payload.exp ?? 0 };
+    const amr: SignInMethod = payload.amr === 'sso' ? 'sso' : 'pwd';
+    return { sub: payload.sub, email: payload.email, amr, iat: payload.iat ?? 0, exp: payload.exp ?? 0 };
   } catch {
     return null;
   }
+}
+
+/**
+ * Whether auth cookies get the Secure flag. Override with
+ * SESSION_COOKIE_SECURE=false only for plain-HTTP intranet deployments; the
+ * default follows NODE_ENV.
+ */
+export function secureCookies() {
+  return process.env.SESSION_COOKIE_SECURE
+    ? process.env.SESSION_COOKIE_SECURE === 'true'
+    : process.env.NODE_ENV === 'production';
 }
 
 export function sessionCookieOptions() {
   return {
     httpOnly: true,
     sameSite: 'lax' as const,
-    // Override with SESSION_COOKIE_SECURE=false only for plain-HTTP intranet
-    // deployments; the default follows NODE_ENV.
-    secure: process.env.SESSION_COOKIE_SECURE
-      ? process.env.SESSION_COOKIE_SECURE === 'true'
-      : process.env.NODE_ENV === 'production',
+    secure: secureCookies(),
     path: '/',
     maxAge: SESSION_TTL_SECONDS,
   };

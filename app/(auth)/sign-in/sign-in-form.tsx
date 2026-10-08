@@ -29,8 +29,18 @@ function MicrosoftLogo() {
   );
 }
 
-export function SignInForm({ microsoftEnabled, redirectTo }: { microsoftEnabled: boolean; redirectTo?: string }) {
+export function SignInForm({
+  microsoftEnabled,
+  passwordEnabled,
+  redirectTo,
+}: {
+  microsoftEnabled: boolean;
+  passwordEnabled: boolean;
+  redirectTo?: string;
+}) {
   const [pending, setPending] = React.useState(false);
+  // With Microsoft available, the password form is a fallback behind a toggle.
+  const [showPassword, setShowPassword] = React.useState(!microsoftEnabled);
   const target = safeRedirectPath(redirectTo);
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
@@ -51,38 +61,51 @@ export function SignInForm({ microsoftEnabled, redirectTo }: { microsoftEnabled:
     window.location.assign(`${window.location.origin}${target}`);
   }
 
+  const passwordFields = (
+    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="email">Work email</Label>
+        <Input id="email" type="email" autoComplete="username" placeholder="you@godrejcp.com" {...passwordForm.register('email')} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="password">Password</Label>
+        <Input id="password" type="password" autoComplete="current-password" {...passwordForm.register('password')} />
+      </div>
+      <Button type="submit" variant={microsoftEnabled ? 'outline' : 'default'} className="w-full" disabled={pending}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+        Sign in
+      </Button>
+    </form>
+  );
+
   return (
     <div className="space-y-4">
       {microsoftEnabled && (
+        <Button asChild className="w-full" disabled={pending}>
+          <a href={`/auth/microsoft?redirect_to=${encodeURIComponent(target)}`}>
+            <MicrosoftLogo />
+            Sign in with Microsoft
+          </a>
+        </Button>
+      )}
+
+      {microsoftEnabled && passwordEnabled && (
         <>
-          <Button asChild variant="outline" className="w-full" disabled={pending}>
-            <a href={`/auth/microsoft?redirect_to=${encodeURIComponent(target)}`}>
-              <MicrosoftLogo />
-              Sign in with Microsoft
-            </a>
-          </Button>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <Separator className="flex-1" />
-            or use email &amp; password
+            or
             <Separator className="flex-1" />
           </div>
+          {!showPassword && (
+            <Button type="button" variant="ghost" className="w-full" onClick={() => setShowPassword(true)}>
+              <KeyRound className="h-4 w-4" />
+              Sign in with password instead
+            </Button>
+          )}
         </>
       )}
 
-      <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Work email</Label>
-          <Input id="email" type="email" autoComplete="username" placeholder="you@godrejcp.com" {...passwordForm.register('email')} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" autoComplete="current-password" {...passwordForm.register('password')} />
-        </div>
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-          Sign in
-        </Button>
-      </form>
+      {passwordEnabled && showPassword && passwordFields}
     </div>
   );
 }

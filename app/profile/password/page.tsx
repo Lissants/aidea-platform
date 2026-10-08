@@ -13,6 +13,23 @@ export default async function ChangePasswordPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/sign-in');
 
+  if (!user.hasPassword) {
+    return (
+      <div>
+        <PageHeader title="Password" />
+        <Card className="max-w-xl">
+          <CardHeader>
+            <CardTitle>You sign in with Microsoft</CardTitle>
+            <CardDescription>
+              Your AIdea account has no separate password. To change your password, use your Godrej Microsoft account
+              or contact Godrej IT.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader title="Change password" />

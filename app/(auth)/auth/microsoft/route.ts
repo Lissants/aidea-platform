@@ -2,19 +2,22 @@ import { NextResponse, type NextRequest } from 'next/server';
 import {
   MS_FLOW_COOKIE,
   MS_SCOPES,
+  appOrigin,
   isMicrosoftSsoEnabled,
   microsoftRedirectUri,
   msCrypto,
   msalClient,
 } from '@/lib/auth/microsoft';
 import { safeRedirectPath } from '@/lib/auth/redirect';
+import { secureCookies } from '@/lib/auth/session-cookie';
 
 /**
  * Starts Microsoft Entra sign-in: generates PKCE + state, stashes them in a
  * short-lived httpOnly cookie, and redirects to the Microsoft login page.
  */
 export async function GET(request: NextRequest) {
-  const { origin, searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request.url);
   if (!isMicrosoftSsoEnabled()) {
     return NextResponse.redirect(`${origin}/sign-in?error=sso_disabled`);
   }
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set(MS_FLOW_COOKIE, JSON.stringify({ state, verifier, redirectTo }), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: secureCookies(),
     path: '/auth/callback/microsoft',
     maxAge: 10 * 60,
   });
