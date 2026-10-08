@@ -59,7 +59,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (claims && Date.now() / 1000 - claims.iat > SESSION_REFRESH_AFTER_SECONDS) {
-    response.cookies.set(SESSION_COOKIE, await createSessionToken(claims.sub, claims.email), sessionCookieOptions());
+    response.cookies.set(SESSION_COOKIE, await createSessionToken(claims.sub, claims.email, claims.amr), sessionCookieOptions());
   }
 
   return response;

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { isMicrosoftSsoEnabled } from '@/lib/auth/microsoft';
+import { isMicrosoftSsoEnabled, isPasswordSignInEnabled } from '@/lib/auth/microsoft';
 import { SignInForm } from './sign-in-form';
 
 export const metadata = { title: 'Sign in' };
@@ -17,7 +17,11 @@ export default async function SignInPage({
         <CardDescription>Sign in to the AI Innovation Challenge with your Godrej work email.</CardDescription>
       </CardHeader>
       <CardContent>
-        <SignInForm microsoftEnabled={isMicrosoftSsoEnabled()} redirectTo={redirect_to} />
+        <SignInForm
+          microsoftEnabled={isMicrosoftSsoEnabled()}
+          passwordEnabled={isPasswordSignInEnabled()}
+          redirectTo={redirect_to}
+        />
       </CardContent>
     </Card>
   );

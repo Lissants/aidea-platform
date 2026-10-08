@@ -1,7 +1,7 @@
 import { Settings } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { isMicrosoftSsoEnabled } from '@/lib/auth/microsoft';
+import { isMicrosoftSsoEnabled, isPasswordSignInEnabled } from '@/lib/auth/microsoft';
 
 export const metadata = { title: 'Settings' };
 
@@ -20,6 +20,7 @@ export default function SettingsPage() {
       value: `SQL Server ${process.env.MSSQL_SERVER || (process.platform === 'win32' ? '.' : 'localhost')} / ${process.env.MSSQL_DATABASE || 'aidea'} (${process.env.MSSQL_DRIVER || (process.platform === 'win32' ? 'msnodesqlv8' : 'tedious')})`,
     },
     { label: 'Microsoft sign-in', value: isMicrosoftSsoEnabled() ? 'Configured' : 'Not configured — email & password only' },
+    { label: 'Password sign-in', value: isPasswordSignInEnabled() ? 'Enabled' : 'Disabled — Microsoft only' },
     { label: 'Email provider (dev)', value: `${process.env.EMAIL_PROVIDER ?? 'smtp'} (queues to email_outbox in dev — see lib/email/adapter.ts)` },
     { label: 'Email "from" address', value: process.env.EMAIL_FROM ?? 'Not set' },
     { label: 'App URL', value: process.env.NEXT_PUBLIC_APP_URL ?? 'Not set' },

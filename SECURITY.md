@@ -53,6 +53,8 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 - It uses the authorization-code flow with PKCE and a `state` check (`@azure/msal-node`).
 - It checks the tenant (`tid` must equal `MICROSOFT_TENANT_ID`) and the email domain.
 - It links to an existing account by Entra `oid`, then by email. Otherwise it provisions a new profile with `SSO_DEFAULT_ROLES`.
+- An admin-issued temporary password is removed on the first Microsoft sign-in, so the admin no longer knows a working password for that account.
+- Sign-out of a Microsoft session also ends the Entra session (front-channel logout). `PASSWORD_SIGNIN_ENABLED=false` disables password sign-in entirely.
 
 **Magic-link sign-in** was removed with Supabase Auth.
 

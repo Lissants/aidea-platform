@@ -94,15 +94,29 @@ Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wi
 
 ### Optional: Microsoft sign-in (Entra ID)
 
-1. Ask IT to register a web app in Entra ID with the redirect URI `http://localhost:3000/auth/callback/microsoft`. For other environments, use `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft`.
-2. Put the tenant ID, client ID and client secret in `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET`.
-3. Restart the app. The "Sign in with Microsoft" button appears on the sign-in page.
+1. Ask IT for an **App registration** in the Godrej Entra ID tenant:
+
+   | Setting | Value |
+   |---|---|
+   | Supported account types | Single tenant (this organisation only) |
+   | Platform | **Web** (not SPA) |
+   | Redirect URI | `http://localhost:3000/auth/callback/microsoft`; for other environments `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft` |
+   | Front-channel logout URL | `{NEXT_PUBLIC_APP_URL}/sign-in` |
+   | API permissions | Microsoft Graph, delegated: `openid`, `profile`, `email`, `User.Read`, admin consent granted |
+   | Client secret | One secret; note its expiry date and rotate it before then |
+   | Enterprise app → Assignment required | Yes to limit AIdea to an assigned group; No for everyone in the tenant |
+
+2. Put the **Directory (tenant) ID**, **Application (client) ID** and the client secret **value** (not its ID) in `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET`. In production `NEXT_PUBLIC_APP_URL` must also be set, or SSO stays off.
+3. Restart the app. "Sign in with Microsoft" becomes the main button; email and password move behind "Sign in with password instead". Set `PASSWORD_SIGNIN_ENABLED=false` to remove password sign-in completely.
 
 What happens when someone signs in with Microsoft:
 
 - **Existing account:** if the email already exists (for example a seeded or pre-created account), the Microsoft identity is linked to it.
 - **First-time user:** a new profile is created with `SSO_DEFAULT_ROLES`, which defaults to `participant,employee_voter`.
 - **Checks:** sign-in is refused unless the user's tenant matches `MICROSOFT_TENANT_ID` and their email domain is in `ALLOWED_EMAIL_DOMAIN`.
+- **Temporary passwords:** if an admin created the account with a temporary password, the first Microsoft sign-in removes that password. The account is then Microsoft-only.
+- **Name and email** are refreshed from Microsoft on every sign-in. Roles are never changed by sign-in; admins manage them in **User Management**.
+- **Sign out** also signs the user out of Microsoft, so shared PCs don't stay signed in.
 
 ## 7. Run the tests
 

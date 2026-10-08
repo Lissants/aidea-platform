@@ -1,11 +1,13 @@
 'use server';
 
 import bcrypt from 'bcryptjs';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { endSession, startSession } from '@/lib/auth/session';
 import { isAllowedEmail } from '@/lib/auth/email-domain';
+import { appOrigin, isMicrosoftSsoEnabled, isPasswordSignInEnabled, microsoftLogoutUrl } from '@/lib/auth/microsoft';
 
 const signInSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -39,6 +41,7 @@ const INVALID = 'Invalid email or password' as const;
 
 /** Email + password sign-in against users.password_hash (bcrypt). */
 export async function signInWithPassword(input: { email: string; password: string }) {
+  if (!isPasswordSignInEnabled()) return { error: 'Please sign in with Microsoft.' } as const;
   const parsed = signInSchema.safeParse(input);
   if (!parsed.success) return { error: INVALID } as const;
   const { email, password } = parsed.data;
@@ -60,11 +63,17 @@ export async function signInWithPassword(input: { email: string; password: strin
   if (account.active === false) return { error: 'This account has been deactivated.' } as const;
 
   attempts.delete(email);
-  await startSession(account.id, account.email);
+  await startSession(account.id, account.email, 'pwd');
   return { ok: true } as const;
 }
 
+/** Ends the AIdea session; Microsoft sessions are also signed out of Entra. */
 export async function signOut() {
-  await endSession();
+  const method = await endSession();
+  if (method === 'sso' && isMicrosoftSsoEnabled()) {
+    const h = await headers();
+    const requestUrl = `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host') ?? 'localhost'}`;
+    redirect(microsoftLogoutUrl(appOrigin(requestUrl)));
+  }
   redirect('/sign-in');
 }

@@ -433,6 +433,7 @@ export async function deleteUserPermanently(userId: string): Promise<Result> {
 export async function changeOwnPassword(input: unknown): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: 'Not signed in' };
+  if (!user.hasPassword) return { error: 'Your account signs in with Microsoft and has no AIdea password.' };
 
   const parsed = changePasswordSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' };
