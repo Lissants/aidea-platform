@@ -94,7 +94,7 @@ Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wi
 
 ### Optional: Microsoft sign-in (Entra ID)
 
-1. Ask IT for an **App registration** in the Godrej Entra ID tenant:
+1. Ask IT for an **App registration** in the Godrej Entra ID tenant. godrejcp.com and godrejinds.com are the same tenant, `bfa3dfb0-91d5-4bf7-9a0c-fbf6ff337187`, so GCPL staff sign in with their usual `name@godrejcp.com` account. The tenant also holds the other Godrej companies, so ask IT to set **Assignment required = Yes** and assign a GCPL group; `ALLOWED_EMAIL_DOMAIN=godrejcp.com` is the second check.
 
    | Setting | Value |
    |---|---|
