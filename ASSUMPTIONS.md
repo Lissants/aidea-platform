@@ -5,7 +5,7 @@ Honest, consolidated record of every deviation from spec, every assumption made,
 ## Dependency & tooling choices
 
 - **Supabase client libraries were removed** with the move to SQL Server (see "SQL Server migration" below), and with them the earlier exact-version pin of `@supabase/supabase-js` / `@supabase/ssr` that worked around the newer PostgREST query-parser. Database access is now `mssql`, with the `msnodesqlv8` driver (Windows auth, local default, an optional dependency) or `tedious` (TCP + SQL login, Docker/Linux).
-- **Font**: the system font stack (see `app/globals.css`), not `next/font`'s Google Fonts loader or the spec's suggested "GI Sans" / "Anek" — those aren't publicly distributable web fonts, and depending on `fonts.google.com` at build time breaks on networks/CI that block it. `app/layout.tsx` documents this choice inline.
+- **Font**: `GI Sans Text` / `GI Sans Display` when installed on the viewer's machine, falling back to Arial (`tailwind.config.ts`). No web font is downloaded: the GI Sans files aren't publicly distributable, and fetching fonts at build time breaks on networks and CI that block it.
 - **No Storybook / component-catalog tool** was set up — out of scope given the spec's own file-structure list didn't call for one.
 
 ## Architecture decisions inherent to Next.js App Router
@@ -36,6 +36,23 @@ The platform moved from Supabase (Postgres + Auth + Storage) to a local Microsof
 - **`audit_logs` is now actually written.** Under Supabase, application-side audit writes were silently blocked because RLS had no insert policy on `audit_logs`. They now succeed (`lib/audit/log.ts`, admin sessions only), alongside the rows written inside the procedures.
 - **Files are stored on local disk.** Supabase Storage → files under `UPLOAD_DIR`, served by `/api/files/[bucket]/[...key]`. Showcase images are public, program resources need a session, and uploads are admin-only. The upload directory must be backed up together with the database, and it rules out Vercel (see `VERCEL_DEPLOYMENT.md`).
 - **CSV export timestamps** are now written as ISO-8601 UTC strings ending in `Z` (e.g. `2026-03-01T09:30:00.000Z`), where Postgres previously produced its own `+00:00` text format.
+
+## Idea submission form (team leader, team size, drafts)
+
+- **The Team Leader is picked explicitly.** The wizard has a required Team Leader field (profile search, the same `/api/profiles/search` used for members), saved to `ideas.team_leader_id`. The leader can be someone other than the person filling in the form (`ideas.created_by`). Both the creator and the leader may submit the idea (`usp_submit_idea`). Only the leader and the listed members are "on" the idea (migration `0009`: `created_by` is not a team role), and the leader counts as a team member for the "no voting for your own team" rule (`dbo.fn_is_idea_team_member`).
+- **Draft fallback for the leader.** A draft saved before a leader is chosen stores the creator as leader (`writeDraft` in `lib/services/ideas.ts`). The submit-time schema then requires an explicit choice. Since migration `0009` the column is nullable, and `NULL` means the leader slot is vacant (for example after the leader committed to another approved idea). Admins can then assign a new leader.
+- **At most 5 team members**, besides the leader (previously 10). Enforced in the UI (`MAX_TEAM_MEMBERS` in `components/forms/idea-wizard.tsx`, which disables the picker at the cap) and in Zod (`ideaTeamSchema`). The leader is excluded from the member picker and vice versa, so nobody is listed twice.
+- **Two validation levels.** `saveIdeaDraft` validates with the lenient `ideaDraftSaveSchema` (structure and maximum lengths only, so a half-finished draft can be saved). `submitIdeaDraft` validates every section with the full `ideaDraftSchema`, saves, then calls `usp_submit_idea`, which re-checks the essentials in the database (title, problem, solution and at least one impact). An unused secondary impact must be removed rather than left blank, because each impact listed on submit needs an explanation of 10+ characters.
+- **Guidance copy is UI-only.** The labels, subtitles and placeholders per section and per support area (for example "Estimated Amount" with an IDR placeholder for budget) live in `idea-wizard.tsx`. No database columns were added for them. No schema change was needed: for the budget area the amount ("Estimated Amount") is stored in `idea_support_requests.details` and the cost assumptions in `estimate`. For tools and data access, `details` holds what is needed and `estimate` holds why.
+- **`allowedDevOrigins` is computed per machine.** Earlier versions hard-coded the developer's LAN address (`192.168.48.128`, later `192.168.48.*`) in `next.config.mjs`, so every other machine had to edit the file. It is now built at dev-server start from the machine's own IPv4 addresses (`os.networkInterfaces()`) plus the optional, comma-separated `DEV_ALLOWED_ORIGINS` from `.env.local` (for DNS names, NAT/VM addresses or wildcards). It only affects `next dev`. See `SELF_HOSTING_WINDOWS.md` §5.
+
+## Godrej UI redesign and voting flow
+
+- **Project Showcase and Results pages were removed** (`/showcase`, `/results`). Showcase Content is still curated by admins, but it now only adds an image and description to the voting ballot. Old notification links are retargeted to `/my-ideas` (migration `0006`). Voting results live at `/voting/results`.
+- **Voting candidates come from the final presentation stage**, not from showcase publication: an idea qualifies once its screening Pass and qualifier Build are published and it has a final presentation assessment (`v_vote_candidates`, migration `0011`). A voting period stays hidden from voters until an admin publishes it.
+- **Stage gates are enforced server-side.** Qualifier needs a published screening Pass, and Final Presentation needs a published qualifier Build.
+- **UI follows the GIG brand rules** (monochrome #141414 / #FFFFFF, GI Sans with an Arial fallback, left-aligned text). The reasoning and the design system are in `design-audit/`.
+- **Known follow-up:** the Project Mentor screen still lists No Build ideas.
 
 ## Deferred / stubbed work (explicitly, not silently)
 

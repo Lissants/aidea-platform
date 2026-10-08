@@ -1,10 +1,11 @@
 import { attempt, db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
 import { ideaReadFilter, reviewAssignmentReadFilter, reviewReadFilter } from '@/lib/permissions/scopes';
+import { PUBLISHED_RESULTS_SELECT, publishedResultsJoins, type PublishedResults } from '@/lib/ideas/published-results';
 
 export type ReviewQueueTab = 'all' | 'pending' | 'draft' | 'submitted' | 'reopened';
 
-export interface ReviewQueueRow {
+export interface ReviewQueueRow extends PublishedResults {
   assignment_id: string;
   idea_id: string;
   idea_title: string;
@@ -19,6 +20,7 @@ export interface ReviewQueueRow {
  * My Reviews queue for the signed-in mentor: pending + completed assignments.
  * Scoped to assignments on the caller's own mentor profile (admins: any),
  * and only the caller's own review rows — same as the old RLS policies.
+ * Screening / qualifier / project mentor are published-only outcomes.
  */
 export async function fetchMyReviewQueue(mentorProfileId: string): Promise<ReviewQueueRow[]> {
   const user = await getCurrentUser();
@@ -38,13 +40,15 @@ export async function fetchMyReviewQueue(mentorProfileId: string): Promise<Revie
       review_id: string | null;
       review_status: ReviewQueueRow['review_status'] | null;
       reopen_reason: string | null;
-    }>(
+    } & PublishedResults>(
       `SELECT ra.id, ra.idea_id,
               i.idea_title, i.team_name, i.submitted_at,
-              r.id AS review_id, r.status AS review_status, r.reopen_reason
+              r.id AS review_id, r.status AS review_status, r.reopen_reason,
+              ${PUBLISHED_RESULTS_SELECT}
          FROM review_assignments ra
          LEFT JOIN ideas i ON i.id = ra.idea_id AND ${ideaScope.sql}
          LEFT JOIN reviews r ON r.review_assignment_id = ra.id AND ${reviewScope.sql}
+         ${publishedResultsJoins('i')}
         WHERE ra.mentor_profile_id = @mentorProfileId AND ${raScope.sql}
         ORDER BY ra.assigned_at DESC`,
       { mentorProfileId, ...raScope.params, ...ideaScope.params, ...reviewScope.params }
@@ -62,6 +66,9 @@ export async function fetchMyReviewQueue(mentorProfileId: string): Promise<Revie
     review_id: a.review_id ?? null,
     review_status: a.review_status ?? 'not_started',
     reopen_reason: a.reopen_reason ?? null,
+    screening: a.screening ?? null,
+    qualifier: a.qualifier ?? null,
+    mentor_name: a.mentor_name ?? null,
   }));
 }
 

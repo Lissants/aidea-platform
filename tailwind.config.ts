@@ -1,7 +1,8 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  darkMode: ['class'],
+  // next-themes sets data-theme on <html>, not a .dark class.
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -14,6 +15,12 @@ const config: Config = {
       screens: { '2xl': '1400px' },
     },
     extend: {
+      // GIG brand type: GI Sans where installed, Arial otherwise. No web font is
+      // downloaded, so there is no font-swap layout shift.
+      fontFamily: {
+        sans: ['"GI Sans Text"', 'Arial', '"Helvetica Neue"', 'Helvetica', 'sans-serif'],
+        display: ['"GI Sans Display"', '"GI Sans Text"', 'Arial', '"Helvetica Neue"', 'Helvetica', 'sans-serif'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -31,6 +38,7 @@ const config: Config = {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+          soft: 'hsl(var(--destructive-soft))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -51,17 +59,22 @@ const config: Config = {
         success: {
           DEFAULT: 'hsl(var(--success))',
           foreground: 'hsl(var(--success-foreground))',
+          soft: 'hsl(var(--success-soft))',
         },
         warning: {
           DEFAULT: 'hsl(var(--warning))',
           foreground: 'hsl(var(--warning-foreground))',
+          soft: 'hsl(var(--warning-soft))',
         },
         information: {
           DEFAULT: 'hsl(var(--information))',
           foreground: 'hsl(var(--information-foreground))',
+          soft: 'hsl(var(--information-soft))',
         },
       },
+      // One radius system: 6px surfaces, 4px controls/badges, full only for avatars.
       borderRadius: {
+        xl: 'var(--radius)',
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',

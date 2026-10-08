@@ -3,13 +3,14 @@ import 'server-only';
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/validation/showcase-image';
+import { MAX_PRESENTATION_BYTES, sniffPresentationType } from '@/lib/validation/presentation';
 
 /**
  * Local-disk file storage (replaces Supabase Storage buckets).
  *
  * Layout:  {UPLOAD_DIR}/{bucket}/{prefix}/{uuid}.{ext}  + a `.meta.json` sidecar
  * holding the content type, size and original file name. `prefix` is the
- * owning idea/program id. Keys are always server-generated, and every key
+ * owning idea/program/mentor-profile id. Keys are always server-generated, and every key
  * that comes back in from a URL is validated against KEY_RE before touching
  * the filesystem, so path traversal is impossible.
  *
@@ -17,7 +18,7 @@ import { ALLOWED_SHOWCASE_IMAGE_TYPES, MAX_SHOWCASE_IMAGE_BYTES } from '@/lib/va
  * /api/files/{bucket}/{key}.
  */
 
-export type Bucket = 'showcase-images' | 'program-resources';
+export type Bucket = 'showcase-images' | 'program-resources' | 'mentor-photos' | 'idea-presentations';
 
 interface BucketConfig {
   maxBytes: number;
@@ -25,11 +26,20 @@ interface BucketConfig {
   types: string[] | null;
   /** Whether anonymous visitors may read (showcase) or a session is required. */
   publicRead: boolean;
+  /**
+   * Custom byte-level check run instead of `types`; returns the content type
+   * to store or throws a user-presentable Error.
+   */
+  validate?: (buf: Buffer, name: string) => string;
 }
 
 export const BUCKETS: Record<Bucket, BucketConfig> = {
   'showcase-images': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: true },
   'program-resources': { maxBytes: 10 * 1024 * 1024, types: null, publicRead: false },
+  'mentor-photos': { maxBytes: MAX_SHOWCASE_IMAGE_BYTES, types: ALLOWED_SHOWCASE_IMAGE_TYPES, publicRead: false },
+  // Written only via app/api/ideas/[ideaId]/presentation; read access is
+  // checked per idea in app/api/files/[bucket]/[...key]/route.ts.
+  'idea-presentations': { maxBytes: MAX_PRESENTATION_BYTES, types: null, publicRead: false, validate: sniffPresentationType },
 };
 
 // Anything a browser would execute or render as active content.
@@ -48,7 +58,7 @@ export interface StoredFileMeta {
 }
 
 export function isBucket(value: string): value is Bucket {
-  return value === 'showcase-images' || value === 'program-resources';
+  return Object.hasOwn(BUCKETS, value);
 }
 
 export function uploadRoot() {
@@ -106,7 +116,9 @@ export async function saveFile(bucket: Bucket, prefix: string, file: File) {
   let contentType = file.type || 'application/octet-stream';
   const ext = extensionOf(file.name);
 
-  if (cfg.types) {
+  if (cfg.validate) {
+    contentType = cfg.validate(buf, file.name);
+  } else if (cfg.types) {
     // Trust the bytes, not the browser-supplied type.
     const sniffed = sniffImageType(buf);
     if (!sniffed || !cfg.types.includes(sniffed)) throw new Error('Only PNG, JPEG or WebP images are allowed.');

@@ -107,15 +107,71 @@ describe('usp_publish_batch row selection', () => {
       { idea_id: SEED.ideaDelta, published: true },
     ]);
 
+    // ideaBeacon is a no_build: published, but the team is not notified.
     const notified = await db.query<{ user_id: string }>(
-      `SELECT DISTINCT user_id FROM notifications WHERE title = 'Qualifier result published'`
+      `SELECT DISTINCT user_id FROM notifications WHERE type IN ('published', 'idea_qualifier_build')`
     );
-    expect(notified).toEqual([{ user_id: SEED.participant2 }]);
+    expect(notified).toEqual([]);
   });
 
   it('refuses a non-admin actor', async () => {
     await expect(
       db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'qualifier_assessment', actor_id: SEED.participant1 })
     ).rejects.toThrow(/only an admin/i);
+  });
+});
+
+describe('usp_publish_batch result notifications', () => {
+  const IDEA_COMET = '77777777-7777-7777-7777-777777777003'; // leader participant3
+  const IDEA_ECHO = '77777777-7777-7777-7777-777777777005'; // leader participant2
+
+  const notificationsOf = (type: string) =>
+    db.query<{ user_id: string; body: string }>(
+      'SELECT user_id, body FROM notifications WHERE type = @type ORDER BY user_id',
+      { type }
+    );
+
+  beforeAll(async () => {
+    await resetTestDb();
+    // Comet: leader participant3 + member participant1. Echo's not_pass is already seeded (unpublished).
+    await db.insert('idea_team_members', { idea_id: IDEA_COMET, profile_id: SEED.participant1, member_order: 1 });
+    await db.insert('screening_decisions', {
+      idea_id: IDEA_COMET,
+      decision: 'pass_to_qualifier',
+      decided_by: SEED.admin1,
+      decided_at: new Date(),
+    });
+  });
+
+  it('screening: Pass notifies creator and team members once each; Not Pass notifies nobody', async () => {
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'screening_decision', actor_id: SEED.admin1 });
+
+    const passed = await notificationsOf('idea_screening_passed');
+    expect(passed.map((n) => n.user_id).sort()).toEqual([SEED.participant1, SEED.participant3].sort());
+
+    const echo = await db.queryOne<{ published: boolean }>('SELECT published FROM screening_decisions WHERE idea_id = @id', { id: IDEA_ECHO });
+    expect(echo?.published).toBe(true);
+    expect(passed.some((n) => n.user_id === SEED.participant2)).toBe(false);
+  });
+
+  it('mentor assignment: notifies the team with the mentor name', async () => {
+    await db.insert('project_mentor_assignments', {
+      idea_id: IDEA_COMET,
+      mentor_profile_id: SEED.mentorProfile1,
+      assigned_by: SEED.admin1,
+    });
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'project_mentor_assignment', actor_id: SEED.admin1 });
+
+    const mentor = await db.queryOne<{ full_name: string }>('SELECT full_name FROM profiles WHERE id = @id', { id: SEED.mentor1 });
+    const rows = await notificationsOf('idea_mentor_assigned');
+    expect(rows.map((n) => n.user_id).sort()).toEqual([SEED.participant1, SEED.participant3].sort());
+    expect(rows[0].body).toContain(mentor!.full_name);
+  });
+
+  it('qualifier: Build notifies the team', async () => {
+    await db.execute("UPDATE qualifier_assessments SET published = 0, published_at = NULL WHERE idea_id = @id", { id: SEED.ideaDelta });
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'qualifier_assessment', actor_id: SEED.admin1 });
+    const rows = await notificationsOf('idea_qualifier_build');
+    expect(rows.map((n) => n.user_id)).toEqual([SEED.participant1]);
   });
 });

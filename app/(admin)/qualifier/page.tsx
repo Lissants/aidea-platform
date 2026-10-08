@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/page-header';
+import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { EmptyState } from '@/components/layout/empty-state';
 import { FileCheck2 } from 'lucide-react';
 import { QualifierRow } from '@/components/admin/qualifier-row';
@@ -17,7 +18,7 @@ export default async function QualifierPage() {
     return (
       <div>
         <PageHeader title="Idea Qualifier" />
-        <EmptyState icon={FileCheck2} title="No active program" description="There is no active program right now." />
+        <NoActiveProgram audience="admin" />
       </div>
     );
   }

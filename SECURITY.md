@@ -32,14 +32,14 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 
 ## Database credentials
 
-- **Local development:** Windows Integrated authentication (`msnodesqlv8` over shared memory). No password is stored anywhere.
+- **Local development and Windows self-hosting:** Windows Integrated authentication (`msnodesqlv8` over shared memory). No password is stored anywhere. The app runs with the rights of the Windows account it runs under, so a Windows service needs its own database access (see `SELF_HOSTING_WINDOWS.md` §9c).
 - **Server and Docker:** a dedicated least-privilege SQL login such as `aidea_app` with `db_datareader`, `db_datawriter` and `GRANT EXECUTE`. It has no DDL rights. Migrations run separately with a `db_owner` account. The password lives only in the server environment (`MSSQL_PASSWORD`), never in the image or the repo.
 - **Browser:** no database credential ever reaches the browser. Nothing database-related is prefixed `NEXT_PUBLIC_`.
 
 ## Auth model
 
 **Sessions.** The session is an app-owned, HS256-signed JWT in the `aidea_session` cookie (`lib/auth/session-cookie.ts`).
-- The cookie is `httpOnly` and `SameSite=Lax`. It is `Secure` in production.
+- The cookie is `httpOnly` and `SameSite=Lax`. It is `Secure` in production. `SESSION_COOKIE_SECURE=false` turns that off for a plain-HTTP intranet deployment; prefer HTTPS where possible, because the cookie then travels unencrypted on the network.
 - Each token lasts 8 hours, and `proxy.ts` re-issues it after an hour of use.
 - It carries only the user id and email. Roles are always re-read from SQL by `getCurrentUser()`, so revoking a role takes effect on the next request.
 - `SESSION_SECRET` (32 characters or more) is required in production. Rotating it signs everyone out.
@@ -56,15 +56,34 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 
 **Magic-link sign-in** was removed with Supabase Auth.
 
+**Profile search.** `/api/profiles/search` backs both the Team Leader and the Team member pickers in the idea wizard. Any signed-in user can call it, and it returns only id, full name and email (top 10 matches, at least 2 characters).
+
 **Route protection.**
 - `proxy.ts` redirects signed-out visitors to `/sign-in`. It only verifies the cookie signature and makes no database call.
 - The `(admin)`, `(mentor)` and `(participant)` layouts check roles server-side.
 - `redirect_to` only accepts same-origin paths.
 
+## User management and the Developer role
+
+Accounts sit on one tier: User < Mentor < Admin < Developer. `employee_voter` is an extra that tier changes never touch. All changes go through `lib/services/users.ts`, which re-checks the caller on every action and applies `canManageUser()` (`lib/permissions`).
+
+| Actor | Can manage |
+| --- | --- |
+| Developer | every tier, including other admins and Developers |
+| Admin | User and Mentor accounts only. Cannot create, promote, demote, reset or remove an admin or Developer. |
+| Mentor / User | nobody |
+
+- A Developer passes every admin check: `isAdmin()` in the app and `dbo.fn_has_role(u, 'admin')` in SQL (migration `0005`). The "Routing required" notification (`0003_procedures.sql`) still goes to `admin` role holders only, so a Developer who isn't also an Admin doesn't receive it.
+- Server-enforced locks: you cannot change, deactivate, delete or reset your own account here; the last active Developer and the last active admin-level account cannot be demoted, deactivated or deleted.
+- "Remove" means deactivate (`profiles.active = 0`), which blocks sign-in on the next request and keeps history. Permanent delete works only for accounts with no ideas, votes, reviews, decisions or audit entries, because those foreign keys do not cascade.
+- Created and reset accounts get a temporary password shown once, `users.must_change_password = 1`, and are redirected to `/profile/password` by every layout until they choose their own (12+ characters).
+- Every create, tier change, deactivate/reactivate, reset and delete is written to the audit log (`entity_type = 'users'`). Passwords are never logged.
+- The four platform Developers are created by `npm run db:seed` (`scripts/seed.ts`). The password is only applied when the account is first created and is hard-coded there, so treat it as compromised-by-design and change it after first sign-in.
+
 ## File uploads
 
-- **Where files live:** showcase images and program resources are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
-- **Uploads** go through `POST /api/files/[bucket]`, which is admin-only.
+- **Where files live:** showcase images, program resources, mentor photos and final presentation decks are stored on local disk under `UPLOAD_DIR` (`lib/storage/local.ts`).
+- **Uploads** go through `POST /api/files/[bucket]`, which is admin-only. The one exception is final presentation decks (`idea-presentations`, 25 MB max, `.pptx` or `.pdf` checked by content). A team uploads its deck through `POST /api/ideas/[ideaId]/presentation` once its qualifier Build is published. Only the team, mentors and admins can download it.
   - Keys are server-generated (`<uuid>/<uuid>.<ext>`), and every key is validated against a strict pattern, so path traversal is impossible.
   - Showcase images are validated by their actual bytes (PNG, JPEG or WebP signature), not the browser-supplied type. The limit is 5 MB.
   - Program resources are limited to 10 MB, and HTML, SVG, script and executable types are refused.
@@ -90,7 +109,7 @@ Voting results follow the same principle:
 ## Known limitations
 
 - **Email is not actually sent** in this build. The only implementation in `lib/email/adapter.ts` queues to `email_outbox` (status `pending`) and logs to the console.
-- **The voting-notifications cron route is not scheduled anywhere in this repo.** It is protected by `CRON_SECRET`; see `COMPANY_SERVER_DEPLOYMENT.md` for scheduling it.
+- **The voting-notifications cron route is not scheduled anywhere in this repo.** It is protected by `CRON_SECRET`. See `COMPANY_SERVER_DEPLOYMENT.md` §4 (Linux cron) or `SELF_HOSTING_WINDOWS.md` §9d (Windows Task Scheduler) for scheduling it.
 - **No column-level redaction in the audit log viewer.** It shows the full `prior_value`/`new_value` JSON to any admin, including internal-only fields such as `internal_reason`.
 - **Sign-in throttling is per process and in memory.** Put a shared rate limiter (or the reverse proxy's) in front if the app ever runs as multiple replicas.
 - **No database-level safety net.** Because authorization lives in the application, a new query that forgets its scope filter would not be caught by the database. Review new data-access code against `lib/permissions/scopes.ts`. The integration tests (`tests/integration/`) exercise the ownership and locking rules against real SQL.

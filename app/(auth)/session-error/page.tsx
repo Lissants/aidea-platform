@@ -8,14 +8,14 @@ export const metadata = { title: 'Session error' };
 export default function SessionErrorPage() {
   return (
     <Card>
-      <CardHeader className="items-center text-center">
-        <AlertTriangle className="mb-2 h-10 w-10 text-warning" />
+      <CardHeader>
+        <AlertTriangle className="mb-1 h-6 w-6 text-warning" aria-hidden="true" />
         <CardTitle>We couldn&apos;t sign you in</CardTitle>
         <CardDescription>
           Your sign-in link may have expired or already been used. Request a new one and try again.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex justify-center">
+      <CardContent>
         <Button asChild>
           <Link href="/sign-in">Back to sign in</Link>
         </Button>

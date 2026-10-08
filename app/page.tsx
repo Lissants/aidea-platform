@@ -16,10 +16,11 @@ export default async function RootPage() {
   }
 
   const ROLE_HOME: Record<string, string> = {
+    developer: '/overview',
     admin: '/overview',
     mentor: '/overview',
     participant: '/overview',
-    employee_voter: '/showcase',
+    employee_voter: '/voting',
   };
 
   redirect(ROLE_HOME[defaultRole!] ?? '/sign-in');

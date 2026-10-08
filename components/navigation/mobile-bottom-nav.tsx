@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAVIGATION, type AppRole } from '@/lib/constants/navigation';
+import { isActivePath } from '@/components/navigation/sidebar-nav';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface MobileBottomNavProps {
@@ -13,59 +14,76 @@ interface MobileBottomNavProps {
   role: AppRole;
 }
 
+const ITEM_CLASS =
+  'flex flex-1 flex-col items-center justify-center gap-1 px-1 text-xs leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring';
+
 /** Mobile bottom nav — max 5 items (primaryItems + "More"), secondary destinations in a sheet. */
 export function MobileBottomNav({ role }: MobileBottomNavProps) {
   const primaryItems = NAVIGATION[role].filter((i) => i.mobilePrimary);
   const moreItems = NAVIGATION[role].filter((i) => i.mobileMore);
   const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = React.useState(false);
   const items = primaryItems.slice(0, 4);
+  const moreActive = moreItems.some((i) => isActivePath(pathname, i.href));
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-card lg:hidden">
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-stretch border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
+    >
       {items.map((item) => {
-        const active = pathname === item.href || pathname?.startsWith(item.href + '/');
+        const active = isActivePath(pathname, item.href);
         const Icon = item.icon;
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={cn(
-              'flex flex-1 flex-col items-center justify-center gap-1 text-xs',
-              active ? 'text-primary' : 'text-muted-foreground'
-            )}
+            aria-current={active ? 'page' : undefined}
+            className={cn(ITEM_CLASS, active ? 'font-semibold text-foreground' : 'text-muted-foreground')}
           >
-            <Icon className="h-5 w-5" />
-            {item.label}
+            <span className={cn('flex h-7 w-12 items-center justify-center rounded-full', active && 'bg-primary text-primary-foreground')}>
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="max-w-full truncate">{item.mobileLabel ?? item.label}</span>
           </Link>
         );
       })}
       {moreItems.length > 0 && (
-        <Sheet>
+        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-1 flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
-              <MoreHorizontal className="h-5 w-5" />
+            <button type="button" className={cn(ITEM_CLASS, moreActive ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+              <span className={cn('flex h-7 w-12 items-center justify-center rounded-full', moreActive && 'bg-primary text-primary-foreground')}>
+                <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+              </span>
               More
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom">
-            <SheetHeader>
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto overscroll-contain">
+            <SheetHeader className="text-left">
               <SheetTitle>More</SheetTitle>
             </SheetHeader>
-            <div className="grid grid-cols-3 gap-3 py-4">
+            <ul className="divide-y py-2">
               {moreItems.map((item) => {
                 const Icon = item.icon;
+                const active = isActivePath(pathname, item.href);
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex flex-col items-center gap-2 rounded-lg border p-3 text-xs text-foreground hover:bg-accent"
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => setMoreOpen(false)}
+                      className={cn(
+                        'flex min-h-12 items-center gap-3 px-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                        active ? 'font-semibold' : ''
+                      )}
+                    >
+                      <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      {item.label}
+                    </Link>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </SheetContent>
         </Sheet>
       )}

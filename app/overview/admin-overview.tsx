@@ -1,11 +1,14 @@
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2, ClipboardList, Gavel, History, Lightbulb, Rocket, Users, Vote } from 'lucide-react';
-import { PageHeader } from '@/components/layout/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
+import { MetricRow } from '@/components/layout/metric';
+import { NextStepHeader } from '@/components/overview/next-step-header';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDate } from '@/lib/utils';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/permissions';
+import { humanizeAuditAction } from '@/lib/audit/labels';
+import type { StatusKey } from '@/lib/constants/status';
 
 interface OverviewCounts {
   totalIdeas: number;
@@ -24,29 +27,12 @@ interface OverviewCounts {
   finalReadyToPublish: number;
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  href,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number;
-  href?: string;
-}) {
-  const inner = (
-    <Card className={href ? 'transition-colors hover:bg-muted/50' : undefined}>
-      <CardHeader className="pb-2">
-        <CardDescription className="flex items-center gap-2">
-          <Icon className="h-4 w-4" /> {label}
-        </CardDescription>
-        <CardTitle className="text-3xl">{value}</CardTitle>
-      </CardHeader>
-    </Card>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
+interface Decision {
+  text: string;
+  href: string;
 }
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export async function AdminOverview() {
   // Platform-wide aggregates and the audit feed are admin-only data.
@@ -54,7 +40,7 @@ export async function AdminOverview() {
   if (!user || !isAdmin(user.roles)) return null;
 
   const [program, counts, recentAuditRows, latestVotingPeriod] = await Promise.all([
-    db.queryOne<{ submission_close_at: string | null }>('SELECT TOP (1) * FROM programs ORDER BY created_at DESC'),
+    db.queryOne<{ title: string; submission_close_at: string | null }>('SELECT TOP (1) * FROM programs ORDER BY created_at DESC'),
     db.queryOne<OverviewCounts>(
       `SELECT
          (SELECT COUNT(*) FROM ideas) AS totalIdeas,
@@ -80,136 +66,132 @@ export async function AdminOverview() {
     ),
   ]);
 
-  const {
-    totalIdeas,
-    submittedIdeas,
-    routingRequired,
-    mentors,
-    pendingReviews,
-    completedReviews,
-    screeningDecisionsRecorded,
-    screeningReadyToPublish,
-    qualifierReadyToPublish,
-    mentorAssignReadyToPublish,
-    finalReadyToPublish,
-  } = counts ?? ({} as Partial<OverviewCounts>);
-  // Same nested shape the feed below reads (a.profiles?.full_name).
-  const recentAudit = recentAuditRows.map((a) => ({ ...a, profiles: a.actor_name ? { full_name: a.actor_name } : null }));
-
-  const readyToFinalize = Math.max(0, (submittedIdeas ?? 0) - (screeningDecisionsRecorded ?? 0));
-  const readyToPublishTotal =
-    (screeningReadyToPublish ?? 0) + (qualifierReadyToPublish ?? 0) + (mentorAssignReadyToPublish ?? 0) + (finalReadyToPublish ?? 0);
+  const c: Partial<OverviewCounts> = counts ?? {};
+  const awaitingScreening = Math.max(0, (c.submittedIdeas ?? 0) - (c.screeningDecisionsRecorded ?? 0));
 
   const now = new Date();
-  const votingStatus = !latestVotingPeriod
-    ? 'No voting period configured'
+  const voting: { key: StatusKey; text: string } = !latestVotingPeriod
+    ? { key: 'not_applicable', text: 'No voting period configured' }
     : latestVotingPeriod.results_published
-      ? 'Results published'
+      ? { key: 'published', text: 'Results published' }
       : new Date(latestVotingPeriod.closes_at) < now
-        ? 'Closed — awaiting publication'
+        ? { key: 'awaiting_publication', text: 'Voting closed. Results are not published yet.' }
         : new Date(latestVotingPeriod.opens_at) > now
-          ? 'Scheduled'
-          : 'Open';
+          ? { key: 'voting_scheduled', text: `Opens ${formatDate(latestVotingPeriod.opens_at)}` }
+          : { key: 'voting_open', text: `Closes ${formatDate(latestVotingPeriod.closes_at)}` };
 
-  const warnings: string[] = [];
-  if (!program) warnings.push('No program has been configured yet — set one up in Program Configuration.');
-  if ((routingRequired ?? 0) > 0) warnings.push(`${routingRequired} idea(s) need manual reviewer assignment.`);
-  if (readyToPublishTotal > 0) warnings.push(`${readyToPublishTotal} decision(s) are finalized but not yet published.`);
-  if (!latestVotingPeriod) warnings.push('No voting period has been scheduled.');
-  if (program && !program.submission_close_at) warnings.push('Program has no submission close date set.');
+  // Each item names the decision and links to the page that resolves it,
+  // in pipeline order.
+  const decisions: Decision[] = [];
+  if (!program) decisions.push({ text: 'No program is set up yet', href: '/program' });
+  if (program && !program.submission_close_at)
+    decisions.push({ text: 'The program has no submission close date', href: '/program' });
+  if (c.routingRequired)
+    decisions.push({ text: `${plural(c.routingRequired, 'idea needs', 'ideas need')} a reviewer assigned by hand`, href: '/review-assignment' });
+  if (awaitingScreening)
+    decisions.push({ text: `${plural(awaitingScreening, 'submitted idea has', 'submitted ideas have')} no screening decision yet`, href: '/screening' });
+  if (c.screeningReadyToPublish)
+    decisions.push({ text: `${plural(c.screeningReadyToPublish, 'screening decision is', 'screening decisions are')} final but not published`, href: '/screening' });
+  if (c.qualifierReadyToPublish)
+    decisions.push({ text: `${plural(c.qualifierReadyToPublish, 'qualifier result is', 'qualifier results are')} final but not published`, href: '/qualifier' });
+  if (c.mentorAssignReadyToPublish)
+    decisions.push({ text: `${plural(c.mentorAssignReadyToPublish, 'project mentor assignment is', 'project mentor assignments are')} not published`, href: '/project-mentor' });
+  if (c.finalReadyToPublish)
+    decisions.push({ text: `${plural(c.finalReadyToPublish, 'final presentation result is', 'final presentation results are')} not published`, href: '/final-presentation' });
+  if (!latestVotingPeriod) decisions.push({ text: 'No voting period has been scheduled', href: '/voting-management' });
 
   return (
-    <div>
-      <PageHeader title="Program overview" description="Snapshot of the current AI Innovation Challenge cycle." />
+    <div className="max-w-5xl space-y-10">
+      <NextStepHeader
+        eyebrow={program?.title ?? 'Program overview'}
+        step={
+          decisions.length > 0
+            ? {
+                title: `${plural(decisions.length, 'item needs', 'items need')} your decision`,
+                body: 'Each item below opens the page where you can resolve it.',
+              }
+            : { title: 'Nothing needs a decision right now', body: 'New submissions, reviews and results will appear here as they arrive.' }
+        }
+      />
 
-      {warnings.length > 0 && (
-        <Card className="mb-6 border-warning/50 bg-warning/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-warning-foreground">
-              <AlertTriangle className="h-4 w-4" /> Needs attention
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-              {warnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      {decisions.length > 0 && (
+        <section aria-labelledby="decisions-title" className="space-y-3">
+          <h2 id="decisions-title" className="text-lg font-bold">
+            Needs a decision
+          </h2>
+          <ul className="divide-y rounded-xl border border-warning/40">
+            {decisions.map((d) => (
+              <li key={d.text}>
+                <Link
+                  href={d.href}
+                  className="flex min-h-12 items-center gap-3 px-4 py-3 transition-colors hover:bg-warning-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                >
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                  <span className="flex-1 font-semibold">{d.text}</span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Lightbulb} label="Total ideas" value={totalIdeas ?? 0} href="/ideas" />
-        <StatCard icon={Lightbulb} label="Submitted" value={submittedIdeas ?? 0} href="/ideas" />
-        <StatCard icon={Gavel} label="Routing required" value={routingRequired ?? 0} href="/review-assignment" />
-        <StatCard icon={Users} label="Mentors" value={mentors ?? 0} href="/mentors" />
-        <StatCard icon={ClipboardList} label="Pending reviews" value={pendingReviews ?? 0} href="/review-assignment" />
-        <StatCard icon={CheckCircle2} label="Completed reviews" value={completedReviews ?? 0} href="/ideas" />
-        <StatCard icon={Rocket} label="Ready to finalize/decide" value={readyToFinalize} href="/screening" />
-        <StatCard icon={Rocket} label="Ready to publish" value={readyToPublishTotal} href="/screening" />
-      </div>
+      <section aria-labelledby="pipeline-title" className="space-y-3">
+        <h2 id="pipeline-title" className="text-lg font-bold">
+          Pipeline
+        </h2>
+        <MetricRow
+          label="Pipeline counts in workflow order"
+          items={[
+            { label: 'Ideas', value: c.totalIdeas ?? 0, hint: 'including drafts', href: '/ideas' },
+            { label: 'Submitted', value: c.submittedIdeas ?? 0, href: '/ideas?stage=submitted' },
+            { label: 'Routing required', value: c.routingRequired ?? 0, href: '/review-assignment' },
+            { label: 'Reviews in progress', value: c.pendingReviews ?? 0, href: '/review-assignment' },
+            { label: 'Reviews completed', value: c.completedReviews ?? 0, href: '/screening' },
+            { label: 'Mentors', value: c.mentors ?? 0, href: '/mentors' },
+          ]}
+        />
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Vote className="h-4 w-4" /> Voting status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            <p>{votingStatus}</p>
-            <Link href="/voting-management" className="mt-2 inline-block text-primary hover:underline">
-              Manage voting →
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <section aria-labelledby="voting-title" className="space-y-3">
+          <h2 id="voting-title" className="text-lg font-bold">
+            Voting
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {voting.key !== 'not_applicable' && <StatusBadge status={voting.key} />}
+            <span className="text-sm text-muted-foreground">{voting.text}</span>
+          </div>
+          <Link href="/voting-management" className="focus-ring inline-block text-sm font-semibold underline underline-offset-4">
+            Manage voting
+          </Link>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <History className="h-4 w-4" /> Recent sensitive activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {(recentAudit ?? []).length === 0 ? (
-              <p className="text-muted-foreground">No audit activity yet.</p>
-            ) : (
-              (recentAudit as any[]).map((a, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {a.action} on {a.entity_type} by {a.profiles?.full_name ?? 'System'}
+        <section aria-labelledby="activity-title" className="space-y-3">
+          <h2 id="activity-title" className="text-lg font-bold">
+            Recent sensitive activity
+          </h2>
+          {recentAuditRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No audit activity yet.</p>
+          ) : (
+            <ul className="divide-y rounded-xl border text-sm">
+              {recentAuditRows.map((a, idx) => (
+                <li key={idx} className="flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                  <span className="min-w-0">
+                    <span className="font-semibold">{humanizeAuditAction(a.action, a.entity_type)}</span>
+                    <span className="text-muted-foreground"> by {a.actor_name ?? 'System'}</span>
                   </span>
-                  <span>{formatDate(a.created_at)}</span>
-                </div>
-              ))
-            )}
-            <Link href="/audit" className="inline-block text-primary hover:underline">
-              View full audit log →
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Link href="/review-assignment" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Review Assignment
-        </Link>
-        <Link href="/screening" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Screening
-        </Link>
-        <Link href="/qualifier" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Qualifier
-        </Link>
-        <Link href="/project-mentor" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Project Mentor
-        </Link>
-        <Link href="/final-presentation" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Final Presentation
-        </Link>
-        <Link href="/showcase-content" className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-          Showcase Content
-        </Link>
+                  <time dateTime={a.created_at} className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatDate(a.created_at)}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link href="/audit" className="focus-ring inline-block text-sm font-semibold underline underline-offset-4">
+            View full audit log
+          </Link>
+        </section>
       </div>
     </div>
   );

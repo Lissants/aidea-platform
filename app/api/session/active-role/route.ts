@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { ACTIVE_ROLE_COOKIE, getCurrentUser } from '@/lib/auth/session';
-import type { AppRole } from '@/lib/constants/navigation';
+import { APP_ROLES, type AppRole } from '@/lib/constants/navigation';
 
-const VALID_ROLES: AppRole[] = ['admin', 'mentor', 'participant', 'employee_voter'];
+const VALID_ROLES = APP_ROLES;
 
 /**
  * Persists the user's "acting as" role choice in a cookie. The role must be

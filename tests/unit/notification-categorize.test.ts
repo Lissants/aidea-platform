@@ -14,6 +14,12 @@ describe('categorizeNotification', () => {
     expect(categorizeNotification('reviewer_assigned')).toBe('your_ideas');
   });
 
+  it('buckets screening/qualifier/mentor result notifications as your_ideas', () => {
+    expect(categorizeNotification('idea_screening_passed')).toBe('your_ideas');
+    expect(categorizeNotification('idea_qualifier_build')).toBe('your_ideas');
+    expect(categorizeNotification('idea_mentor_assigned')).toBe('your_ideas');
+  });
+
   it('falls back to system for anything else (e.g. admin escalations)', () => {
     expect(categorizeNotification('routing_required')).toBe('system');
     expect(categorizeNotification('some_future_type')).toBe('system');

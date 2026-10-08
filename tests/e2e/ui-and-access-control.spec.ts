@@ -35,7 +35,9 @@ test('a participant cannot reach an admin-only route', async ({ page }) => {
 });
 
 test.describe('mobile viewport', () => {
-  test.use({ ...devices['iPhone 13'] });
+  // Viewport/touch only: spreading the full device sets defaultBrowserType (webkit),
+  // which Playwright 1.63 rejects inside a describe and which is not installed here.
+  test.use({ viewport: devices['iPhone 13'].viewport, isMobile: true, hasTouch: true });
 
   test('an unauthenticated visitor is redirected away from a protected route (mobile)', async ({ page }) => {
     await page.goto('/my-ideas');

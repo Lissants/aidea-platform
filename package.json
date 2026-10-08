@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "audit:design": "tsx scripts/validate-design-audit.ts",
+    "audit:capture": "playwright test ui-baseline --workers=1",
     "seed": "tsx scripts/seed.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
@@ -54,7 +56,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@playwright/test": "^1.47.2",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@types/mssql": "^12.3.0",
     "@types/node": "^24.19.0",
     "@types/react": "^19.3.0",

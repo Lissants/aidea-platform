@@ -1,4 +1,4 @@
-import type { AppRole } from '@/lib/constants/navigation';
+import { USER_TIERS, type AppRole, type UserTier } from '@/lib/constants/navigation';
 
 /**
  * Role-level permissions matrix (hide nav items, gate pages, gate server
@@ -31,7 +31,8 @@ export type Action =
   | 'voting:manage'
   | 'reports:view'
   | 'audit:view'
-  | 'settings:manage';
+  | 'settings:manage'
+  | 'user:manage';
 
 export interface PermissionContext {
   isOwner?: boolean;
@@ -44,8 +45,12 @@ export interface PermissionContext {
  * `can(action, role, context)` — role-based checks with optional row-level
  * context flags. Each case comments the mirrored RLS policy name.
  */
-export function can(action: Action, role: AppRole, context: PermissionContext = {}): boolean {
+export function can(action: Action, actingRole: AppRole, context: PermissionContext = {}): boolean {
+  // Developer is a superset of admin: it passes every admin check.
+  const role: AppRole = actingRole === 'developer' ? 'admin' : actingRole;
   switch (action) {
+    case 'user:manage':
+      return role === 'admin';
     case 'idea:create':
     case 'idea:edit_draft':
       // Mirrors RLS: "participants_crud_own_drafts" on public.ideas
@@ -98,7 +103,28 @@ export function can(action: Action, role: AppRole, context: PermissionContext = 
   }
 }
 
-export const isAdmin = (roles: AppRole[]) => roles.includes('admin');
+/** Admin-level access: true for admins and for developers (superset of admin). */
+export const isAdmin = (roles: AppRole[]) => roles.includes('admin') || roles.includes('developer');
+export const isDeveloper = (roles: AppRole[]) => roles.includes('developer');
+
+/** The single privilege tier an account sits on (highest role held), or null. */
+export function tierOf(roles: AppRole[]): UserTier | null {
+  for (const t of [...USER_TIERS].reverse()) if (roles.includes(t)) return t;
+  return null;
+}
+
+/**
+ * Who may change whom. A Developer manages every tier. An Admin manages only
+ * User and Mentor accounts: it can neither touch an admin/developer account nor
+ * grant those tiers. `to` is omitted for actions that don't change the tier
+ * (create is `to` = the new tier; deactivate/reset omit it).
+ */
+export function canManageUser(actorRoles: AppRole[], targetTier: UserTier, to?: UserTier): boolean {
+  if (isDeveloper(actorRoles)) return true;
+  if (!isAdmin(actorRoles)) return false;
+  const low = (t: UserTier) => t === 'participant' || t === 'mentor';
+  return low(targetTier) && (to === undefined || low(to));
+}
 export const isMentor = (roles: AppRole[]) => roles.includes('mentor');
 export const isParticipant = (roles: AppRole[]) => roles.includes('participant');
 export const isEmployeeVoter = (roles: AppRole[]) => roles.includes('employee_voter');

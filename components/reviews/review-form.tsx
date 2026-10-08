@@ -31,40 +31,57 @@ interface ReviewFormProps {
   reopenReason: string | null;
 }
 
+/** Radio option whose whole row (control + label) is one 44px tap target. */
+function RadioOption({ value, id, label, disabled }: { value: string; id: string; label: string; disabled: boolean }) {
+  return (
+    <Label
+      htmlFor={id}
+      className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 font-normal has-[[data-state=checked]]:border-foreground has-[[data-state=checked]]:font-semibold"
+    >
+      <RadioGroupItem value={value} id={id} disabled={disabled} />
+      {label}
+    </Label>
+  );
+}
+
 function YesNo({
+  name,
   label,
   description,
   value,
   onChange,
   disabled,
 }: {
+  name: string;
   label: string;
   description?: string;
   value: boolean | null;
   onChange: (v: boolean) => void;
   disabled: boolean;
 }) {
+  const labelId = `review-${name}-label`;
+  const descriptionId = description ? `review-${name}-description` : undefined;
   return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {description && <p className="text-sm text-muted-foreground">{description}</p>}
+    <div className="space-y-2">
+      <div className="space-y-1">
+        <p id={labelId} className="text-sm font-semibold">
+          {label}
+        </p>
+        {description && (
+          <p id={descriptionId} className="text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </div>
       <RadioGroup
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
         value={value === null ? undefined : value ? 'yes' : 'no'}
         onValueChange={(v) => onChange(v === 'yes')}
-        className="flex gap-4"
+        className="grid grid-cols-2 gap-2 sm:flex"
       >
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="yes" id={`${label}-yes`} disabled={disabled} />
-          <Label htmlFor={`${label}-yes`} className="cursor-pointer font-normal">
-            Yes
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <RadioGroupItem value="no" id={`${label}-no`} disabled={disabled} />
-          <Label htmlFor={`${label}-no`} className="cursor-pointer font-normal">
-            No
-          </Label>
-        </div>
+        <RadioOption value="yes" id={`review-${name}-yes`} label="Yes" disabled={disabled} />
+        <RadioOption value="no" id={`review-${name}-no`} label="No" disabled={disabled} />
       </RadioGroup>
     </div>
   );
@@ -83,13 +100,16 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
   const [recommendation, setRecommendation] = React.useState<ReviewRecommendation | null>(initial.recommendation);
   const [comment, setComment] = React.useState(initial.comment ?? '');
 
-  const isComplete =
-    desirability !== null &&
-    viability !== null &&
-    businessImpact !== null &&
-    realistic !== null &&
-    recommendation !== null &&
-    comment.trim().length >= 10;
+  // Listed next to the disabled Submit button so the mentor knows what is left.
+  const missing = [
+    desirability === null && 'Desirability',
+    viability === null && 'Viability',
+    businessImpact === null && 'Business Impact',
+    realistic === null && 'Realistic Implementation',
+    recommendation === null && 'Recommendation',
+    comment.trim().length < 10 && 'Comment (at least 10 characters)',
+  ].filter(Boolean) as string[];
+  const isComplete = missing.length === 0;
 
   async function handleSaveDraft() {
     setPending(true);
@@ -150,45 +170,62 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Your assessment</CardTitle>
+          <CardTitle>Your Assessment</CardTitle>
           {isReadOnly && <StatusBadge status="review_completed" />}
         </CardHeader>
         <CardContent className="space-y-4">
-          <YesNo label="Desirability" value={desirability} onChange={setDesirability} disabled={isReadOnly} />
-          <YesNo label="Viability" value={viability} onChange={setViability} disabled={isReadOnly} />
           <YesNo
-            label="Business impact"
+            name="desirability"
+            label="Desirability"
+            description="Does the idea address a real and relevant problem for its intended users?"
+            value={desirability}
+            onChange={setDesirability}
+            disabled={isReadOnly}
+          />
+          <YesNo
+            name="viability"
+            label="Viability"
+            description="Does the idea create sufficient business value to justify further investment and implementation?"
+            value={viability}
+            onChange={setViability}
+            disabled={isReadOnly}
+          />
+          <YesNo
+            name="business-impact"
+            label="Business Impact"
             description="How large and measurable is the expected result?"
             value={businessImpact}
             onChange={setBusinessImpact}
             disabled={isReadOnly}
           />
-          <YesNo label="Realistic implementation" value={realistic} onChange={setRealistic} disabled={isReadOnly} />
+          <YesNo
+            name="realistic"
+            label="Realistic Implementation"
+            description="Can the idea be realistically developed using available technology, data, expertise, resources, and proposed support?"
+            value={realistic}
+            onChange={setRealistic}
+            disabled={isReadOnly}
+          />
 
-          <div className="space-y-1.5">
-            <Label>Recommendation</Label>
+          <div className="space-y-2">
+            <p id="review-recommendation-label" className="text-sm font-semibold">
+              Recommendation
+            </p>
             <RadioGroup
+              aria-labelledby="review-recommendation-label"
               value={recommendation ?? undefined}
               onValueChange={(v) => setRecommendation(v as ReviewRecommendation)}
-              className="flex flex-col gap-2 sm:flex-row sm:gap-4"
+              className="grid gap-2 sm:flex"
             >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="recommend_pass" id="rec-pass" disabled={isReadOnly} />
-                <Label htmlFor="rec-pass" className="cursor-pointer font-normal">
-                  Recommend Pass
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="recommend_not_pass" id="rec-not-pass" disabled={isReadOnly} />
-                <Label htmlFor="rec-not-pass" className="cursor-pointer font-normal">
-                  Recommend Not Pass
-                </Label>
-              </div>
+              <RadioOption value="recommend_pass" id="rec-pass" label="Pass" disabled={isReadOnly} />
+              <RadioOption value="recommend_not_pass" id="rec-not-pass" label="Not Pass" disabled={isReadOnly} />
             </RadioGroup>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="comment">Reviewer comment (required)</Label>
+            <Label htmlFor="comment" className="font-semibold">
+              Reviewer Comment (required)
+            </Label>
             <Textarea
               id="comment"
               rows={5}
@@ -202,13 +239,23 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
       </Card>
 
       {!isReadOnly && (
-        <ContextualActionBar>
-          <Button variant="secondary" onClick={handleSaveDraft} disabled={pending}>
-            Save as Draft
-          </Button>
-          <Button onClick={() => setConfirmOpen(true)} disabled={pending || !isComplete}>
-            Submit Review
-          </Button>
+        <ContextualActionBar className="justify-between">
+          <p id="review-submit-hint" className="text-sm text-muted-foreground">
+            {isComplete ? 'Ready to submit.' : `To submit, complete: ${missing.join(', ')}.`}
+          </p>
+          <div className="flex flex-1 justify-end gap-2 sm:flex-none">
+            <Button variant="secondary" onClick={handleSaveDraft} disabled={pending} className="flex-1 sm:flex-none">
+              {pending ? 'Saving…' : 'Save draft'}
+            </Button>
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              disabled={pending || !isComplete}
+              aria-describedby="review-submit-hint"
+              className="flex-1 sm:flex-none"
+            >
+              Submit review
+            </Button>
+          </div>
         </ContextualActionBar>
       )}
 

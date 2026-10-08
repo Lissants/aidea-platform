@@ -14,6 +14,24 @@ export const profileSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileSchema>;
 
+export const MAX_MENTOR_EXPERTISE_CHARS = 600;
+
+/** Admin-edited mentor card (job title lives on profiles, the rest on mentor_profiles). */
+export const mentorProfileSchema = z.object({
+  job_title: z.string().trim().max(120, 'Title must be 120 characters or fewer').nullable(),
+  expertise: z
+    .string()
+    .trim()
+    .max(MAX_MENTOR_EXPERTISE_CHARS, `Expertise must be ${MAX_MENTOR_EXPERTISE_CHARS} characters or fewer`)
+    .nullable(),
+  // Relative URL from lib/storage/local.ts, so not z.string().url().
+  photo_url: z
+    .string()
+    .regex(/^\/api\/files\/mentor-photos\/[0-9a-f-]+\/[0-9a-f-]+(\.[a-z0-9]{1,8})?$/, 'Invalid photo')
+    .nullable(),
+});
+export type MentorProfileInput = z.infer<typeof mentorProfileSchema>;
+
 // --- Idea submission wizard (multi-step; each step schema composes into
 // ideaDraftSchema for final submit validation) --------------------------
 
@@ -30,16 +48,39 @@ export const ideaTeamMemberSchema = z.object({
   member_order: z.number().int().min(1),
 });
 
-export const ideaTeamSchema = z.object({
+const ideaTeamObject = z.object({
   team_leader_id: z.string().uuid('Team leader is required'),
   team_members: z.array(ideaTeamMemberSchema).max(5, 'A team can have at most 5 members'),
 });
 
+/**
+ * Team composition rules shared by the submit and save-draft schemas: no one
+ * listed twice, and the team leader is not also listed as a member.
+ */
+function refineTeam(
+  team: { team_leader_id?: string | null; team_members?: { profile_id: string }[] },
+  ctx: z.RefinementCtx
+) {
+  const ids = (team.team_members ?? []).map((m) => m.profile_id);
+  if (new Set(ids).size !== ids.length) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['team_members'], message: 'A team member is listed more than once' });
+  }
+  if (team.team_leader_id && ids.includes(team.team_leader_id)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['team_members'],
+      message: 'The team leader cannot also be listed as a team member',
+    });
+  }
+}
+
+export const ideaTeamSchema = ideaTeamObject.superRefine(refineTeam);
+
 export const impactTypeEnum = z.enum([
   'revenue_growth',
   'time_efficiency',
-  'cost_efficiency',
-  'governance_improvement',
+  'cost_optimization',
+  'governance_excellence',
 ]);
 
 export const ideaImpactSchema = z.object({
@@ -57,7 +98,12 @@ export const ideaSupportRequestSchema = z.object({
   support_area: z.enum(['tools', 'budget', 'data_access']),
   details: z.string().max(2000).optional().nullable(),
   reason: z.string().max(2000).optional().nullable(),
-  estimate: z.string().max(500).optional().nullable(),
+  estimate: z
+    .string()
+    .regex(/^\d{1,15}$/, 'Estimated amount must be a number')
+    .or(z.literal(''))
+    .optional()
+    .nullable(),
 });
 
 export const ideaSupportRequestsSchema = z.object({
@@ -69,21 +115,41 @@ export const ideaMentorPreferenceSchema = z.object({
   mentor_profile_id: z.string().uuid(),
 });
 
+const mentorPreferencesArray = z
+  .array(ideaMentorPreferenceSchema)
+  .max(2)
+  .refine((prefs) => new Set(prefs.map((p) => p.priority)).size === prefs.length, {
+    message: 'Each priority can be used only once',
+  })
+  // Mirrors the DB constraint uq_idea_mentor_preferences_mentor, so a repeated
+  // mentor gets a clear message instead of a constraint violation on save.
+  .refine((prefs) => new Set(prefs.map((p) => p.mentor_profile_id)).size === prefs.length, {
+    message: 'Choose two different mentors for Priority 1 and Priority 2',
+  });
+
 export const ideaMentorPreferencesSchema = z.object({
-  mentor_preferences: z
-    .array(ideaMentorPreferenceSchema)
-    .max(2)
-    .refine((prefs) => new Set(prefs.map((p) => p.priority)).size === prefs.length, {
-      message: 'Priority 1 and Priority 2 must be different mentors',
-    }),
+  mentor_preferences: mentorPreferencesArray,
+});
+
+/**
+ * What the submit form asks for: both priorities filled. Kept separate from
+ * the shared schema because the server-side submit path (usp_submit_idea and
+ * existing fixtures) does not require preferences; making it mandatory there
+ * is a product decision (design-audit R-05).
+ */
+export const ideaMentorPreferencesRequiredSchema = z.object({
+  mentor_preferences: mentorPreferencesArray.refine((prefs) => prefs.length === 2, {
+    message: 'Choose a mentor for Priority 1 and for Priority 2',
+  }),
 });
 
 /** Full submit-time schema — combines every wizard step for final validation. */
 export const ideaDraftSchema = ideaBasicsSchema
-  .merge(ideaTeamSchema)
+  .merge(ideaTeamObject)
   .merge(ideaImpactsSchema)
   .merge(ideaSupportRequestsSchema)
-  .merge(ideaMentorPreferencesSchema);
+  .merge(ideaMentorPreferencesSchema)
+  .superRefine(refineTeam);
 export type IdeaDraftInput = z.infer<typeof ideaDraftSchema>;
 
 /**
@@ -100,12 +166,39 @@ export const ideaDraftSaveSchema = z.object({
   proposed_solution: z.string().max(4000).optional(),
   target_users: z.string().max(2000).optional().nullable(),
   team_leader_id: z.string().uuid().optional(),
-  team_members: ideaTeamSchema.shape.team_members.optional(),
+  team_members: ideaTeamObject.shape.team_members.optional(),
   impacts: z.array(ideaImpactSchema.extend({ explanation: z.string().max(2000).optional().nullable() })).max(4).optional(),
   support_requests: ideaSupportRequestsSchema.shape.support_requests.optional(),
   mentor_preferences: ideaMentorPreferencesSchema.shape.mentor_preferences.optional(),
-});
+}).superRefine(refineTeam);
 export type IdeaDraftSaveInput = z.infer<typeof ideaDraftSaveSchema>;
+
+// --- Admin team changes ---------------------------------------------------
+
+export const teamChangeReasonSchema = z
+  .string()
+  .trim()
+  .min(5, 'Please give a reason (at least 5 characters)')
+  .max(500, 'Reason must be 500 characters or fewer');
+
+export const adminRemoveTeamMemberSchema = z.object({
+  idea_id: z.string().uuid(),
+  profile_id: z.string().uuid(),
+  reason: teamChangeReasonSchema,
+});
+
+export const adminAddTeamMemberSchema = z
+  .object({
+    idea_id: z.string().uuid(),
+    profile_id: z.string().uuid(),
+    as_leader: z.boolean(),
+    override: z.boolean(),
+    reason: z.string().trim().max(500).optional().nullable(),
+  })
+  .refine((v) => !v.override || teamChangeReasonSchema.safeParse(v.reason ?? '').success, {
+    message: 'A reason (at least 5 characters) is required to override eligibility',
+    path: ['reason'],
+  });
 
 // --- Review ---------------------------------------------------------------
 
@@ -170,3 +263,48 @@ export const votingPeriodSchema = z
     path: ['closes_at'],
   });
 export type VotingPeriodInput = z.infer<typeof votingPeriodSchema>;
+
+// --- User management / passwords --------------------------------------
+
+export const MIN_PASSWORD_LENGTH = 12;
+
+export const newPasswordSchema = z
+  .string()
+  .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+  .max(200);
+
+export const userTierEnum = z.enum(['participant', 'mentor', 'admin', 'developer']);
+
+// Parsed twice: by zodResolver in the browser, then again by createUser() on
+// the server with the browser's *output*. So every output must also be valid
+// input (blank -> null/undefined must be accepted back).
+export const createUserSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(320),
+  fullName: z.string().trim().min(2, 'Full name is required').max(200),
+  employeeId: z
+    .string()
+    .trim()
+    .max(50)
+    .nullish()
+    .transform((v) => v || null),
+  tier: userTierEnum,
+  // Blank or omitted: a temporary password is generated.
+  tempPassword: z
+    .union([z.literal(''), newPasswordSchema])
+    .nullish()
+    .transform((v) => v || undefined),
+});
+export type CreateUserInput = z.input<typeof createUserSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password').max(200),
+    newPassword: newPasswordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, { message: 'Passwords do not match', path: ['confirmPassword'] })
+  .refine((v) => v.newPassword !== v.currentPassword, {
+    message: 'New password must be different from the current one',
+    path: ['newPassword'],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

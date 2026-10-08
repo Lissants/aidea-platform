@@ -13,11 +13,10 @@ test('a mentor can submit a review for an assigned idea', async ({ page }) => {
   await page.goto('/reviews');
   await page.getByText('Waiting for Review').first().click();
 
-  await page.getByLabel('Desirability').check();
-  await page.getByLabel('Viability').check();
-  await page.getByLabel('Business impact').check();
-  await page.getByLabel('Realistic implementation').check();
-  await page.getByLabel(/recommend/i).first().check();
+  for (const group of ['Desirability', 'Viability', 'Business Impact', 'Realistic Implementation']) {
+    await page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: 'Yes' }).click();
+  }
+  await page.getByRole('radiogroup', { name: 'Recommendation' }).getByRole('radio', { name: 'Pass', exact: true }).click();
   await page.getByLabel(/comment/i).fill('Clear articulation of desirability, viability, and feasibility.');
 
   await page.getByRole('button', { name: /submit review/i }).click();

@@ -39,6 +39,10 @@
   ],
   "exclude": [
     "node_modules",
-    "tests/e2e"
+    "tests/e2e",
+    "agent-skills",
+    "skills",
+    "ui-ux-pro-max-skill",
+    "claude-marketplace"
   ]
 }

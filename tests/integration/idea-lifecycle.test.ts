@@ -77,7 +77,7 @@ describe('submitIdea', () => {
   });
 
   it("refuses to submit someone else's idea", async () => {
-    await db.insert('idea_impacts', { idea_id: SEED.draftIdea, impact_kind: 'primary', impact_type: 'cost_efficiency' });
+    await db.insert('idea_impacts', { idea_id: SEED.draftIdea, impact_kind: 'primary', impact_type: 'cost_optimization' });
     currentUser = participant2;
     const result = await submitIdea(SEED.draftIdea);
     expect('error' in result).toBe(true);
