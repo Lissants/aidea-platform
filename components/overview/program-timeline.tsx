@@ -1,20 +1,11 @@
 import { Check } from 'lucide-react';
 import type { Program } from '@/types/database';
+import { TIMELINE_STAGES, parseTimelineTba } from '@/lib/program/timeline';
 import { cn } from '@/lib/utils';
-
-const MILESTONES: { key: keyof Program; label: string }[] = [
-  { key: 'submission_close_at', label: 'Submissions close' },
-  { key: 'screening_close_at', label: 'Screening results' },
-  { key: 'qualifier_close_at', label: 'Qualifier results' },
-  { key: 'final_presentation_close_at', label: 'Final presentations' },
-  { key: 'showcase_open_at', label: 'Showcase opens' },
-  { key: 'voting_open_at', label: 'Voting opens' },
-  { key: 'voting_close_at', label: 'Voting closes' },
-];
 
 function formatDay(iso: string, now: Date) {
   const d = new Date(iso);
-  // Year only when it differs from today's, to keep the seven cells short.
+  // Year only when it differs from today's, to keep the cells short.
   return d.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -23,13 +14,18 @@ function formatDay(iso: string, now: Date) {
 }
 
 /**
- * The program's dated milestones in order. It is a real sequence, so the
- * steps are numbered; the next upcoming milestone is marked "Next".
+ * The program's public stages in order. It is a real sequence, so the steps
+ * are numbered; the next upcoming stage is marked "Next". A stage an admin
+ * marked TBA shows its message instead of the date (the real date never
+ * reaches the page), and still counts as done once that date has passed.
  */
 export function ProgramTimeline({ program, now = new Date() }: { program: Program; now?: Date }) {
-  const steps = MILESTONES.filter((m) => program[m.key]).map((m) => {
-    const iso = program[m.key] as string;
-    return { ...m, iso, past: new Date(iso) < now };
+  const tba = parseTimelineTba(program.timeline_tba);
+  const steps = TIMELINE_STAGES.flatMap((m) => {
+    const iso = program[m.key];
+    const mask = tba[m.key]?.hidden ? tba[m.key]!.text : null;
+    if (!iso && !mask) return [];
+    return [{ ...m, mask, past: !!iso && new Date(iso) < now, dateLabel: mask ?? formatDay(iso!, now), iso }];
   });
   if (steps.length === 0) return null;
   const nextIndex = steps.findIndex((s) => !s.past);
@@ -38,6 +34,8 @@ export function ProgramTimeline({ program, now = new Date() }: { program: Progra
     <ol className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 sm:[&>li:last-child:nth-child(odd)]:col-span-2 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none xl:[&>li:last-child:nth-child(odd)]:col-span-1">
       {steps.map((s, i) => {
         const isNext = i === nextIndex;
+        const dateClass = cn('block text-sm', isNext ? 'text-primary-foreground' : 'text-muted-foreground');
+        const dateText = isNext ? `Next, ${s.dateLabel}` : s.dateLabel;
         return (
           <li
             key={s.key}
@@ -59,9 +57,13 @@ export function ProgramTimeline({ program, now = new Date() }: { program: Progra
                 {s.label}
                 {s.past && <span className="sr-only"> (done)</span>}
               </span>
-              <time dateTime={s.iso} className={cn('block text-sm', isNext ? 'text-primary-foreground' : 'text-muted-foreground')}>
-                {isNext ? `Next, ${formatDay(s.iso, now)}` : formatDay(s.iso, now)}
-              </time>
+              {s.mask || !s.iso ? (
+                <span className={dateClass}>{dateText}</span>
+              ) : (
+                <time dateTime={s.iso} className={dateClass}>
+                  {dateText}
+                </time>
+              )}
             </span>
           </li>
         );

@@ -29,6 +29,17 @@ describe('participantNextStep', () => {
     expect(step.body).toContain('a draft that has not been submitted');
   });
 
+  it('links straight back into a single draft the participant created', () => {
+    const draft = { status: 'draft' as const, screening: null, qualifier: null, id: 'd1', editable: true };
+    expect(participantNextStep({ ...base, ideas: [draft] }).action).toEqual({ label: 'Continue draft', href: '/submit?draft=d1' });
+    expect(participantNextStep({ ...base, ideas: [draft, { ...draft, id: 'd2' }] }).action).toEqual({
+      label: 'View My Ideas',
+      href: '/my-ideas',
+    });
+    // A draft someone else created can't be continued by this participant.
+    expect(participantNextStep({ ...base, ideas: [{ ...draft, editable: false }] }).action?.href).toBe('/submit');
+  });
+
   it('only offers voting while voting is open', () => {
     const submitted = { status: 'submitted' as const, screening: null, qualifier: null };
     expect(participantNextStep({ ...base, submissionOpen: false, ideas: [submitted] }).action?.href).not.toBe('/voting');

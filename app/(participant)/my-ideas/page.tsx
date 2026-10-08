@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Lightbulb, PlusCircle } from 'lucide-react';
+import { Lightbulb, Pencil, PlusCircle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/layout/empty-state';
 import { Button } from '@/components/ui/button';
@@ -30,12 +30,28 @@ export default async function MyIdeasPage() {
   // published-only (see lib/ideas/published-results.ts).
   const [ideas, conflicts] = await Promise.all([user ? fetchMyIdeas(user.id) : [], fetchMyMembershipConflicts()]);
 
+  // Only the creator can keep editing a draft (same rule as saveIdeaDraft).
+  const canContinue = (row: MyIdeaRow) => row.status === 'draft' && !!user && row.created_by === user.id;
+
   const columns: ResponsiveTableColumn<MyIdeaRow>[] = [
     {
       key: 'idea_title',
       header: 'Idea',
       mobile: 'title',
-      cell: (row) => row.idea_title || <span className="text-muted-foreground">Untitled draft</span>,
+      cell: (row) => {
+        const title = row.idea_title || <span className="text-muted-foreground">Untitled draft</span>;
+        if (!canContinue(row)) return title;
+        return (
+          <div className="flex flex-col items-start gap-2">
+            <span>{title}</span>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/submit?draft=${row.id}`} aria-label={`Continue editing ${row.idea_title || 'untitled draft'}`}>
+                <Pencil className="h-4 w-4" aria-hidden="true" /> Continue editing
+              </Link>
+            </Button>
+          </div>
+        );
+      },
     },
     { key: 'team_name', header: 'Team', cell: (row) => row.team_name },
     { key: 'my_role', header: 'Your role', cell: (row) => ROLE_LABEL[row.my_role] },

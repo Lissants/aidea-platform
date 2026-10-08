@@ -142,7 +142,8 @@ export function SectionIndex({ issues }: { issues: IdeaFormIssue[] }) {
 
 export interface ImpactValue {
   impact_kind: ImpactKind;
-  impact_type: ImpactType;
+  /** Empty until the participant picks one. */
+  impact_type: ImpactType | '';
   explanation: string;
   measurable_result: string;
 }
@@ -160,14 +161,14 @@ export function ImpactFieldset({
   onChange: (patch: Partial<ImpactValue>) => void;
   onRemove?: () => void;
 }) {
-  const typeId = ideaFieldId(`impacts.${index}.impact_type`);
+  const type = field(`impacts.${index}.impact_type`);
   const explanation = field(`impacts.${index}.explanation`);
   const measurable = field(`impacts.${index}.measurable_result`, true);
   const isPrimary = impact.impact_kind === 'primary';
   return (
     <fieldset className="relative space-y-4 rounded-xl border p-4">
       <legend className="float-left min-h-11 pr-12 pt-2.5 font-bold leading-6">
-        {isPrimary ? 'Primary impact' : 'Secondary impact'}
+        {isPrimary ? 'Primary Impact' : 'Secondary Impact'}
         {isPrimary && <span className="sr-only"> (required)</span>}
       </legend>
       {onRemove && (
@@ -175,10 +176,10 @@ export function ImpactFieldset({
           <RemoveButton label="Remove secondary impact" onClick={onRemove} />
         </div>
       )}
-      <FormField id={typeId} label="Impact type" className="clear-both">
-        <Select value={impact.impact_type} onValueChange={(v) => onChange({ impact_type: v as ImpactType })}>
-          <SelectTrigger id={typeId}>
-            <SelectValue />
+      <FormField id={type.id} label="Impact Type" required error={type.error} className="clear-both">
+        <Select value={impact.impact_type || undefined} onValueChange={(v) => onChange({ impact_type: v as ImpactType })}>
+          <SelectTrigger {...type.a11y} aria-required>
+            <SelectValue placeholder="Select an impact type" />
           </SelectTrigger>
           <SelectContent>
             {IMPACT_TYPE_OPTIONS.map((opt) => (
@@ -189,7 +190,7 @@ export function ImpactFieldset({
           </SelectContent>
         </Select>
       </FormField>
-      <FormField id={explanation.id} label="How will the idea create this impact?" required error={explanation.error}>
+      <FormField id={explanation.id} label="How will the Idea Create this Impact?" required error={explanation.error}>
         <Textarea
           {...explanation.a11y}
           aria-required
@@ -199,12 +200,14 @@ export function ImpactFieldset({
       </FormField>
       <FormField
         id={measurable.id}
-        label="What measurable result would show success?"
-        hint="Optional. The result or indicator you expect."
+        label="What Measurable Result would Show Success?"
+        required
+        hint="The result or indicator you expect."
         error={measurable.error}
       >
         <Input
           {...measurable.a11y}
+          aria-required
           value={impact.measurable_result}
           onChange={(e) => onChange({ measurable_result: e.target.value })}
         />

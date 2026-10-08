@@ -25,6 +25,8 @@ import {
 import { saveIdeaDraft, submitIdeaDraft } from '@/lib/services/ideas';
 import { IDEA_FORM_SECTIONS, collectIdeaIssues, type IdeaFormValues } from '@/lib/ideas/idea-form-issues';
 import type { IdeaDraftInput } from '@/lib/validation/schemas';
+import type { IdeaDraftInitial } from '@/lib/ideas/idea-draft';
+import type { ImpactType } from '@/types/database';
 
 interface TeamMemberEntry {
   profile_id: string;
@@ -43,29 +45,44 @@ const MAX_TEAM_MEMBERS = 5;
 const MAX_SUPPORT_REQUESTS = 5;
 const [SECTION_BASICS, SECTION_TEAM, SECTION_IMPACT, SECTION_SUPPORT, SECTION_MENTORS] = IDEA_FORM_SECTIONS;
 
-export function IdeaWizard({ programId, mentors }: { programId: string; mentors: MentorOption[] }) {
+export function IdeaWizard({
+  programId,
+  mentors,
+  initial,
+}: {
+  programId: string;
+  mentors: MentorOption[];
+  /** A saved draft to continue (from /submit?draft=<id>). */
+  initial?: IdeaDraftInitial;
+}) {
   const router = useRouter();
-  const [ideaId, setIdeaId] = React.useState<string | null>(null);
+  const [ideaId, setIdeaId] = React.useState<string | null>(initial?.ideaId ?? null);
   const [pending, setPending] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [showErrors, setShowErrors] = React.useState(false);
   const [savedAt, setSavedAt] = React.useState<Date | null>(null);
   const summaryRef = React.useRef<HTMLDivElement>(null);
 
-  const [basics, setBasics] = React.useState({
-    team_name: '',
-    idea_title: '',
-    problem_opportunity: '',
-    proposed_solution: '',
-    target_users: '',
-  });
-  const [teamLeader, setTeamLeader] = React.useState<{ profile_id: string; full_name: string } | null>(null);
-  const [teamMembers, setTeamMembers] = React.useState<TeamMemberEntry[]>([]);
-  const [impacts, setImpacts] = React.useState<ImpactValue[]>([
-    { impact_kind: 'primary', impact_type: 'time_efficiency', explanation: '', measurable_result: '' },
-  ]);
-  const [supportRequests, setSupportRequests] = React.useState<SupportRequestValue[]>([]);
-  const [mentorPrefs, setMentorPrefs] = React.useState<{ priority: 1 | 2; mentor_profile_id: string }[]>([]);
+  const [basics, setBasics] = React.useState(
+    initial?.basics ?? {
+      team_name: '',
+      idea_title: '',
+      problem_opportunity: '',
+      proposed_solution: '',
+      target_users: '',
+    }
+  );
+  const [teamLeader, setTeamLeader] = React.useState<{ profile_id: string; full_name: string } | null>(
+    initial?.teamLeader ?? null
+  );
+  const [teamMembers, setTeamMembers] = React.useState<TeamMemberEntry[]>(initial?.teamMembers ?? []);
+  const [impacts, setImpacts] = React.useState<ImpactValue[]>(
+    initial?.impacts ?? [{ impact_kind: 'primary', impact_type: '', explanation: '', measurable_result: '' }]
+  );
+  const [supportRequests, setSupportRequests] = React.useState<SupportRequestValue[]>(initial?.supportRequests ?? []);
+  const [mentorPrefs, setMentorPrefs] = React.useState<{ priority: 1 | 2; mentor_profile_id: string }[]>(
+    initial?.mentorPrefs ?? []
+  );
 
   const teamMemberRows = teamMembers.map(({ profile_id, member_order }) => ({ profile_id, member_order }));
 
@@ -86,7 +103,8 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
     ...basics,
     team_leader_id: teamLeader?.profile_id,
     team_members: teamMemberRows,
-    impacts,
+    // impact_type is NOT NULL in the DB, so an impact is stored once its type is chosen.
+    impacts: impacts.filter((i): i is ImpactValue & { impact_type: ImpactType } => i.impact_type !== ''),
     support_requests: supportRequests,
     mentor_preferences: mentorPrefs,
   });
@@ -100,6 +118,9 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
       toast.error(result.error);
       return;
     }
+    // A new draft gets its own URL, so a refresh reopens it instead of starting a duplicate.
+    // Native replaceState is synced with the Next router and skips a server re-render.
+    if (!ideaId && result.ideaId) window.history.replaceState(null, '', `/submit?draft=${result.ideaId}`);
     setIdeaId(result.ideaId ?? null);
     setSavedAt(new Date());
     toast.success('Draft saved');
@@ -151,7 +172,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
         {issues.length > 0 && <ErrorSummary issues={issues} summaryRef={summaryRef} />}
 
         <FormSection section={SECTION_BASICS} description="Describe the opportunity, your solution and who benefits.">
-          <FormField id={title.id} label="Idea title" required error={title.error}>
+          <FormField id={title.id} label="Idea Title" required error={title.error}>
             <Input
               {...title.a11y}
               aria-required
@@ -162,7 +183,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
           </FormField>
           <FormField
             id={problem.id}
-            label="Problem / opportunity"
+            label="Problem / Opportunity"
             required
             hint="What problem or opportunity does the idea address, and why does it matter?"
             error={problem.error}
@@ -177,7 +198,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
           </FormField>
           <FormField
             id={solution.id}
-            label="Proposed solution & AI use"
+            label="Proposed Solution & AI Use"
             required
             hint="Describe the solution and how AI will be used."
             error={solution.error}
@@ -192,12 +213,14 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
           </FormField>
           <FormField
             id={targetUsers.id}
-            label="Target users / beneficiaries"
-            hint="Optional. Who will use or benefit from the solution?"
+            label="Target Users / Beneficiaries"
+            required
+            hint="Who will use or benefit from the solution?"
             error={targetUsers.error}
           >
             <Textarea
               {...targetUsers.a11y}
+              aria-required
               rows={2}
               value={basics.target_users}
               onChange={(e) => setBasics({ ...basics, target_users: e.target.value })}
@@ -209,7 +232,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
           section={SECTION_TEAM}
           description={`Name your team and choose a leader. You can add up to ${MAX_TEAM_MEMBERS} members.`}
         >
-          <FormField id={teamName.id} label="Team name" required error={teamName.error}>
+          <FormField id={teamName.id} label="Team Name" required error={teamName.error}>
             <Input
               {...teamName.a11y}
               aria-required
@@ -218,7 +241,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
             />
           </FormField>
 
-          <FormField id={leader.id} label="Team leader" required hint="Search colleagues by name or email." error={leader.error}>
+          <FormField id={leader.id} label="Team Leader" required hint="Search colleagues by name or email." error={leader.error}>
             {teamLeader ? (
               <div className="flex items-center justify-between gap-2 rounded-md border pl-3 text-sm">
                 <span className="font-semibold">{teamLeader.full_name}</span>
@@ -236,7 +259,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
 
           <FormField
             id={members.id}
-            label="Team members"
+            label="Team Members"
             hint={`Optional. Up to ${MAX_TEAM_MEMBERS} colleagues, searched by name or email.`}
             error={members.error}
           >
@@ -299,11 +322,11 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
               onClick={() =>
                 setImpacts((prev) => [
                   ...prev,
-                  { impact_kind: 'secondary', impact_type: 'cost_optimization', explanation: '', measurable_result: '' },
+                  { impact_kind: 'secondary', impact_type: '', explanation: '', measurable_result: '' },
                 ])
               }
             >
-              Add secondary impact
+              Add Secondary Impact
             </Button>
           )}
         </FormSection>
@@ -332,7 +355,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                 setSupportRequests((prev) => [...prev, { support_area: 'tools', details: '', reason: '', estimate: '' }])
               }
             >
-              Add support request
+              Add Support Request
             </Button>
           )}
         </FormSection>
@@ -346,7 +369,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
             const selected = mentorPrefs.find((p) => p.priority === priority)?.mentor_profile_id ?? '';
             const other = mentorPrefs.find((p) => p.priority !== priority)?.mentor_profile_id;
             return (
-              <FormField key={priority} id={id} label={`Mentor priority ${priority}`} required>
+              <FormField key={priority} id={id} label={`Mentor Priority ${priority}`} required>
                 <Select
                   value={selected}
                   onValueChange={(v) =>
@@ -373,7 +396,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
                           key={m.mentor_profile_id}
                           value={m.mentor_profile_id}
                           disabled={takenByOther}
-                          description={takenByOther ? `Already your priority ${priority === 1 ? 2 : 1}` : m.expertise}
+                          description={takenByOther ? `Already your priority ${priority === 1 ? 2 : 1}` : undefined}
                         >
                           <span className="font-medium">{m.full_name}</span>
                           {m.job_title && <span className="text-muted-foreground">, {m.job_title}</span>}
@@ -395,7 +418,7 @@ export function IdeaWizard({ programId, mentors }: { programId: string; mentors:
         <ContextualActionBar className="justify-between">
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {savedAt
-              ? `Draft saved at ${savedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}. Keep this page open to keep editing.`
+              ? `Draft saved at ${savedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}. You can continue it later from My Ideas.`
               : ''}
           </p>
           <div className="flex flex-1 justify-end gap-2 sm:flex-none">

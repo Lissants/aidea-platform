@@ -51,10 +51,10 @@ function ideaInput(title: string, leader: string, members: string[]) {
     idea_title: title,
     problem_opportunity: 'Warehouses run out of stock unpredictably every month.',
     proposed_solution: 'Use demand forecasting to flag shortages a week early.',
-    target_users: null,
+    target_users: 'Warehouse planners',
     team_leader_id: leader,
     team_members: members.map((profile_id, i) => ({ profile_id, member_order: i + 1 })),
-    impacts: [{ impact_kind: 'primary' as const, impact_type: 'cost_optimization' as const, explanation: 'Less expedited freight.' }],
+    impacts: [{ impact_kind: 'primary' as const, impact_type: 'cost_optimization' as const, explanation: 'Less expedited freight.', measurable_result: '10% less freight spend' }],
     support_requests: [],
     mentor_preferences: [],
   };

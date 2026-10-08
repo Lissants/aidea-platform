@@ -14,6 +14,9 @@ export interface ParticipantIdeaSummary {
   status: 'draft' | 'submitted';
   screening: 'pass_to_qualifier' | 'not_pass' | null;
   qualifier: 'build' | 'no_build' | null;
+  id?: string;
+  /** True when this user created the draft and so can continue editing it. */
+  editable?: boolean;
 }
 
 export interface ParticipantNextStepInput {
@@ -35,6 +38,13 @@ export function participantIdeaStatusKey(idea: ParticipantIdeaSummary): StatusKe
   return 'waiting_for_review';
 }
 
+function draftAction(drafts: ParticipantIdeaSummary[]): NextStep['action'] {
+  const editable = drafts.filter((d) => d.editable && d.id);
+  if (editable.length === 1) return { label: 'Continue draft', href: `/submit?draft=${editable[0].id}` };
+  if (editable.length > 1) return { label: 'View My Ideas', href: '/my-ideas' };
+  return { label: 'Submit New Idea', href: '/submit' };
+}
+
 export function participantNextStep(input: ParticipantNextStepInput): NextStep {
   const { conflictCount, ideas, submissionOpen, submissionCloseLabel, votingOpen, votingCloseLabel } = input;
   const submitted = ideas.filter((i) => i.status === 'submitted');
@@ -51,14 +61,14 @@ export function participantNextStep(input: ParticipantNextStepInput): NextStep {
     return {
       title: `Submit your idea${by}`,
       body: `You have ${drafts.length === 1 ? 'a draft' : `${drafts.length} drafts`} that ${drafts.length === 1 ? 'has' : 'have'} not been submitted. Only submitted ideas go to a mentor for review.`,
-      action: { label: 'Submit New Idea', href: '/submit' },
+      action: draftAction(drafts),
     };
   }
   if (submitted.length === 0 && submissionOpen) {
     return {
       title: `Submit your idea${by}`,
       body: 'Describe the problem, your AI solution and its business impact. You can save a draft as you go.',
-      action: { label: 'Submit New Idea', href: '/submit' },
+      action: draftAction(drafts),
     };
   }
   if (votingOpen) {
