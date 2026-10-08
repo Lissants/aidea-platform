@@ -22,6 +22,7 @@ interface ReviewFormProps {
   initial: {
     desirability: boolean | null;
     viability: boolean | null;
+    business_impact: boolean | null;
     realistic_implementation: boolean | null;
     recommendation: ReviewRecommendation | null;
     comment: string | null;
@@ -46,24 +47,35 @@ function RadioOption({ value, id, label, disabled }: { value: string; id: string
 function YesNo({
   name,
   label,
+  description,
   value,
   onChange,
   disabled,
 }: {
   name: string;
   label: string;
+  description?: string;
   value: boolean | null;
   onChange: (v: boolean) => void;
   disabled: boolean;
 }) {
   const labelId = `review-${name}-label`;
+  const descriptionId = description ? `review-${name}-description` : undefined;
   return (
     <div className="space-y-2">
-      <p id={labelId} className="text-sm font-semibold">
-        {label}
-      </p>
+      <div className="space-y-1">
+        <p id={labelId} className="text-sm font-semibold">
+          {label}
+        </p>
+        {description && (
+          <p id={descriptionId} className="text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </div>
       <RadioGroup
         aria-labelledby={labelId}
+        aria-describedby={descriptionId}
         value={value === null ? undefined : value ? 'yes' : 'no'}
         onValueChange={(v) => onChange(v === 'yes')}
         className="grid grid-cols-2 gap-2 sm:flex"
@@ -83,6 +95,7 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
 
   const [desirability, setDesirability] = React.useState<boolean | null>(initial.desirability);
   const [viability, setViability] = React.useState<boolean | null>(initial.viability);
+  const [businessImpact, setBusinessImpact] = React.useState<boolean | null>(initial.business_impact);
   const [realistic, setRealistic] = React.useState<boolean | null>(initial.realistic_implementation);
   const [recommendation, setRecommendation] = React.useState<ReviewRecommendation | null>(initial.recommendation);
   const [comment, setComment] = React.useState(initial.comment ?? '');
@@ -91,7 +104,8 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
   const missing = [
     desirability === null && 'Desirability',
     viability === null && 'Viability',
-    realistic === null && 'Realistic implementation',
+    businessImpact === null && 'Business Impact',
+    realistic === null && 'Realistic Implementation',
     recommendation === null && 'Recommendation',
     comment.trim().length < 10 && 'Comment (at least 10 characters)',
   ].filter(Boolean) as string[];
@@ -102,6 +116,7 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
     const result = await saveReviewDraft(assignmentId, ideaId, {
       desirability: desirability ?? undefined,
       viability: viability ?? undefined,
+      business_impact: businessImpact ?? undefined,
       realistic_implementation: realistic ?? undefined,
       recommendation: recommendation ?? undefined,
       comment,
@@ -116,11 +131,20 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
   }
 
   async function handleSubmit() {
-    if (!isComplete || desirability === null || viability === null || realistic === null || recommendation === null) return;
+    if (
+      !isComplete ||
+      desirability === null ||
+      viability === null ||
+      businessImpact === null ||
+      realistic === null ||
+      recommendation === null
+    )
+      return;
     setPending(true);
     const result = await submitReview(assignmentId, ideaId, {
       desirability,
       viability,
+      business_impact: businessImpact,
       realistic_implementation: realistic,
       recommendation,
       comment,
@@ -146,15 +170,38 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Your assessment</CardTitle>
+          <CardTitle>Your Assessment</CardTitle>
           {isReadOnly && <StatusBadge status="review_completed" />}
         </CardHeader>
         <CardContent className="space-y-4">
-          <YesNo name="desirability" label="Desirability" value={desirability} onChange={setDesirability} disabled={isReadOnly} />
-          <YesNo name="viability" label="Viability" value={viability} onChange={setViability} disabled={isReadOnly} />
+          <YesNo
+            name="desirability"
+            label="Desirability"
+            description="Does the idea address a real and relevant problem for its intended users?"
+            value={desirability}
+            onChange={setDesirability}
+            disabled={isReadOnly}
+          />
+          <YesNo
+            name="viability"
+            label="Viability"
+            description="Does the idea create sufficient business value to justify further investment and implementation?"
+            value={viability}
+            onChange={setViability}
+            disabled={isReadOnly}
+          />
+          <YesNo
+            name="business-impact"
+            label="Business Impact"
+            description="How large and measurable is the expected result?"
+            value={businessImpact}
+            onChange={setBusinessImpact}
+            disabled={isReadOnly}
+          />
           <YesNo
             name="realistic"
-            label="Realistic implementation"
+            label="Realistic Implementation"
+            description="Can the idea be realistically developed using available technology, data, expertise, resources, and proposed support?"
             value={realistic}
             onChange={setRealistic}
             disabled={isReadOnly}
@@ -170,14 +217,14 @@ export function ReviewForm({ assignmentId, ideaId, initial, reviewStatus, reopen
               onValueChange={(v) => setRecommendation(v as ReviewRecommendation)}
               className="grid gap-2 sm:flex"
             >
-              <RadioOption value="recommend_pass" id="rec-pass" label="Recommend pass" disabled={isReadOnly} />
-              <RadioOption value="recommend_not_pass" id="rec-not-pass" label="Recommend not pass" disabled={isReadOnly} />
+              <RadioOption value="recommend_pass" id="rec-pass" label="Pass" disabled={isReadOnly} />
+              <RadioOption value="recommend_not_pass" id="rec-not-pass" label="Not Pass" disabled={isReadOnly} />
             </RadioGroup>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="comment" className="font-semibold">
-              Reviewer comment (required)
+              Reviewer Comment (required)
             </Label>
             <Textarea
               id="comment"

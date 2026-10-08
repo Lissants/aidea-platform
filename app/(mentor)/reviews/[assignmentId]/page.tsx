@@ -127,6 +127,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ a
             initial={{
               desirability: review?.desirability ?? null,
               viability: review?.viability ?? null,
+              business_impact: review?.business_impact ?? null,
               realistic_implementation: review?.realistic_implementation ?? null,
               recommendation: review?.recommendation ?? null,
               comment: review?.comment ?? null,

@@ -153,11 +153,11 @@ test('2. the priority-1 mentor recommends Pass', async ({ page }) => {
   await page.goto('/reviews');
   await page.getByRole('link', { name: `Start review of ${IDEA_TITLE}` }).click();
 
-  for (const group of ['Desirability', 'Viability', 'Realistic Implementation']) {
+  for (const group of ['Desirability', 'Viability', 'Business Impact', 'Realistic Implementation']) {
     await page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: 'Yes' }).click();
   }
   await page.getByRole('radiogroup', { name: 'Recommendation' }).getByRole('radio', { name: 'Pass', exact: true }).click();
-  await page.getByLabel(/Reviewer comment/).fill('Clear problem, credible data source, feasible pilot.');
+  await page.getByLabel(/Reviewer comment/i).fill('Clear problem, credible data source, feasible pilot.');
 
   await page.getByRole('button', { name: 'Submit review' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Submit review' }).click();
