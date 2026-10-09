@@ -39,6 +39,15 @@ function envBool(name: string, fallback: boolean) {
   return v === 'true' || v === '1';
 }
 
+/**
+ * Accept the SQL Server certificate without validating it? Off by default in
+ * production so the encrypted connection can't be intercepted; the server
+ * then needs a certificate for its FQDN from a CA this machine trusts.
+ */
+function trustServerCertificate() {
+  return envBool('MSSQL_TRUST_CERT', process.env.NODE_ENV !== 'production');
+}
+
 function driverName(): 'msnodesqlv8' | 'tedious' {
   const d = process.env.MSSQL_DRIVER;
   if (d === 'msnodesqlv8' || d === 'tedious') return d;
@@ -62,7 +71,7 @@ async function connect(): Promise<{ driver: Driver; pool: MSSQL.ConnectionPool }
           ? `Uid=${process.env.MSSQL_USER};Pwd=${process.env.MSSQL_PASSWORD ?? ''}`
           : 'Trusted_Connection=yes',
         `Encrypt=${envBool('MSSQL_ENCRYPT', true) ? 'yes' : 'no'}`,
-        `TrustServerCertificate=${envBool('MSSQL_TRUST_CERT', true) ? 'yes' : 'no'}`,
+        `TrustServerCertificate=${trustServerCertificate() ? 'yes' : 'no'}`,
       ].join(';') + ';';
     const p = new driver.ConnectionPool({ connectionString, pool } as any);
     await p.connect();
@@ -79,7 +88,7 @@ async function connect(): Promise<{ driver: Driver; pool: MSSQL.ConnectionPool }
     pool,
     options: {
       encrypt: envBool('MSSQL_ENCRYPT', true),
-      trustServerCertificate: envBool('MSSQL_TRUST_CERT', true),
+      trustServerCertificate: trustServerCertificate(),
     },
   });
   await p.connect();

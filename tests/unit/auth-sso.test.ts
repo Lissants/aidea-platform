@@ -23,8 +23,10 @@ describe('session token sign-in method', () => {
   it('round-trips the amr claim', async () => {
     const sso = await verifySessionToken(await createSessionToken('u1', 'a@godrejcp.com', 'sso'));
     const pwd = await verifySessionToken(await createSessionToken('u1', 'a@godrejcp.com', 'pwd'));
+    const ldap = await verifySessionToken(await createSessionToken('u1', 'a@godrejcp.com', 'ldap'));
     expect(sso?.amr).toBe('sso');
     expect(pwd?.amr).toBe('pwd');
+    expect(ldap?.amr).toBe('ldap');
   });
 
   it('treats tokens issued before amr existed as password sessions', async () => {

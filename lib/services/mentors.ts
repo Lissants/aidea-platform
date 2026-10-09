@@ -72,23 +72,20 @@ export async function fetchPublicMentorProfiles(): Promise<PublicMentorProfile[]
   );
 }
 
-/** Admin edit of the mentor card: photo, title (profiles.job_title) and
- * expertise paragraph. Audited; a replaced/removed photo file is deleted. */
+/** Admin edit of the mentor card: photo and expertise paragraph (the title
+ * comes from Active Directory). Audited; a replaced/removed photo file is deleted. */
 export async function updateMentorProfile(mentorProfileId: string, input: MentorProfileInput) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return { error: 'Not authorized' } as const;
 
   const parsed = mentorProfileSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' } as const;
-  const job_title = parsed.data.job_title || null;
   const expertise = parsed.data.expertise || null;
   const photo_url = parsed.data.photo_url;
 
   const { data: before, error: readError } = await attempt(() =>
-    db.queryOne<{ id: string; profile_id: string; job_title: string | null; expertise: string | null; photo_url: string | null }>(
-      `SELECT mp.id, mp.profile_id, p.job_title, mp.expertise, mp.photo_url
-         FROM mentor_profiles mp JOIN profiles p ON p.id = mp.profile_id
-        WHERE mp.id = @id`,
+    db.queryOne<{ id: string; expertise: string | null; photo_url: string | null }>(
+      'SELECT id, expertise, photo_url FROM mentor_profiles WHERE id = @id',
       { id: mentorProfileId }
     )
   );
@@ -100,15 +97,7 @@ export async function updateMentorProfile(mentorProfileId: string, input: Mentor
     return { error: 'Invalid photo' } as const;
   }
 
-  const { error } = await attempt(() =>
-    db.transaction(async (tx) => {
-      await tx.update('mentor_profiles', { expertise, photo_url }, 'id = @id', { id: before.id });
-      await tx.execute('UPDATE profiles SET job_title = @job_title, updated_at = SYSDATETIMEOFFSET() WHERE id = @id', {
-        job_title,
-        id: before.profile_id,
-      });
-    })
-  );
+  const { error } = await attempt(() => db.update('mentor_profiles', { expertise, photo_url }, 'id = @id', { id: before.id }));
   if (error) return { error } as const;
 
   if (before.photo_url && before.photo_url !== photo_url) await removeByUrl(before.photo_url);
@@ -118,8 +107,8 @@ export async function updateMentorProfile(mentorProfileId: string, input: Mentor
     entityId: mentorProfileId,
     actorId: user.id,
     action: 'mentor_profile_updated',
-    priorValue: { job_title: before.job_title, expertise: before.expertise, photo_url: before.photo_url },
-    newValue: { job_title, expertise, photo_url },
+    priorValue: { expertise: before.expertise, photo_url: before.photo_url },
+    newValue: { expertise, photo_url },
   });
 
   revalidatePath('/mentors');

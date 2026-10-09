@@ -21,12 +21,30 @@ export async function resetTestDb() {
   await resetDatabase();
   await runMigrations({ log: () => undefined });
   await seedDatabase({ log: () => undefined });
+  await ensureTestDevelopers();
   // Start the test on fresh connections, so no session state from the
   // migration/seed batches leaks into the code under test.
   await closePool();
 }
 
-/** Fixed ids from db/seed.sql. */
+/**
+ * Developer accounts for tests (SEED.dev1-4). The seed no longer creates
+ * any: real Developers come from AD_DEVELOPER_EMAILS at sign-in.
+ */
+async function ensureTestDevelopers() {
+  const ids = [SEED.dev1, SEED.dev2, SEED.dev3, SEED.dev4];
+  for (const [i, id] of ids.entries()) {
+    const email = `test.developer${i + 1}@godrejcp.com`;
+    await db.execute(
+      `INSERT INTO users (id, email) VALUES (@id, @email);
+       INSERT INTO profiles (id, email, full_name, active) VALUES (@id, @email, @name, 1);
+       INSERT INTO user_roles (user_id, role_id) SELECT @id, r.id FROM roles r WHERE r.name IN ('developer', 'employee_voter');`,
+      { id, email, name: `Test Developer ${i + 1}` }
+    );
+  }
+}
+
+/** Fixed ids from db/seed.sql, plus the test-only developers above. */
 export const SEED = {
   program: '66666666-6666-6666-6666-666666666001',
   admin1: '11111111-1111-1111-1111-111111111001',
@@ -55,5 +73,5 @@ export const SEED = {
 
 /** Builds the SessionUser shape getCurrentUser() returns, for mocking. */
 export function sessionUser(id: string, roles: AppRole[], email = `${id}@test.local`): SessionUser {
-  return { id, email, profile: null, roles, mustChangePassword: false, hasPassword: true, signInMethod: 'pwd' };
+  return { id, email, profile: null, roles, signInMethod: 'pwd' };
 }

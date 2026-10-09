@@ -244,9 +244,9 @@ npm run dev -- -H 0.0.0.0
 | Participant | `demo.participant1@godrejcp.com` | `AideaDemo!2026` |
 | Employee voter | `demo.voter1@godrejcp.com` | `AideaDemo!2026` |
 
-These accounts are fake and meant only for demos and testing. Set `DEMO_PASSWORD` in `.env.local` before seeding if you want a different password.
+These accounts are fake and meant only for demos and testing, and their passwords only work under `npm run dev`. Set `DEMO_PASSWORD` in `.env.local` before seeding if you want a different password.
 
-The seed also creates the four real platform **Developer** accounts (the top role: everything an Admin can do, plus managing admins). Their starting password is hard-coded in `scripts/seed.ts`, so each Developer should sign in and change it straight away on the change-password page (`/profile/password`). Accounts that an admin creates or resets get a temporary password and are sent to the change-password page on first sign-in.
+A production build signs people in with their Windows account only (Active Directory, see [IIS_DEPLOYMENT.md](./IIS_DEPLOYMENT.md)). Everyone starts as User; the emails in `AD_DEVELOPER_EMAILS` and `AD_ADMIN_EMAILS` become Developer (the top role: everything an Admin can do, plus managing admins) and Admin at sign-in.
 
 **Take a quick tour to prove everything works:**
 
@@ -390,21 +390,23 @@ Day-to-day commands:
 
 ### Microsoft Entra ID (single sign-on)
 
-1. Ask IT to register a **Web** app in Entra ID with the redirect URI `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft`, for example `http://192.168.1.25:3000/auth/callback/microsoft`. Entra only accepts plain `http://` redirect URIs for `localhost`, so a LAN deployment with SSO normally needs HTTPS and a host name (next section).
+1. Ask IT to register a **Web** app in Entra ID with the redirect URI `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft`, for example `http://192.168.1.25:3000/auth/callback/microsoft`. Entra only accepts plain `http://` redirect URIs for `localhost`, so a LAN deployment with SSO normally needs HTTPS and a host name (next section). For production that is `https://aidea.godrejindonesia.com/auth/callback/microsoft`.
 2. Put `MICROSOFT_TENANT_ID`, `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET` in `.env.local` and restart the service.
-3. A **Sign in with Microsoft** button appears. First-time users get the roles in `SSO_DEFAULT_ROLES` (default `participant,employee_voter`). An admin raises users to Mentor in **User Management**; only a Developer can make someone an Admin.
+3. A **Sign in with Microsoft** button appears. First-time users start as User. An admin raises users to Mentor in **User Management**; only a Developer can make someone an Admin.
 
 ### HTTPS with IIS as a reverse proxy
 
-To serve `https://aidea.yourcompany.local` instead of `http://IP:3000`:
+To serve `https://aidea.godrejindonesia.com` instead of `http://IP:3000`:
 
-1. Ask IT for a DNS name pointing at the PC and a certificate from the company CA.
+1. Ask IT for a DNS `A` record for `aidea.godrejindonesia.com` pointing at the server, and a certificate issued for that name.
 2. Enable **IIS** (*Turn Windows features on or off → Internet Information Services*), then install the **URL Rewrite** and **Application Request Routing (ARR)** modules.
 3. In IIS Manager, select the server node → **Application Request Routing Cache → Server Proxy Settings** → tick **Enable proxy**.
-4. Create a site bound to **https / 443** with your certificate, and add a URL Rewrite **Reverse Proxy** rule to `localhost:3000`. Under the rule's server variables, allow and set `HTTP_X_FORWARDED_PROTO` to `https`.
+4. Create a site bound to **https / 443**, host name `aidea.godrejindonesia.com`, with that certificate, and add a URL Rewrite **Reverse Proxy** rule to `localhost:3000`. Under the rule's server variables, allow and set `HTTP_X_FORWARDED_PROTO` to `https`.
 5. Raise the request size limit to at least 30 MB (final presentation decks can be 25 MB): *Request Filtering → Edit Feature Settings → Maximum allowed content length = 31457280*.
-6. Update `.env.local`: `NEXT_PUBLIC_APP_URL=https://aidea.yourcompany.local`, **remove** `SESSION_COOKIE_SECURE=false`, then rebuild and restart (`npm run build`, `nssm restart AIdea`).
+6. Update `.env.local`: `NEXT_PUBLIC_APP_URL=https://aidea.godrejindonesia.com`, **remove** `SESSION_COOKIE_SECURE=false`, then rebuild and restart (`npm run build`, `nssm restart AIdea`).
 7. Close port 3000 to the network again (`Remove-NetFirewallRule -DisplayName "AIdea (TCP 3000)"`) and open 443 instead, so everyone goes through IIS.
+
+For production — Active Directory sign-in over LDAPS, a ready-made `web.config`, validated SQL Server TLS, TDE and BitLocker — continue with **[IIS_DEPLOYMENT.md](./IIS_DEPLOYMENT.md)**.
 
 ---
 

@@ -169,7 +169,7 @@ test('participant submit form: validation summary and mobile action bar', async 
 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/submit');
-  await page.getByRole('heading', { name: 'Your idea' }).waitFor();
+  await page.getByRole('heading', { name: 'Your Idea' }).waitFor();
   await page.evaluate(() => window.scrollTo(0, 400));
   await page.waitForTimeout(200);
   result.mobileActionBar = await page.evaluate(() => {

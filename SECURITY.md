@@ -40,20 +40,22 @@ Queries are always parameterized (`@name` parameters through `lib/db`). The data
 
 **Sessions.** The session is an app-owned, HS256-signed JWT in the `aidea_session` cookie (`lib/auth/session-cookie.ts`).
 - The cookie is `httpOnly` and `SameSite=Lax`. It is `Secure` in production. `SESSION_COOKIE_SECURE=false` turns that off for a plain-HTTP intranet deployment; prefer HTTPS where possible, because the cookie then travels unencrypted on the network.
-- Each token lasts 8 hours, and `proxy.ts` re-issues it after an hour of use.
-- It carries only the user id and email. Roles are always re-read from SQL by `getCurrentUser()`, so revoking a role takes effect on the next request.
+- Each token lasts 8 hours, and `proxy.ts` re-issues it after an hour of use. However active, a session ends 24 hours after sign-in (`auth_time`), so a disabled Windows account loses access within a day.
+- It carries only the user id, email, sign-in method and sign-in time. Roles are always re-read from SQL by `getCurrentUser()`, so revoking a role takes effect on the next request.
 - `SESSION_SECRET` (32 characters or more) is required in production. Rotating it signs everyone out.
 
-**Email and password.**
-- Passwords are bcrypt-hashed in `users.password_hash`.
-- Sign-in attempts are throttled per email, and a failed sign-in takes the same time whether or not the email exists.
+**Active Directory (the only sign-in in production).**
+- The login and Windows password are checked against AD over LDAPS with the corporate CA validated (`lib/auth/ldap.ts`). Production refuses `ldap://`. An empty password is refused before any bind, because AD treats it as an anonymous success.
+- The password is held in memory only for the bind; AIdea stores no passwords for AD accounts and removes any old local one at sign-in.
+- Sign-in attempts are throttled per login (5 per 10 minutes), which also keeps AIdea from tripping the AD lockout policy. "No such user", "wrong password" and "disabled" all answer "Invalid email or password".
 - Sign-in is gated by `ALLOWED_EMAIL_DOMAIN`, and deactivated profiles are refused.
+- Local bcrypt passwords (`users.password_hash`) work only when `NODE_ENV` is not `production`, for the seeded demo accounts.
 
 **Microsoft Entra ID SSO (optional).**
 - It uses the authorization-code flow with PKCE and a `state` check (`@azure/msal-node`).
 - It checks the tenant (`tid` must equal `MICROSOFT_TENANT_ID`) and the email domain.
-- It links to an existing account by Entra `oid`, then by email. Otherwise it provisions a new profile with `SSO_DEFAULT_ROLES`.
-- An admin-issued temporary password is removed on the first Microsoft sign-in, so the admin no longer knows a working password for that account.
+- It links to an existing account by Entra `oid`, then by email. Otherwise it provisions a new profile as User (or the tier in `AD_DEVELOPER_EMAILS` / `AD_ADMIN_EMAILS`).
+- Any local AIdea password on the account is removed at the first directory sign-in.
 - Sign-out of a Microsoft session also ends the Entra session (front-channel logout). `PASSWORD_SIGNIN_ENABLED=false` disables password sign-in entirely.
 
 **Magic-link sign-in** was removed with Supabase Auth.
@@ -72,15 +74,14 @@ Accounts sit on one tier: User < Mentor < Admin < Developer. `employee_voter` is
 | Actor | Can manage |
 | --- | --- |
 | Developer | every tier, including other admins and Developers |
-| Admin | User and Mentor accounts only. Cannot create, promote, demote, reset or remove an admin or Developer. |
+| Admin | User and Mentor accounts only. Cannot promote, demote or remove an admin or Developer. |
 | Mentor / User | nobody |
 
 - A Developer passes every admin check: `isAdmin()` in the app and `dbo.fn_has_role(u, 'admin')` in SQL (migration `0005`). The "Routing required" notification (`0003_procedures.sql`) still goes to `admin` role holders only, so a Developer who isn't also an Admin doesn't receive it.
-- Server-enforced locks: you cannot change, deactivate, delete or reset your own account here; the last active Developer and the last active admin-level account cannot be demoted, deactivated or deleted.
+- Server-enforced locks: you cannot change, deactivate or delete your own account here; the last active Developer and the last active admin-level account cannot be demoted, deactivated or deleted; the tier of an email in `AD_DEVELOPER_EMAILS` / `AD_ADMIN_EMAILS` can't be changed here (it is set at every sign-in).
 - "Remove" means deactivate (`profiles.active = 0`), which blocks sign-in on the next request and keeps history. Permanent delete works only for accounts with no ideas, votes, reviews, decisions or audit entries, because those foreign keys do not cascade.
-- Created and reset accounts get a temporary password shown once, `users.must_change_password = 1`, and are redirected to `/profile/password` by every layout until they choose their own (12+ characters).
-- Every create, tier change, deactivate/reactivate, reset and delete is written to the audit log (`entity_type = 'users'`). Passwords are never logged.
-- The four platform Developers are created by `npm run db:seed` (`scripts/seed.ts`). The password is only applied when the account is first created and is hard-coded there, so treat it as compromised-by-design and change it after first sign-in.
+- Accounts are created by a person's first AD sign-in, as User. There is no create-user or reset-password flow, and `users.must_change_password` is no longer used.
+- Every tier change, deactivate/reactivate and delete is written to the audit log (`entity_type = 'users'`). A tier applied from server settings at sign-in is logged as `user_tier_set_by_settings` with no actor.
 
 ## File uploads
 

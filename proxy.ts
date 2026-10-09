@@ -34,7 +34,8 @@ const PUBLIC_PREFIXES = ['/sign-in', '/auth/microsoft', '/auth/callback', '/acce
  * anonymous visitors to /sign-in. Role checks (e.g. admin-only route groups)
  * happen server-side in the route-group layouts via getCurrentUser(), which
  * reads roles from SQL on every request. Also slides the session expiry by
- * re-issuing tokens older than SESSION_REFRESH_AFTER_SECONDS.
+ * re-issuing tokens older than SESSION_REFRESH_AFTER_SECONDS, up to
+ * MAX_SESSION_AGE_SECONDS after sign-in (verifySessionToken enforces the cap).
  */
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: request.headers } });
@@ -59,7 +60,11 @@ export async function proxy(request: NextRequest) {
   }
 
   if (claims && Date.now() / 1000 - claims.iat > SESSION_REFRESH_AFTER_SECONDS) {
-    response.cookies.set(SESSION_COOKIE, await createSessionToken(claims.sub, claims.email, claims.amr), sessionCookieOptions());
+    response.cookies.set(
+      SESSION_COOKIE,
+      await createSessionToken(claims.sub, claims.email, claims.amr, claims.authTime),
+      sessionCookieOptions()
+    );
   }
 
   return response;

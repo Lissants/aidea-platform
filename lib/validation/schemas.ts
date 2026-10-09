@@ -6,19 +6,10 @@ import { z } from 'zod';
  * sync with types/database.ts and supabase/migrations.
  */
 
-export const profileSchema = z.object({
-  full_name: z.string().min(2, 'Full name is required').max(120),
-  job_title: z.string().max(120).optional().nullable(),
-  department: z.string().max(120).optional().nullable(),
-  avatar_url: z.string().url().optional().nullable(),
-});
-export type ProfileInput = z.infer<typeof profileSchema>;
-
 export const MAX_MENTOR_EXPERTISE_CHARS = 600;
 
-/** Admin-edited mentor card (job title lives on profiles, the rest on mentor_profiles). */
+/** Admin-edited mentor card (mentor_profiles). The job title comes from Active Directory. */
 export const mentorProfileSchema = z.object({
-  job_title: z.string().trim().max(120, 'Title must be 120 characters or fewer').nullable(),
   expertise: z
     .string()
     .trim()
@@ -271,48 +262,3 @@ export const votingPeriodSchema = z
     path: ['closes_at'],
   });
 export type VotingPeriodInput = z.infer<typeof votingPeriodSchema>;
-
-// --- User management / passwords --------------------------------------
-
-export const MIN_PASSWORD_LENGTH = 12;
-
-export const newPasswordSchema = z
-  .string()
-  .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
-  .max(200);
-
-export const userTierEnum = z.enum(['participant', 'mentor', 'admin', 'developer']);
-
-// Parsed twice: by zodResolver in the browser, then again by createUser() on
-// the server with the browser's *output*. So every output must also be valid
-// input (blank -> null/undefined must be accepted back).
-export const createUserSchema = z.object({
-  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(320),
-  fullName: z.string().trim().min(2, 'Full name is required').max(200),
-  employeeId: z
-    .string()
-    .trim()
-    .max(50)
-    .nullish()
-    .transform((v) => v || null),
-  tier: userTierEnum,
-  // Blank or omitted: a temporary password is generated.
-  tempPassword: z
-    .union([z.literal(''), newPasswordSchema])
-    .nullish()
-    .transform((v) => v || undefined),
-});
-export type CreateUserInput = z.input<typeof createUserSchema>;
-
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Enter your current password').max(200),
-    newPassword: newPasswordSchema,
-    confirmPassword: z.string(),
-  })
-  .refine((v) => v.newPassword === v.confirmPassword, { message: 'Passwords do not match', path: ['confirmPassword'] })
-  .refine((v) => v.newPassword !== v.currentPassword, {
-    message: 'New password must be different from the current one',
-    path: ['newPassword'],
-  });
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

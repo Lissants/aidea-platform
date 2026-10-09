@@ -1,7 +1,7 @@
 /**
  * Integration coverage for findOrCreateSsoUser (lib/auth/microsoft.ts):
- * provisioning, linking pre-created accounts, dropping admin-issued temporary
- * passwords, refreshing the name, and refusing deactivated profiles.
+ * provisioning, linking pre-created accounts, dropping local passwords,
+ * refreshing the name, and refusing deactivated profiles.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SEED, closePool, db, resetTestDb } from './helpers/test-db';
@@ -20,7 +20,7 @@ const rolesOf = async (id: string) =>
   ).map((r) => r.name);
 
 describe('findOrCreateSsoUser', () => {
-  it('provisions a first-time user with the default SSO roles', async () => {
+  it('provisions a first-time user as User (participant + employee_voter)', async () => {
     const account = await findOrCreateSsoUser({ oid: 'oid-new-1', email: 'new.person@godrejcp.com', name: 'New Person' });
     expect(account?.email).toBe('new.person@godrejcp.com');
 
@@ -61,13 +61,13 @@ describe('findOrCreateSsoUser', () => {
     expect(await rolesOf(SEED.participant2)).toContain('participant');
   });
 
-  it('keeps the password of an already-active password account it links to', async () => {
+  it('removes the local password of any account it links to: the directory is the only way in', async () => {
     const account = await findOrCreateSsoUser({ oid: 'oid-voter1', email: 'demo.voter1@godrejcp.com', name: '' });
     expect(account?.id).toBe(SEED.voter1);
     const user = await db.queryOne<{ password_hash: string | null }>('SELECT password_hash FROM users WHERE id = @id', {
       id: SEED.voter1,
     });
-    expect(user?.password_hash).not.toBeNull();
+    expect(user?.password_hash).toBeNull();
   });
 
   it('refuses a deactivated profile without linking it', async () => {

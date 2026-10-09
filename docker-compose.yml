@@ -19,7 +19,9 @@ x-app-env: &app-env
   MSSQL_USER: ${MSSQL_USER}
   MSSQL_PASSWORD: ${MSSQL_PASSWORD}
   MSSQL_ENCRYPT: ${MSSQL_ENCRYPT:-true}
-  MSSQL_TRUST_CERT: ${MSSQL_TRUST_CERT:-true}
+  # Validate the SQL Server certificate (encryption requirement). Set true only
+  # while the server still has a self-signed certificate.
+  MSSQL_TRUST_CERT: ${MSSQL_TRUST_CERT:-false}
   SESSION_SECRET: ${SESSION_SECRET}
   ALLOWED_EMAIL_DOMAIN: ${ALLOWED_EMAIL_DOMAIN}
   EMAIL_PROVIDER: ${EMAIL_PROVIDER}
@@ -28,7 +30,15 @@ x-app-env: &app-env
   MICROSOFT_TENANT_ID: ${MICROSOFT_TENANT_ID}
   MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
   MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
-  SSO_DEFAULT_ROLES: ${SSO_DEFAULT_ROLES:-participant,employee_voter}
+  LDAP_URL: ${LDAP_URL:-}
+  LDAP_BASE_DN: ${LDAP_BASE_DN:-}
+  LDAP_DOMAIN: ${LDAP_DOMAIN:-}
+  LDAP_BIND_DN: ${LDAP_BIND_DN:-}
+  LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-}
+  # Path inside the container; mount the CA file as a volume.
+  LDAP_CA_CERT_PATH: ${LDAP_CA_CERT_PATH:-}
+  AD_DEVELOPER_EMAILS: ${AD_DEVELOPER_EMAILS:-}
+  AD_ADMIN_EMAILS: ${AD_ADMIN_EMAILS:-}
   UPLOAD_DIR: /app/uploads
 
 services:

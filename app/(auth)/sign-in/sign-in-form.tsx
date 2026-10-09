@@ -18,6 +18,12 @@ const passwordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+// AD accepts an email, UPN or network ID, and the domain's own password policy applies.
+const directorySchema = z.object({
+  email: z.string().trim().min(1, 'Enter your email or network ID'),
+  password: z.string().min(1, 'Enter your password'),
+});
+
 function MicrosoftLogo() {
   return (
     <svg aria-hidden="true" viewBox="0 0 21 21" className="h-4 w-4">
@@ -32,10 +38,13 @@ function MicrosoftLogo() {
 export function SignInForm({
   microsoftEnabled,
   passwordEnabled,
+  directoryEnabled = false,
   redirectTo,
 }: {
   microsoftEnabled: boolean;
   passwordEnabled: boolean;
+  /** On-prem AD sign-in (LDAPS): accepts a network ID and the Windows password. */
+  directoryEnabled?: boolean;
   redirectTo?: string;
 }) {
   const [pending, setPending] = React.useState(false);
@@ -44,7 +53,7 @@ export function SignInForm({
   const target = safeRedirectPath(redirectTo);
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
+    resolver: zodResolver(directoryEnabled ? directorySchema : passwordSchema),
     defaultValues: { email: '', password: '' },
   });
 
@@ -64,11 +73,19 @@ export function SignInForm({
   const passwordFields = (
     <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="email">Work email</Label>
-        <Input id="email" type="email" autoComplete="username" placeholder="you@godrejcp.com" {...passwordForm.register('email')} />
+        <Label htmlFor="email">{directoryEnabled ? 'Work email or network ID' : 'Work email'}</Label>
+        <Input
+          id="email"
+          type={directoryEnabled ? 'text' : 'email'}
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="you@godrejcp.com"
+          {...passwordForm.register('email')}
+        />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{directoryEnabled ? 'Windows password' : 'Password'}</Label>
         <Input id="password" type="password" autoComplete="current-password" {...passwordForm.register('password')} />
       </div>
       <Button type="submit" variant={microsoftEnabled ? 'outline' : 'default'} className="w-full" disabled={pending}>

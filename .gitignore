@@ -19,3 +19,6 @@ uploads
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local source snapshots (may contain .env.local)
+/*.zip

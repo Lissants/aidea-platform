@@ -3,7 +3,6 @@ import { ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/layout/empty-state';
 import { RoleManagementRow } from '@/components/admin/role-management-row';
-import { AddUserDialog } from '@/components/admin/add-user-dialog';
 import { fetchManagedUsers } from '@/lib/services/users';
 
 export const metadata = { title: 'User Management' };
@@ -18,7 +17,7 @@ function pageHref(q: string | undefined, page: number) {
 
 export default async function RolesPage(props: { searchParams: Promise<Record<string, string | undefined>> }) {
   const searchParams = await props.searchParams;
-  const { users, total, page, pageSize, creatableTiers } = await fetchManagedUsers(
+  const { users, total, page, pageSize } = await fetchManagedUsers(
     searchParams.q,
     Number(searchParams.page) || 1
   );
@@ -28,8 +27,7 @@ export default async function RolesPage(props: { searchParams: Promise<Record<st
     <div>
       <PageHeader
         title="User Management"
-        description="Add and deactivate users and change their role. Every change is written to the audit log."
-        action={<AddUserDialog tiers={creatableTiers} />}
+        description="Change roles and deactivate accounts. People appear here after their first sign-in with their Windows account; everyone starts as User. Every change is written to the audit log."
       />
 
       <form method="get" className="mb-6 flex gap-2">

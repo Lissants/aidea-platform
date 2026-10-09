@@ -16,10 +16,6 @@ export interface SessionUser {
   email: string;
   profile: Profile | null;
   roles: AppRole[];
-  /** Set when an admin created the account or reset its password. */
-  mustChangePassword: boolean;
-  /** False for Microsoft-only accounts (users.password_hash is NULL). */
-  hasPassword: boolean;
   /** How this session was started. */
   signInMethod: SignInMethod;
 }
@@ -38,12 +34,9 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const claims = await verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
   if (!claims) return null;
 
-  const account = await db.queryOne<{ id: string; email: string; must_change_password: boolean; has_password: boolean }>(
-    `SELECT id, email, must_change_password,
-            CAST(CASE WHEN password_hash IS NULL THEN 0 ELSE 1 END AS bit) AS has_password
-       FROM users WHERE id = @id`,
-    { id: claims.sub }
-  );
+  const account = await db.queryOne<{ id: string; email: string }>('SELECT id, email FROM users WHERE id = @id', {
+    id: claims.sub,
+  });
   if (!account) return null;
 
   const profile = await db.queryOne<Profile>('SELECT * FROM profiles WHERE id = @id', { id: account.id });
@@ -59,8 +52,6 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
     email: account.email,
     profile: profile ?? null,
     roles: roleRows.map((r) => r.name as AppRole),
-    mustChangePassword: account.must_change_password === true,
-    hasPassword: account.has_password === true,
     signInMethod: claims.amr,
   };
 });

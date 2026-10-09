@@ -7,7 +7,6 @@ import { Loader2, Pencil, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { MentorAvatar } from '@/components/mentors/mentor-avatar';
@@ -17,10 +16,10 @@ import { validateImage } from '@/lib/validation/image';
 import { MAX_MENTOR_EXPERTISE_CHARS, mentorProfileSchema, type MentorProfileInput } from '@/lib/validation/schemas';
 
 function defaults(mentor: MentorDirectoryRow): MentorProfileInput {
-  return { job_title: mentor.job_title ?? '', expertise: mentor.expertise ?? '', photo_url: mentor.photo_url };
+  return { expertise: mentor.expertise ?? '', photo_url: mentor.photo_url };
 }
 
-/** Admin edit of what everyone sees on the Mentor Profile page. */
+/** Admin edit of what everyone sees on the Mentor Profile page (photo and expertise). */
 export function EditMentorProfileDialog({ mentor }: { mentor: MentorDirectoryRow }) {
   const [open, setOpen] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
@@ -65,8 +64,8 @@ export function EditMentorProfileDialog({ mentor }: { mentor: MentorDirectoryRow
           <DialogHeader>
             <DialogTitle>Edit mentor profile</DialogTitle>
             <DialogDescription>
-              {[mentor.full_name, mentor.email, mentor.department].filter(Boolean).join(' · ')}. Shown to everyone on the
-              Mentor Profile page.
+              {[mentor.full_name, mentor.job_title, mentor.department, mentor.email].filter(Boolean).join(' · ')}. Shown to
+              everyone on the Mentor Profile page. Name, title and department come from Active Directory.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -102,11 +101,6 @@ export function EditMentorProfileDialog({ mentor }: { mentor: MentorDirectoryRow
                 )}
                 <p className="w-full text-xs text-muted-foreground">PNG, JPEG or WebP, up to 5MB. A square photo works best.</p>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="mentor-job-title">Title</Label>
-              <Input id="mentor-job-title" placeholder="e.g. Senior Manager, Data & AI" {...form.register('job_title')} />
-              {errors.job_title && <p className="text-xs text-destructive">{errors.job_title.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="mentor-expertise">Expertise</Label>

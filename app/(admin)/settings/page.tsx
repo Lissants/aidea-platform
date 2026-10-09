@@ -1,6 +1,8 @@
 import { Settings } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isAdEnabled, ldapCaLoaded, ldapServerLabel, localPasswordsAllowed, usesServiceAccount } from '@/lib/auth/ldap';
+import { settingsAssignedEmails } from '@/lib/auth/roles';
 import { isMicrosoftSsoEnabled, isPasswordSignInEnabled } from '@/lib/auth/microsoft';
 
 export const metadata = { title: 'Settings' };
@@ -13,13 +15,29 @@ export const metadata = { title: 'Settings' };
  * LOCAL_SETUP.md / COMPANY_SERVER_DEPLOYMENT.md for how to change them.
  */
 export default function SettingsPage() {
+  const fixed = settingsAssignedEmails();
   const rows: { label: string; value: string }[] = [
     { label: 'Allowed sign-in email domain(s)', value: process.env.ALLOWED_EMAIL_DOMAIN || 'Not set (any domain)' },
     {
       label: 'Database',
       value: `SQL Server ${process.env.MSSQL_SERVER || (process.platform === 'win32' ? '.' : 'localhost')} / ${process.env.MSSQL_DATABASE || 'aidea'} (${process.env.MSSQL_DRIVER || (process.platform === 'win32' ? 'msnodesqlv8' : 'tedious')})`,
     },
-    { label: 'Microsoft sign-in', value: isMicrosoftSsoEnabled() ? 'Configured' : 'Not configured — email & password only' },
+    {
+      label: 'Active Directory sign-in (LDAPS)',
+      value: isAdEnabled()
+        ? `Configured — ${ldapServerLabel()}, ${usesServiceAccount() ? 'service account lookup' : 'signs in as the user'}, ${ldapCaLoaded() ? 'corporate CA loaded' : 'system CA store (LDAP_CA_CERT_PATH not set or unreadable)'}`
+        : 'Not configured — nobody can sign in to a production build',
+    },
+    {
+      label: 'Local passwords',
+      value: localPasswordsAllowed()
+        ? 'Development only — demo accounts not in AD can sign in'
+        : 'Off — Active Directory accounts only',
+    },
+    { label: 'Developers (AD_DEVELOPER_EMAILS)', value: fixed.developers.join(', ') || 'None' },
+    { label: 'Admins (AD_ADMIN_EMAILS)', value: fixed.admins.join(', ') || 'None' },
+    { label: 'Everyone else', value: 'Starts as User at first sign-in' },
+    { label: 'Microsoft sign-in', value: isMicrosoftSsoEnabled() ? 'Configured' : 'Not configured' },
     { label: 'Password sign-in', value: isPasswordSignInEnabled() ? 'Enabled' : 'Disabled — Microsoft only' },
     { label: 'Email provider (dev)', value: `${process.env.EMAIL_PROVIDER ?? 'smtp'} (queues to email_outbox in dev — see lib/email/adapter.ts)` },
     { label: 'Email "from" address', value: process.env.EMAIL_FROM ?? 'Not set' },

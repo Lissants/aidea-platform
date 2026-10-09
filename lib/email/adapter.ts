@@ -24,7 +24,9 @@ export interface EmailAdapter {
  * Graph `sendMail` (using MICROSOFT_TENANT_ID/CLIENT_ID/CLIENT_SECRET from
  * .env.example) or SMTP (EMAIL_PROVIDER/EMAIL_FROM), and select between
  * them with `EMAIL_PROVIDER`. Keep the same `EmailAdapter` interface so
- * call sites never change.
+ * call sites never change. Encryption requirement: the real adapter must
+ * use TLS (Graph is HTTPS; SMTP must require STARTTLS/TLS 1.2+ and validate
+ * the server certificate, never fall back to plain text).
  */
 class DevOutboxEmailAdapter implements EmailAdapter {
   async send(email: OutgoingEmail): Promise<void> {

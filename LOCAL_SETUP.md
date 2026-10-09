@@ -62,7 +62,7 @@ Other database scripts:
 
 The demo password comes from `DEMO_PASSWORD`, or defaults to the value shown in `README.md`.
 
-The seed also creates the platform Developers (Christopher Gerard, Janice Ong, Jose Siahaan, Yudha Bhakti Nugraha). They can manage every user at `/roles`. Their password is set only when the account is first created, so re-seeding never reverts a changed one.
+The seed creates only demo accounts, and their passwords work only under `npm run dev` and the tests. Real people sign in with their Windows account (Active Directory, see below): everyone starts as User, and the emails in `AD_DEVELOPER_EMAILS` / `AD_ADMIN_EMAILS` become Developer / Admin at sign-in.
 
 > **Running ad-hoc SQL with `sqlcmd`:** pass `-I` (`QUOTED_IDENTIFIER ON`), for example `sqlcmd -S . -E -C -I -d aidea -Q "..."`. The schema uses filtered indexes, and SQL Server rejects writes to those tables when `QUOTED_IDENTIFIER` is off, which is `sqlcmd`'s default. The app's ODBC and TDS connections have it on by default.
 
@@ -112,11 +112,25 @@ Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wi
 What happens when someone signs in with Microsoft:
 
 - **Existing account:** if the email already exists (for example a seeded or pre-created account), the Microsoft identity is linked to it.
-- **First-time user:** a new profile is created with `SSO_DEFAULT_ROLES`, which defaults to `participant,employee_voter`.
+- **First-time user:** a new profile is created as User (`participant` + `employee_voter`), or Developer / Admin if the email is in `AD_DEVELOPER_EMAILS` / `AD_ADMIN_EMAILS`.
 - **Checks:** sign-in is refused unless the user's tenant matches `MICROSOFT_TENANT_ID` and their email domain is in `ALLOWED_EMAIL_DOMAIN`.
-- **Temporary passwords:** if an admin created the account with a temporary password, the first Microsoft sign-in removes that password. The account is then Microsoft-only.
-- **Name and email** are refreshed from Microsoft on every sign-in. Roles are never changed by sign-in; admins manage them in **User Management**.
+- **Local passwords:** any AIdea password on the account is removed at the first Microsoft sign-in.
+- **Name and email** are refreshed from Microsoft on every sign-in. Apart from the listed Developer / Admin emails, roles are managed in **User Management**.
 - **Sign out** also signs the user out of Microsoft, so shared PCs don't stay signed in.
+
+### Testing Active Directory sign-in on this PC
+
+Under `npm run dev` on a domain-joined PC, `/sign-in` already uses Active Directory: without `LDAP_URL` it asks the domain controller this PC signed in through. Demo accounts aren't in AD, so for them sign-in falls back to the demo password.
+
+To see each step of an AD sign-in, open <http://localhost:3000/ad-test>. The page only works under `npm run dev` and returns 404 in production builds.
+
+1. **Trust the corporate CA.** Node doesn't use the Windows certificate store, so export the CA chain of the domain controller's LDAPS certificate to a PEM file. For example, use `C:\aidea\certs\corp-root-ca.pem`, which holds `godrejinds-GCRPCASRPR04-CA` and `godrejinds-GCRPINTCAAPP1-CA`. Then set `LDAP_CA_CERT_PATH=C:/aidea/certs/corp-root-ca.pem` in `.env.local`.
+2. **Check connection only** needs no password. It confirms that the domain controller answers over TLS and shows the base DN.
+3. **Test and sign in** needs your Windows password. The network ID is filled in from this PC. The test checks the password, reads your AD record (including department and title) and applies `ALLOWED_EMAIL_DOMAIN`. It then creates or links your AIdea account and signs you in, the same way `/sign-in` does.
+
+**Lookup method:** until IT provides the service account (`LDAP_BIND_DN` / `LDAP_BIND_PASSWORD`), sign-in binds to AD directly as you. Once both are set, it looks you up with the service account first.
+
+**Lockout protection:** the page stops after 3 password checks in 15 minutes, so testing can't lock your Windows account.
 
 ## 7. Run the tests
 

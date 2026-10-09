@@ -6,18 +6,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/layout/confirm-dialog';
-import { TempPasswordDialog } from '@/components/admin/temp-password-dialog';
 import { TIER_LABELS, type UserTier } from '@/lib/constants/navigation';
-import { changeUserTier, deleteUserPermanently, resetUserPassword, setUserActive } from '@/lib/services/users';
+import { changeUserTier, deleteUserPermanently, setUserActive } from '@/lib/services/users';
 import type { ManagedUser } from '@/lib/services/users';
 
-type Pending = 'deactivate' | 'delete' | 'reset' | null;
+type Pending = 'deactivate' | 'delete' | null;
 
-/** One account in User Management: tier select plus deactivate / reset / delete. */
+/** One account in User Management: tier select plus deactivate / delete. */
 export function RoleManagementRow({ user }: { user: ManagedUser }) {
   const [busy, setBusy] = React.useState(false);
   const [confirm, setConfirm] = React.useState<Pending>(null);
-  const [tempPassword, setTempPassword] = React.useState<string | null>(null);
 
   async function run<T extends { error: string } | { ok: true }>(fn: () => Promise<T>, success: string) {
     setBusy(true);
@@ -35,11 +33,6 @@ export function RoleManagementRow({ user }: { user: ManagedUser }) {
     await run(() => changeUserTier(user.user_id, tier), `${user.full_name} is now ${TIER_LABELS[tier]}`);
   }
 
-  async function onReset() {
-    const result = await run(() => resetUserPassword(user.user_id), 'Password reset');
-    if (result && 'tempPassword' in result) setTempPassword(result.tempPassword);
-  }
-
   const tierOptions = user.tier ? Array.from(new Set<UserTier>([user.tier, ...user.assignableTiers])) : user.assignableTiers;
 
   return (
@@ -51,13 +44,12 @@ export function RoleManagementRow({ user }: { user: ManagedUser }) {
             {user.full_name}
             {user.isSelf && <Badge variant="outline">You</Badge>}
             {!user.active && <Badge variant="destructive">Deactivated</Badge>}
-            {user.must_change_password && <Badge variant="warning">Password change pending</Badge>}
           </div>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {user.canManage ? (
+          {user.canManage && !user.tierLockedBySettings ? (
             <select
               aria-label={`Tier for ${user.full_name}`}
               value={user.tier ?? ''}
@@ -73,14 +65,14 @@ export function RoleManagementRow({ user }: { user: ManagedUser }) {
               ))}
             </select>
           ) : (
-            <Badge variant="secondary">{user.tier ? TIER_LABELS[user.tier] : 'Voter only'}</Badge>
+            <>
+              <Badge variant="secondary">{user.tier ? TIER_LABELS[user.tier] : 'Voter only'}</Badge>
+              {user.tierLockedBySettings && <span className="text-xs text-muted-foreground">Set in server settings</span>}
+            </>
           )}
 
           {user.canManage && (
             <>
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirm('reset')}>
-                Reset password
-              </Button>
               {user.active ? (
                 <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirm('deactivate')}>
                   Deactivate
@@ -103,14 +95,6 @@ export function RoleManagementRow({ user }: { user: ManagedUser }) {
         </div>
       </CardContent>
 
-      <ConfirmDialog
-        open={confirm === 'reset'}
-        onOpenChange={(o) => !o && setConfirm(null)}
-        title="Reset password?"
-        description={`${user.full_name}'s current password will stop working. They sign in with a new temporary password and must choose their own straight away.`}
-        confirmLabel="Reset password"
-        onConfirm={onReset}
-      />
       <ConfirmDialog
         open={confirm === 'deactivate'}
         onOpenChange={(o) => !o && setConfirm(null)}
@@ -135,7 +119,6 @@ export function RoleManagementRow({ user }: { user: ManagedUser }) {
           await run(() => deleteUserPermanently(user.user_id), `${user.full_name} deleted`);
         }}
       />
-      <TempPasswordDialog password={tempPassword} email={user.email} onClose={() => setTempPassword(null)} />
     </Card>
   );
 }

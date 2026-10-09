@@ -61,7 +61,12 @@ export function isBucket(value: string): value is Bucket {
 }
 
 export function uploadRoot() {
-  return path.resolve(process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads'));
+  // turbopackIgnore: a runtime-only location. Without it, output file tracing
+  // treats process.cwd() as a dependency and copies the whole project folder
+  // into the standalone build.
+  return path.resolve(
+    /* turbopackIgnore: true */ process.env.UPLOAD_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), 'uploads')
+  );
 }
 
 function resolveKey(bucket: Bucket, key: string) {
