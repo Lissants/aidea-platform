@@ -6,11 +6,11 @@ This guide hardens the Windows self-hosted setup in [SELF_HOSTING_WINDOWS.md](./
 2. **Encryption in transit**: browser ↔ IIS (HTTPS), app ↔ SQL Server (TLS), app ↔ domain controller (LDAPS)
 3. **Encryption at rest**: SQL Server TDE for the database, BitLocker for uploads and backups
 
-Follow SELF_HOSTING_WINDOWS.md §1–9 first (prerequisites, database, NSSM service), then this guide.
+**Deploying is scripted:** `deploy-production.cmd` installs, updates and rolls back AIdea on the server in one step, including the HTTPS binding, the HTTP→HTTPS redirect, database migrations and the hourly notifications task. See [deploy/iis/README.md → Production](./deploy/iis/README.md#production). This guide covers what the script needs from IT and what it can't do: AD, certificates, SQL Server TLS and encryption at rest.
 
 To run AIdea in IIS on a developer PC instead (IIS starts Node itself, `http://localhost:8080`), see [deploy/iis/README.md](./deploy/iis/README.md).
 
-**Production host:** `https://aidea.godrejindonesia.com`, on the company's Windows Server. IIS listens on 443 (and 80, only to redirect to HTTPS) and forwards to Node on `127.0.0.1:3000`.
+**Production host:** `https://aidea.godrejindonesia.com`, on the company's Windows Server. IIS listens on 443 (and 80, only to redirect to HTTPS) and runs Node itself through HttpPlatformHandler, on a loopback port only.
 
 ## What to ask IT for
 
@@ -54,7 +54,7 @@ This is password sign-in against AD, not silent single sign-on, and AD itself pr
 ### Configure
 
 1. Copy the root CA to the server, e.g. `C:\aidea\certs\corp-root-ca.pem`. Only the service account running AIdea needs read access to it.
-2. Add to `.env.local`:
+2. Put these in the production settings file: [`deploy/iis/production.env.example`](./deploy/iis/production.env.example) for the first deployment, `C:\inetpub\aidea\.env.production.local` afterwards:
 
    ```ini
    LDAP_URL=ldaps://dc01.corp.godrej.com:636,ldaps://dc02.corp.godrej.com:636
@@ -70,9 +70,8 @@ This is password sign-in against AD, not silent single sign-on, and AD itself pr
    ```
 
    Leave the `MICROSOFT_*` variables empty. The **Sign in with Microsoft** button then stays hidden.
-3. Apply the migrations (`users.ad_object_guid`, and removing the formerly seeded Developers): `npm run db:migrate` (from an account with `db_owner`).
-4. Rebuild and restart: `npm run build`, `nssm restart AIdea`.
-5. Sign in with a Windows account listed in `AD_DEVELOPER_EMAILS` or `AD_ADMIN_EMAILS` and open **Settings**. It should say *Active Directory sign-in (LDAPS): Configured — ldaps://dc01…, signs in as the user, corporate CA loaded*.
+3. Deploy with `deploy-production.cmd`. It applies the migrations (`users.ad_object_guid`, and removing the formerly seeded Developers) as the person running it, who needs `db_owner`. After editing settings later, `Restart-WebAppPool AIdea` is enough.
+4. Sign in with a Windows account listed in `AD_DEVELOPER_EMAILS` or `AD_ADMIN_EMAILS` and open **Settings**. It should say *Active Directory sign-in (LDAPS): Configured — ldaps://dc01…, signs in as the user, corporate CA loaded*.
 
 In production AIdea refuses `ldap://` URLs: AD sign-in stays off, nobody can sign in, and the log says why (the service also logs it at start-up). Certificates are always validated (`rejectUnauthorized`, TLS 1.2+). A DC presenting a certificate the CA didn't issue, or a host name that doesn't match it, is treated as unavailable, and the next DC in `LDAP_URL` is tried.
 
@@ -86,7 +85,7 @@ A production build has no break-glass AIdea password: if no domain controller an
 Test-NetConnection dc01.corp.godrej.com -Port 636
 ```
 
-If sign-in says "temporarily unavailable", the log (`logs\aidea.err.log`) shows `[auth] AD server … unavailable:` with the reason. The usual causes:
+If sign-in says "temporarily unavailable", the newest `C:\inetpub\aidea\logs\node_*.log` shows `[auth] AD server … unavailable:` with the reason. The usual causes:
 - **Certificate errors:** a wrong CA file, or `LDAP_URL` using an IP instead of the name on the certificate.
 - **Invalid credentials on the service bind** (service account only): the service account's password has changed.
 
@@ -94,24 +93,20 @@ If sign-in says "temporarily unavailable", the log (`logs\aidea.err.log`) shows 
 
 ### Browser ↔ IIS (HTTPS)
 
-1. Set up IIS, URL Rewrite and ARR as in SELF_HOSTING_WINDOWS.md §10 ("HTTPS with IIS as a reverse proxy").
-2. Use [`deploy/iis/web.config`](./deploy/iis/web.config) as the site's `web.config`. It redirects HTTP to HTTPS, proxies to `127.0.0.1:3000`, sets `X-Forwarded-Proto`, and allows 30 MB uploads. In IIS Manager → the site → **URL Rewrite → View Server Variables**, add `HTTP_X_FORWARDED_PROTO` and `HTTP_X_FORWARDED_HOST`.
-3. **Make Node reachable only through IIS.** Change the NSSM service to listen on loopback:
+`deploy-production.cmd` sets this up and checks it on every run:
 
-   ```powershell
-   & $nssm set AIdea AppParameters "node_modules\next\dist\bin\next start -H 127.0.0.1 -p 3000"
-   & $nssm restart AIdea
-   Remove-NetFirewallRule -DisplayName "AIdea (TCP 3000)" -ErrorAction SilentlyContinue
-   ```
+| Site | Binding | Does |
+| --- | --- | --- |
+| `AIdea` | https, 443, host `aidea.godrejindonesia.com`, **Require SNI**, the certificate for that name | Runs Node through HttpPlatformHandler on `127.0.0.1` only. 30 MB request limit; no `Server` / `X-Powered-By` headers |
+| `AIdea-Redirect` | http, 80, host `aidea.godrejindonesia.com` | 301 to `https://` with the same path and query (IIS *HTTP Redirection*) |
 
-4. **TLS 1.2+ only.** Disable SSL 3.0, TLS 1.0 and TLS 1.1 on the server (Group Policy or IIS Crypto, following Godrej's server baseline). Import the `.pfx` into *Local Computer → Personal*, then give the site exactly two bindings:
+It finds the certificate in *Local Computer → Personal* by name (or `-CertThumbprint`), and refuses one that is expired, lacks its private key or doesn't cover the host name. It warns 30 days before expiry. After IT renews the certificate, import the new `.pfx` and deploy again: the binding switches to it.
 
-   | Type | Port | Host name | Certificate |
-   | --- | --- | --- | --- |
-   | https | 443 | `aidea.godrejindonesia.com` | the `aidea.godrejindonesia.com` certificate. Tick **Require Server Name Indication** if this server hosts other HTTPS sites |
-   | http | 80 | `aidea.godrejindonesia.com` | — (only redirects to HTTPS) |
+What stays manual:
 
-5. In `.env.local`: set `NEXT_PUBLIC_APP_URL=https://aidea.godrejindonesia.com` (no trailing slash) and **remove** `SESSION_COOKIE_SECURE=false`. Rebuild and restart. The URL is baked into the build, so changing it later needs `npm run build` again.
+1. **TLS 1.2+ only.** Disable SSL 3.0, TLS 1.0 and TLS 1.1 on the server (Group Policy or IIS Crypto, following Godrej's server baseline).
+2. **Firewall:** open 443 and 80 inbound. Node needs no firewall rule: it only listens on loopback.
+3. **Settings:** `NEXT_PUBLIC_APP_URL=https://aidea.godrejindonesia.com` (no trailing slash), and no `SESSION_COOKIE_SECURE=false`. The deployment refuses anything else. The URL is baked into the build, so changing it needs a new `npm run build:iis -- -AppUrl …`.
 
 If Microsoft sign-in is turned on later, the Entra app registration needs the redirect URI `https://aidea.godrejindonesia.com/auth/callback/microsoft` and the front-channel logout URL `https://aidea.godrejindonesia.com/sign-in`.
 
@@ -180,11 +175,12 @@ Uploads (`UPLOAD_DIR`) are plain files. Put them, and the folder SQL backups are
 
 - [ ] `nslookup aidea.godrejindonesia.com` returns the Windows Server's IP from a user's PC.
 - [ ] `https://aidea.godrejindonesia.com/sign-in` loads with a trusted certificate issued for that name; `http://aidea.godrejindonesia.com` redirects to `https://`.
-- [ ] `http://<server>:3000` is **not** reachable from another machine.
+- [ ] The last deployment ended with *AIdea … is live* and `Node : loopback only`, with no problems listed.
 - [ ] `curl.exe -sI https://aidea.godrejindonesia.com/sign-in` shows `Strict-Transport-Security` and `X-Frame-Options: DENY`.
-- [ ] No `[security]` warnings in `logs\aidea.err.log` after a restart.
+- [ ] No `[security]` notes in the deployment output (they come from `C:\inetpub\aidea\logs\node_*.log`).
 - [ ] An AD user signs in with network ID + Windows password; a wrong password, a disabled account and an unknown user are refused.
 - [ ] Settings shows *Active Directory sign-in (LDAPS): Configured … corporate CA loaded*.
 - [ ] `sys.dm_exec_connections.encrypt_option` = TRUE with `MSSQL_TRUST_CERT` unset.
 - [ ] TDE `encryption_state` = 3, and the TDE certificate backup is stored off-server.
-- [ ] `UPLOAD_DIR` and the backup folder are on BitLocker volumes.
+- [ ] `UPLOAD_DIR`, `C:\aidea` (releases and backups) and the SQL backup folder are on BitLocker volumes.
+- [ ] The `AIdea voting notifications` scheduled task exists and its last run result is 0.

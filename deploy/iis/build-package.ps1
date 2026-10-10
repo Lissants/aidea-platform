@@ -7,15 +7,19 @@
   into the bundles), then assembles dist\iis\aidea from the standalone server,
   the static assets and public\.
 
-  The package holds no settings or secrets: install-local.ps1 writes
-  .env.production.local next to server.js and the IIS settings into
-  applicationHost.config on the target. Needs no admin rights, and can run while
-  `npm run dev` is running (dev builds into .next\dev).
+  The package also carries db\migrations and tools\migrate.cjs, so the target
+  can apply migrations without npm.
+
+  The package holds no settings or secrets: install-local.ps1 or
+  deploy-production.ps1 keeps .env.production.local next to server.js on the
+  target. Needs no admin rights, and can run while `npm run dev` is running
+  (dev builds into .next\dev).
 
 .EXAMPLE
   npm run build:iis
   npm run build:iis -- -Zip
   npm run build:iis -- -AppUrl http://localhost:8080
+  npm run build:iis -- -AppUrl https://aidea.godrejindonesia.com -Zip   (production)
 #>
 [CmdletBinding()]
 param(
@@ -104,6 +108,26 @@ if (-not (Test-Path (Join-Path $out 'node_modules\msnodesqlv8\prebuilds\win32-x6
   throw 'msnodesqlv8.node (the Windows SQL Server driver) is missing from the package.'
 }
 
+# Migrations and their runner (scripts/migrate.ts as one file), so the server
+# can apply them without npm: node tools\migrate.cjs. mssql and the native
+# driver come from the package's own node_modules; import() is turned into
+# require() so 'mssql/msnodesqlv8' resolves as it does under tsx.
+Write-Step 'Bundling the migration runner'
+Copy-Tree (Join-Path $root 'db\migrations') (Join-Path $out 'db\migrations')
+Push-Location $root
+try {
+  Invoke-Native {
+    node node_modules\esbuild\bin\esbuild scripts\migrate.ts --bundle --platform=node --format=cjs --target=node24 --supported:dynamic-import=false `
+      --external:mssql --external:msnodesqlv8 --log-level=warning --outfile=$(Join-Path $out 'tools\migrate.cjs')
+  }
+} finally { Pop-Location }
+foreach ($module in 'mssql', 'msnodesqlv8') {
+  if (-not (Test-Path (Join-Path $out "node_modules\$module\package.json"))) {
+    throw "node_modules\$module is missing from the package, so tools\migrate.cjs could not run."
+  }
+}
+$migrations = @(Get-ChildItem (Join-Path $out 'db\migrations') -Filter '*.sql' | Sort-Object Name | Select-Object -ExpandProperty Name)
+
 # Settings and secrets belong on the server, never in the package.
 Get-ChildItem $out -Filter '.env*' -File -Force | Remove-Item -Force
 
@@ -114,6 +138,7 @@ $commit = try { (& git -C $root rev-parse --short HEAD) } catch { '' }
   next    = (Get-Content (Join-Path $root 'node_modules\next\package.json') -Raw | ConvertFrom-Json).version
   commit  = "$commit"
   builtAt = (Get-Date).ToString('s')
+  migrations = $migrations
 } | ConvertTo-Json | Set-Content (Join-Path $out 'build-info.json') -Encoding ASCII
 
 $sizeMb = [math]::Round(((Get-ChildItem $out -Recurse -File -Force | Measure-Object Length -Sum).Sum / 1MB), 1)
@@ -121,10 +146,17 @@ Write-Step "Package ready: $out ($sizeMb MB)"
 
 if ($Zip) {
   $zipPath = Join-Path $distDir ("aidea-iis-{0}.zip" -f (Get-Date -Format 'yyyyMMdd-HHmm'))
-  Invoke-Native { tar.exe -a -c -f $zipPath -C $out . }
+  # Windows' own bsdtar: a GNU tar earlier on PATH (Git) can't write zips.
+  $tar = Join-Path $env:windir 'System32\tar.exe'
+  Invoke-Native { & $tar -a -c -f $zipPath -C $out . }
   Write-Step "Zip ready: $zipPath"
 }
 
 Write-Host ''
-Write-Host 'Next: in an elevated PowerShell, from the project folder, run'
-Write-Host '  powershell -ExecutionPolicy Bypass -File deploy\iis\install-local.ps1 -LdapUrl ldaps://<domain controller>:636'
+if ($AppUrl -like 'https://*') {
+  Write-Host 'Next: copy the zip and deploy\iis\deploy-production.* to the server, then run there'
+  Write-Host "  deploy-production.cmd -Package <zip> -HostName $(([Uri]$AppUrl).Host)"
+} else {
+  Write-Host 'Next: from the project folder, run'
+  Write-Host '  deploy\iis\install-local.cmd -LdapUrl ldaps://<domain controller>:636'
+}

@@ -396,6 +396,8 @@ Day-to-day commands:
 
 ### HTTPS with IIS as a reverse proxy
 
+On the production server, use the deployment script instead: it does all of this, without ARR or NSSM ([deploy/iis/README.md → Production](./deploy/iis/README.md#production)). The manual steps below put IIS in front of the NSSM service on this PC.
+
 To serve `https://aidea.godrejindonesia.com` instead of `http://IP:3000`:
 
 1. Ask IT for a DNS `A` record for `aidea.godrejindonesia.com` pointing at the server, and a certificate issued for that name.
@@ -406,7 +408,7 @@ To serve `https://aidea.godrejindonesia.com` instead of `http://IP:3000`:
 6. Update `.env.local`: `NEXT_PUBLIC_APP_URL=https://aidea.godrejindonesia.com`, **remove** `SESSION_COOKIE_SECURE=false`, then rebuild and restart (`npm run build`, `nssm restart AIdea`).
 7. Close port 3000 to the network again (`Remove-NetFirewallRule -DisplayName "AIdea (TCP 3000)"`) and open 443 instead, so everyone goes through IIS.
 
-For production — Active Directory sign-in over LDAPS, a ready-made `web.config`, validated SQL Server TLS, TDE and BitLocker — continue with **[IIS_DEPLOYMENT.md](./IIS_DEPLOYMENT.md)**.
+For production — Active Directory sign-in over LDAPS, the one-command deployment, validated SQL Server TLS, TDE and BitLocker — continue with **[IIS_DEPLOYMENT.md](./IIS_DEPLOYMENT.md)**.
 
 ---
 
