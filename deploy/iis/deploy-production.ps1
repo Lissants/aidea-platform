@@ -229,6 +229,10 @@ if (-not ($certNames | Where-Object { $HostName -like $_ })) {
 if ($cert.NotAfter -lt (Get-Date).AddDays(30)) { Add-Note "The certificate expires on $($cert.NotAfter.ToString('yyyy-MM-dd')). Ask IT for a new one." }
 Write-Host "  Certificate : $($cert.Subject), expires $($cert.NotAfter.ToString('yyyy-MM-dd')), thumbprint $($cert.Thumbprint)"
 Write-Host "  Node        : $nodeVersion ($nodeExe)"
+# The start-up checks and the hourly task call curl.exe, which Windows Server 2016 lacks.
+if (-not (Test-Path (Join-Path $env:windir 'System32\curl.exe'))) {
+  throw "curl.exe is missing (Windows Server 2016 does not include it). Copy C:\Windows\System32\curl.exe from a Windows 10/11 PC to $env:windir\System32, then run this again."
+}
 
 # Nobody else may answer for this host name.
 $taken = Get-WebBinding | Where-Object {
