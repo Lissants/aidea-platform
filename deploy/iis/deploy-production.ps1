@@ -92,26 +92,17 @@ $webConfigPath = Join-Path $SitePath 'web.config'
 $logsDir = Join-Path $SitePath 'logs'
 $cacheDir = Join-Path $SitePath '.next\cache'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-# Reach -HostName on this server itself, whatever DNS says.
-$resolve = @('--resolve', "${HostName}:443:127.0.0.1", '--resolve', "${HostName}:80:127.0.0.1")
 $problems = New-Object System.Collections.Generic.List[string]
 $notes = New-Object System.Collections.Generic.List[string]
 
 function Add-Note([string]$Message) { $notes.Add($Message); Write-Warning $Message }
 
-function Invoke-Curl([string[]]$Arguments) {
-  $previous = $ErrorActionPreference
-  $ErrorActionPreference = 'Continue'
-  try { @(& curl.exe -s --max-time 15 @Arguments 2>$null) } finally { $ErrorActionPreference = $previous }
-}
-
-# Response headers of a GET, as a lower-case name => value map plus 'status'.
-function Get-Headers([string]$Url, [string[]]$Extra = @()) {
-  $map = @{}
-  foreach ($line in Invoke-Curl (@('-k', '-o', 'NUL', '-D', '-') + $resolve + $Extra + $Url)) {
-    if ($line -match '^HTTP/\S+\s+(\d{3})') { $map['status'] = $Matches[1] }
-    elseif ($line -match '^([A-Za-z0-9-]+):\s*(.*)$') { $map[$Matches[1].ToLower()] = $Matches[2].Trim() }
-  }
+# Response headers of a GET to -HostName on this server itself (whatever DNS
+# says), as a lower-case name => value map plus 'status'.
+function Get-Headers([string]$Url) {
+  $response = Invoke-SiteRequest $Url -Loopback
+  $map = $response.Headers.Clone()
+  $map['status'] = "$($response.Status)"
   $map
 }
 
@@ -229,10 +220,6 @@ if (-not ($certNames | Where-Object { $HostName -like $_ })) {
 if ($cert.NotAfter -lt (Get-Date).AddDays(30)) { Add-Note "The certificate expires on $($cert.NotAfter.ToString('yyyy-MM-dd')). Ask IT for a new one." }
 Write-Host "  Certificate : $($cert.Subject), expires $($cert.NotAfter.ToString('yyyy-MM-dd')), thumbprint $($cert.Thumbprint)"
 Write-Host "  Node        : $nodeVersion ($nodeExe)"
-# The start-up checks and the hourly task call curl.exe, which Windows Server 2016 lacks.
-if (-not (Test-Path (Join-Path $env:windir 'System32\curl.exe'))) {
-  throw "curl.exe is missing (Windows Server 2016 does not include it). Copy C:\Windows\System32\curl.exe from a Windows 10/11 PC to $env:windir\System32, then run this again."
-}
 
 # Nobody else may answer for this host name.
 $taken = Get-WebBinding | Where-Object {
@@ -476,6 +463,7 @@ if ($settings['CRON_SECRET']) {
   $taskScript = Join-Path $DataRoot 'tasks\voting-notifications.ps1'
   New-Item -ItemType Directory -Force -Path (Split-Path $taskScript) | Out-Null
   Copy-Item (Join-Path $PSScriptRoot 'voting-notifications.ps1') $taskScript -Force
+  Copy-Item (Join-Path $PSScriptRoot 'common.ps1') (Split-Path $taskScript) -Force
   $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument (
     "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$taskScript`" -EnvFile `"$envFilePath`" -HostName $HostName")
   $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Hours 1)
@@ -490,14 +478,13 @@ if ($settings['CRON_SECRET']) {
 Write-Step 'Starting'
 Start-SitePool $SiteName
 Start-SitePool $redirectSite
-$healthArgs = @('-k') + $resolve
-$problem = Get-SiteProblem "$appUrl/api/health" $healthArgs
+$problem = Get-SiteProblem "$appUrl/api/health" -Loopback
 if ($problem -like 'HTTP 500.19*' -and (Test-Path $webConfigPath)) {
   Add-Note "web.config method failed. $problem. Switched to applicationHost.config (-IisConfig AppHost)."
   Stop-SitePool $SiteName $serverJs
   Set-AppHostSettings @iisArgs
   Start-SitePool $SiteName
-  $problem = Get-SiteProblem "$appUrl/api/health" $healthArgs
+  $problem = Get-SiteProblem "$appUrl/api/health" -Loopback
 }
 
 Write-Step 'Checks'
@@ -507,8 +494,7 @@ if ($problem) {
   Write-Host '  Health          : OK'
 
   # Certificate as this server sees it (users' PCs should trust the same CA).
-  $trusted = Invoke-Curl (@('--ssl-no-revoke', '-o', 'NUL', '-w', '%{http_code}') + $resolve + "$appUrl/api/health")
-  if ("$trusted" -eq '200') { Write-Host '  Certificate     : trusted' }
+  if ((Invoke-SiteRequest "$appUrl/api/health" -Loopback).Trusted) { Write-Host '  Certificate     : trusted' }
   else { Add-Note "This server does not trust the certificate for $HostName. Check from a user's PC that the browser shows no warning." }
 
   $headers = Get-Headers "$appUrl/sign-in"

@@ -110,7 +110,6 @@ One command on the server deploys, updates or rolls back AIdea. It needs nothing
 | HttpPlatformHandler v1.2 (x64) | <https://www.iis.net/downloads/microsoft/httpplatformhandler> |
 | Node.js 24 (x64 MSI) | Installed for all users in `C:\Program Files\nodejs`. |
 | ODBC Driver 18 for SQL Server (x64) | The app's SQL Server driver. |
-| `curl.exe` in `C:\Windows\System32` | Built in from Windows Server 2019. On Server 2016, copy it from a Windows 10/11 PC. |
 | The TLS certificate for `aidea.godrejindonesia.com` | Imported with its private key into *Local Computer → Personal*. The script finds it by name. |
 | The corporate root CA in PEM | For example `C:\aidea\certs\corp-root-ca.pem` (`LDAP_CA_CERT_PATH`). |
 | DNS, firewall, SQL Server certificate | See *What to ask IT for* in [IIS_DEPLOYMENT.md](../../IIS_DEPLOYMENT.md). |
@@ -185,7 +184,6 @@ Puts back the release built before the current one, without migrations. Run it a
 | --- | --- |
 | *No certificate for … in Local Computer > Personal* | Import the `.pfx` (with private key) into the computer's store, not your user's, or pass `-CertThumbprint`. |
 | *Could not read the migration state* | The deploying account can't reach or log in to SQL Server. Check `MSSQL_SERVER`, the SQL Server certificate (or `MSSQL_TRUST_CERT=true` until it's in place) and that you have `db_owner`. |
-| *curl.exe is missing* / *'curl.exe' is not recognized* | Windows Server 2016. Copy `C:\Windows\System32\curl.exe` from a Windows 10/11 PC to the same folder on the server. |
 | *This server does not trust the certificate* | Only a note. Make sure users' browsers show no warning. |
 | Login failed for `<DOMAIN>\<SERVER>$` | The DBA hasn't run the printed T-SQL yet. |
 | Anything else | The newest `C:\inetpub\aidea\logs\node_*.log`, and the deployment log. |

@@ -17,9 +17,10 @@ $line = Get-Content $EnvFile | Where-Object { $_ -match '^\s*CRON_SECRET\s*=' } 
 $secret = ("$line" -replace '^\s*CRON_SECRET\s*=\s*', '').Trim().Trim('"', "'")
 if (-not $secret) { exit 0 }
 
-# Straight to IIS on this server, whatever DNS says; -k because the
-# certificate is for the host name, checked by the deployment instead.
-& (Join-Path $env:windir 'System32\curl.exe') -s -k --fail --max-time 120 `
-  --resolve "${HostName}:443:127.0.0.1" -H "Authorization: Bearer $secret" `
-  "https://$HostName/api/cron/voting-notifications"
-exit $LASTEXITCODE
+# Straight to IIS on this server, whatever DNS says. The certificate is
+# checked by the deployment instead. common.ps1 is copied next to this file.
+. (Join-Path $PSScriptRoot 'common.ps1')
+$response = Invoke-SiteRequest "https://$HostName/api/cron/voting-notifications" -Loopback `
+  -Headers @{ Authorization = "Bearer $secret" } -TimeoutSec 120
+if ($response.Status -ge 200 -and $response.Status -lt 300) { exit 0 }
+exit 1

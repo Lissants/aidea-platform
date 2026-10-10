@@ -255,18 +255,71 @@ $variables
 
 # --- Checks ------------------------------------------------------------------
 
+# One HTTP/1.0 request, without curl.exe (Windows Server 2016 has none).
+# -Loopback connects to 127.0.0.1 but still sends the URL's host name as Host
+# header and TLS SNI, like curl --resolve. The certificate is never enforced:
+# Trusted says whether this server would trust it. Status is 0 when nothing
+# answered (Error says why).
+function Invoke-SiteRequest([string]$Url, [switch]$Loopback, [hashtable]$Headers = @{}, [int]$TimeoutSec = 15) {
+  $uri = [Uri]$Url
+  $result = [pscustomobject]@{ Status = 0; Headers = @{}; Body = ''; Trusted = $false; Error = $null }
+  $client = New-Object Net.Sockets.TcpClient
+  try {
+    $target = if ($Loopback) { '127.0.0.1' } else { $uri.DnsSafeHost }
+    $connect = $client.BeginConnect($target, $uri.Port, $null, $null)
+    if (-not $connect.AsyncWaitHandle.WaitOne($TimeoutSec * 1000)) { throw "No answer from ${target}:$($uri.Port)." }
+    $client.EndConnect($connect)
+    $client.ReceiveTimeout = $TimeoutSec * 1000
+    $client.SendTimeout = $TimeoutSec * 1000
+    $stream = $client.GetStream()
+    if ($uri.Scheme -eq 'https') {
+      $tls = @{ Errors = $null }
+      $accept = { param($source, $certificate, $chain, $errors) $tls.Errors = $errors; $true }.GetNewClosure()
+      $ssl = New-Object Net.Security.SslStream($stream, $false, [Net.Security.RemoteCertificateValidationCallback]$accept)
+      $ssl.AuthenticateAsClient($uri.DnsSafeHost, $null, [Security.Authentication.SslProtocols]::Tls12, $false)
+      $result.Trusted = $tls.Errors -eq [Net.Security.SslPolicyErrors]::None
+      $stream = $ssl
+    }
+    $lines = @("GET $($uri.PathAndQuery) HTTP/1.0", "Host: $($uri.Authority)", 'Connection: close')
+    foreach ($name in $Headers.Keys) { $lines += "${name}: $($Headers[$name])" }
+    $request = [Text.Encoding]::ASCII.GetBytes(($lines -join "`r`n") + "`r`n`r`n")
+    $stream.Write($request, 0, $request.Length)
+    $stream.Flush()
+    $buffer = New-Object byte[] 8192
+    $memory = New-Object IO.MemoryStream
+    try {
+      while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) { $memory.Write($buffer, 0, $read) }
+    } catch [IO.IOException] {
+      # Servers may end TLS without a close_notify; keep what arrived.
+      if (-not $memory.Length) { throw }
+    }
+    $raw = [Text.Encoding]::UTF8.GetString($memory.ToArray())
+    $split = $raw.IndexOf("`r`n`r`n")
+    $head = if ($split -ge 0) { $raw.Substring(0, $split) } else { $raw }
+    if ($split -ge 0) { $result.Body = $raw.Substring($split + 4) }
+    $headLines = @($head -split "`r`n")
+    if ($headLines[0] -match '^HTTP/\S+\s+(\d{3})') { $result.Status = [int]$Matches[1] }
+    foreach ($line in $headLines | Select-Object -Skip 1) {
+      if ($line -match '^([A-Za-z0-9-]+):\s*(.*)$') { $result.Headers[$Matches[1].ToLower()] = $Matches[2].Trim() }
+    }
+  } catch {
+    $result.Error = $_.Exception.Message
+  } finally {
+    $client.Close()
+  }
+  $result
+}
+
 # $null when $Url answers 200, otherwise the reason. A 500.19 comes back at once
-# with the lines of IIS's error page that name the refused setting. $CurlArgs
-# adds curl options, e.g. --resolve to reach a host name on this server.
-function Get-SiteProblem([string]$Url, [string[]]$CurlArgs = @()) {
+# with the lines of IIS's error page that name the refused setting. -Loopback
+# reaches a host name on this server, whatever DNS says.
+function Get-SiteProblem([string]$Url, [switch]$Loopback) {
   $problem = 'no answer'
   for ($i = 0; $i -lt 30; $i++) {
-    $previous = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try { $out = @(& curl.exe -s --max-time 10 @CurlArgs -w "`n%{http_code}" $Url) } finally { $ErrorActionPreference = $previous }
-    $code = "$($out[-1])".Trim()
+    $response = Invoke-SiteRequest $Url -Loopback:$Loopback -TimeoutSec 10
+    $code = "$($response.Status)"
     if ($code -eq '200') { return $null }
-    $body = ($out | Select-Object -SkipLast 1) -join ' '
+    $body = $response.Body
     if ($code -eq '500' -and $body -match '500\.19') {
       $text = $body -replace '<[^>]+>', ' ' -replace '&nbsp;', ' ' -replace '&quot;', '"' -replace '&lt;', '<' -replace '&gt;', '>' -replace '\s+', ' '
       $next = 'Error Code|Config Error|Config File|Requested URL|Physical Path|Config Source|More Information'
@@ -278,7 +331,7 @@ function Get-SiteProblem([string]$Url, [string[]]$CurlArgs = @()) {
       }
       return "HTTP 500.19 | $($details -join ' | ')"
     }
-    $problem = if ($code -eq '000') { 'no answer' } else { "HTTP $code" }
+    $problem = if ($code -eq '0') { 'no answer' } else { "HTTP $code" }
     Start-Sleep -Seconds 2
   }
   $problem
