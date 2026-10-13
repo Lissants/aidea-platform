@@ -9,13 +9,18 @@ import {
   msalClient,
 } from '@/lib/auth/microsoft';
 import { isAllowedEmail } from '@/lib/auth/email-domain';
-import { safeRedirectPath } from '@/lib/auth/redirect';
+import { postSignInPath } from '@/lib/auth/post-sign-in';
 import { startSession } from '@/lib/auth/session';
 
 /**
  * Microsoft Entra redirect target: validates state, redeems the code (with
  * the PKCE verifier), checks tenant + ALLOWED_EMAIL_DOMAIN, links or
- * provisions the local user, then issues the app session cookie.
+ * provisions the local user, then issues the app session cookie and sends
+ * the user to the page they asked for or their role's home (/overview).
+ *
+ * A sign-in AIdea did not start (no flow cookie, e.g. opened from a Microsoft
+ * My Apps / Grove tile) is restarted through /auth/microsoft instead of
+ * failing, so the user still lands in AIdea.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -29,14 +34,17 @@ export async function GET(request: NextRequest) {
   if (!isMicrosoftSsoEnabled()) return fail('sso_disabled');
   if (searchParams.get('error')) return fail('sso_cancelled');
 
-  let flow: { state: string; verifier: string; redirectTo: string };
+  let flow: { state: string; verifier: string; redirectTo: string } | null = null;
   try {
     flow = JSON.parse(request.cookies.get(MS_FLOW_COOKIE)?.value ?? '');
   } catch {
-    return fail('sso_state');
+    flow = null;
+  }
+  if (!flow?.state || !flow.verifier) {
+    return NextResponse.redirect(`${origin}/auth/microsoft?redirect_to=${encodeURIComponent('/overview')}`);
   }
   const code = searchParams.get('code');
-  if (!code || !flow?.state || searchParams.get('state') !== flow.state) return fail('sso_state');
+  if (!code || searchParams.get('state') !== flow.state) return fail('sso_state');
 
   let claims: Record<string, unknown>;
   try {
@@ -66,7 +74,7 @@ export async function GET(request: NextRequest) {
 
   await startSession(account.id, account.email, 'sso');
 
-  const res = NextResponse.redirect(`${origin}${safeRedirectPath(flow.redirectTo)}`);
+  const res = NextResponse.redirect(`${origin}${await postSignInPath(account.id, flow.redirectTo)}`);
   res.cookies.delete({ name: MS_FLOW_COOKIE, path: '/auth/callback/microsoft' });
   return res;
 }

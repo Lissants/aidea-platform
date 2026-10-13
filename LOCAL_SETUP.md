@@ -102,6 +102,7 @@ Sign in as `demo.participant1@godrejcp.com` and open **Submit New Idea**. The wi
    | Platform | **Web** (not SPA) |
    | Redirect URI | `http://localhost:3000/auth/callback/microsoft`; for other environments `{NEXT_PUBLIC_APP_URL}/auth/callback/microsoft` |
    | Front-channel logout URL | `{NEXT_PUBLIC_APP_URL}/sign-in` |
+   | Branding & properties → Home page URL | `{NEXT_PUBLIC_APP_URL}/overview`. My Apps and Grove tiles open this URL. If it is left empty or points at Grove, users who sign in from a tile end up on Grove instead of AIdea |
    | API permissions | Microsoft Graph, delegated: `openid`, `profile`, `email`, `User.Read`, admin consent granted |
    | Client secret | One secret; note its expiry date and rotate it before then |
    | Enterprise app → Assignment required | Yes to limit AIdea to an assigned group; No for everyone in the tenant |

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { attempt, db, DbError, newId } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
+import { currentMentorSql } from '@/lib/auth/roles';
 import {
   ideaDraftSaveSchema,
   ideaDraftSchema,
@@ -153,6 +154,17 @@ async function writeDraft(user: SessionUser, programId: string, ideaId: string |
       }
 
       if (data.mentor_preferences) {
+        const mentorIds = [...new Set(data.mentor_preferences.map((p) => p.mentor_profile_id))];
+        if (mentorIds.length > 0) {
+          const current = await tx.queryOne<{ count: number }>(
+            `SELECT COUNT(*) AS count FROM mentor_profiles mp JOIN profiles p ON p.id = mp.profile_id
+              WHERE mp.id IN (@mentorIds) AND ${currentMentorSql('p')}`,
+            { mentorIds }
+          );
+          if ((current?.count ?? 0) !== mentorIds.length) {
+            throw new DbError('One of the preferred mentors is no longer available. Please choose again.');
+          }
+        }
         await tx.execute('DELETE FROM idea_mentor_preferences WHERE idea_id = @id', { id: currentIdeaId });
         await tx.insertMany(
           'idea_mentor_preferences',

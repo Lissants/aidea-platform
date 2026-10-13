@@ -10,6 +10,7 @@ import { isAllowedEmail } from '@/lib/auth/email-domain';
 import { authenticateWithAd, isAdEnabled, localPasswordsAllowed } from '@/lib/auth/ldap';
 import { appOrigin, isMicrosoftSsoEnabled, isPasswordSignInEnabled, microsoftLogoutUrl } from '@/lib/auth/microsoft';
 import { findOrCreateDirectoryUser } from '@/lib/auth/provision';
+import { postSignInPath } from '@/lib/auth/post-sign-in';
 
 // With AD sign-in the login may be a network ID (jdoe, CORP\jdoe), not an email.
 const signInSchema = z.object({
@@ -58,7 +59,15 @@ const AD_MESSAGES = {
  * runner, a login AD refuses or can't check falls back to a local AIdea
  * password, so the seeded demo accounts (not in AD) keep working.
  */
-export async function signInWithPassword(input: { email: string; password: string }) {
+export async function signInWithPassword(input: { email: string; password: string; redirectTo?: string }) {
+  const result = await authenticatePassword(input);
+  if ('error' in result) return result;
+  return { ok: true, redirectTo: await postSignInPath(result.userId, input.redirectTo) } as const;
+}
+
+type PasswordAuthResult = { error: string } | { ok: true; userId: string };
+
+async function authenticatePassword(input: { email: string; password: string }): Promise<PasswordAuthResult> {
   if (!isPasswordSignInEnabled()) return { error: 'Please sign in with Microsoft.' } as const;
   const parsed = signInSchema.safeParse(input);
   if (!parsed.success) return { error: INVALID } as const;
@@ -89,7 +98,7 @@ export async function signInWithPassword(input: { email: string; password: strin
     if (!account) return { error: DEACTIVATED } as const;
     attempts.delete(login);
     await startSession(account.id, account.email, 'ldap');
-    return { ok: true } as const;
+    return { ok: true, userId: account.id } as const;
   }
 
   if (localPasswordsAllowed() && (result.reason === 'invalid' || result.reason === 'not_found' || result.reason === 'unavailable')) {
@@ -105,7 +114,7 @@ export async function signInWithPassword(input: { email: string; password: strin
   return { error: AD_MESSAGES[result.reason] } as const;
 }
 
-async function signInWithLocalPassword(email: string, password: string) {
+async function signInWithLocalPassword(email: string, password: string): Promise<PasswordAuthResult> {
   if (!localPasswordsAllowed()) return { error: INVALID } as const;
   if (!emailSchema.safeParse(email).success || !isAllowedEmail(email)) return { error: INVALID } as const;
 
@@ -122,7 +131,7 @@ async function signInWithLocalPassword(email: string, password: string) {
 
   attempts.delete(email);
   await startSession(account.id, account.email, 'pwd');
-  return { ok: true } as const;
+  return { ok: true, userId: account.id } as const;
 }
 
 /** Ends the AIdea session; Microsoft sessions are also signed out of Entra. */

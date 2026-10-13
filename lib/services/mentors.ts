@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { attempt, db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/permissions';
+import { currentMentorSql } from '@/lib/auth/roles';
 import { logAudit } from '@/lib/audit/log';
 import { removeByUrl } from '@/lib/storage/local';
 import { mentorProfileSchema, type MentorProfileInput } from '@/lib/validation/schemas';
@@ -65,9 +66,7 @@ export async function fetchPublicMentorProfiles(): Promise<PublicMentorProfile[]
     `SELECT mp.id, p.full_name, p.email, p.job_title, p.department, mp.expertise, mp.photo_url
        FROM mentor_profiles mp
        JOIN profiles p ON p.id = mp.profile_id
-      WHERE p.active = 1
-        AND EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id
-                     WHERE ur.user_id = p.id AND r.name = 'mentor')
+      WHERE ${currentMentorSql('p')}
       ORDER BY p.full_name`
   );
 }

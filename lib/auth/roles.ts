@@ -34,6 +34,18 @@ export function assignedTier(email: string): Extract<UserTier, 'developer' | 'ad
   return null;
 }
 
+/**
+ * SQL predicate: the profile aliased `alias` is an active account that still
+ * holds the mentor role. A mentor moved to another tier keeps their
+ * mentor_profiles row (past assignments and preferences point to it), so
+ * every list of mentors to choose from must filter with this.
+ */
+export function currentMentorSql(alias = 'p') {
+  if (!/^[a-z_][a-z0-9_]*$/i.test(alias)) throw new Error(`Invalid alias ${alias}`);
+  return `${alias}.active = 1 AND EXISTS (SELECT 1 FROM user_roles cm_ur JOIN roles cm_r ON cm_r.id = cm_ur.role_id
+                                           WHERE cm_ur.user_id = ${alias}.id AND cm_r.name = 'mentor')`;
+}
+
 export async function ensureMentorProfile(q: Queryable, profileId: string) {
   await q.execute(
     `IF NOT EXISTS (SELECT 1 FROM mentor_profiles WHERE profile_id = @profileId)

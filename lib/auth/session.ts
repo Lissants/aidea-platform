@@ -42,19 +42,23 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const profile = await db.queryOne<Profile>('SELECT * FROM profiles WHERE id = @id', { id: account.id });
   if (profile && profile.active === false) return null;
 
-  const roleRows = await db.query<{ name: string }>(
-    `SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = @id`,
-    { id: account.id }
-  );
-
   return {
     id: account.id,
     email: account.email,
     profile: profile ?? null,
-    roles: roleRows.map((r) => r.name as AppRole),
+    roles: await getUserRoles(account.id),
     signInMethod: claims.amr,
   };
 });
+
+/** Role names held by a user, read from SQL (works before the session cookie is readable). */
+export async function getUserRoles(userId: string): Promise<AppRole[]> {
+  const roleRows = await db.query<{ name: string }>(
+    `SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = @id`,
+    { id: userId }
+  );
+  return roleRows.map((r) => r.name as AppRole);
+}
 
 /** Issues the session cookie for a verified user (Server Actions / Route Handlers only). */
 export async function startSession(userId: string, email: string, method: SignInMethod) {

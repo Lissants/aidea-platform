@@ -59,21 +59,22 @@ export function SignInForm({
 
   async function onPasswordSubmit(values: z.infer<typeof passwordSchema>) {
     setPending(true);
-    const result = await signInWithPassword(values);
+    const result = await signInWithPassword({ ...values, redirectTo: target });
     if ('error' in result) {
       setPending(false);
       toast.error(result.error);
       return;
     }
-    // Full reload (not router.push) so the proxy and Server Components pick up
+    // The server picks the destination: the requested page, or the role's
+    // home (/overview). Full reload (not router.push) so the proxy and Server Components pick up
     // the new session cookie on the very next request.
-    window.location.assign(`${window.location.origin}${target}`);
+    window.location.assign(`${window.location.origin}${safeRedirectPath(result.redirectTo)}`);
   }
 
   const passwordFields = (
     <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="email">{directoryEnabled ? 'Work email or network ID' : 'Work email'}</Label>
+        <Label htmlFor="email">{directoryEnabled ? 'Work Email' : 'Work email'}</Label>
         <Input
           id="email"
           type={directoryEnabled ? 'text' : 'email'}
@@ -85,7 +86,7 @@ export function SignInForm({
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="password">{directoryEnabled ? 'Windows password' : 'Password'}</Label>
+        <Label htmlFor="password">{directoryEnabled ? 'Microsoft Login Password' : 'Password'}</Label>
         <Input id="password" type="password" autoComplete="current-password" {...passwordForm.register('password')} />
       </div>
       <Button type="submit" variant={microsoftEnabled ? 'outline' : 'default'} className="w-full" disabled={pending}>

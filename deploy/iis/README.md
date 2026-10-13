@@ -138,6 +138,16 @@ Copy `dist\iis\aidea-iis-<time>.zip` and the `deploy\iis` folder to the server, 
 
 ### Updates
 
+#### From your PC in one step
+
+```powershell
+npm run publish:prod
+```
+
+`publish-to-server.ps1` runs the typecheck and unit tests, builds the package for `https://aidea.godrejindonesia.com`, and copies it with this folder to `\\10.21.10.189\C$\aidea\drop` (asking for a server administrator account if your own login can't open the share). It keeps the newest 3 zips there. It does not deploy: Remote Desktop to the server and double-click `C:\aidea\drop\DEPLOY-LATEST.cmd`, which runs `deploy-production.cmd -Package <that zip>`. Options: `-SkipChecks`, `-SkipBuild` (reuse the newest zip), `-Force` (don't stop for uncommitted changes), `-Server`, `-DropDir`.
+
+#### By hand
+
 ```bat
 deploy-production.cmd -Package D:\drop\aidea-iis-<time>.zip
 ```

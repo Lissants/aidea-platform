@@ -108,7 +108,7 @@ What stays manual:
 2. **Firewall:** open 443 and 80 inbound. Node needs no firewall rule: it only listens on loopback.
 3. **Settings:** `NEXT_PUBLIC_APP_URL=https://aidea.godrejindonesia.com` (no trailing slash), and no `SESSION_COOKIE_SECURE=false`. The deployment refuses anything else. The URL is baked into the build, so changing it needs a new `npm run build:iis -- -AppUrl …`.
 
-If Microsoft sign-in is turned on later, the Entra app registration needs the redirect URI `https://aidea.godrejindonesia.com/auth/callback/microsoft` and the front-channel logout URL `https://aidea.godrejindonesia.com/sign-in`.
+If Microsoft sign-in is turned on later, the Entra app registration needs the redirect URI `https://aidea.godrejindonesia.com/auth/callback/microsoft` and the front-channel logout URL `https://aidea.godrejindonesia.com/sign-in`. Set its Home page URL (**Branding & properties**) to `https://aidea.godrejindonesia.com/overview`, so that the My Apps and Grove tiles open AIdea and not Grove.
 
 AIdea itself sends these on every response: `Strict-Transport-Security` (1 year, production only), `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy` and `Permissions-Policy`. Session cookies are `HttpOnly`, `SameSite=Lax` and `Secure`. At startup the log prints `[security] …` warnings if any production setting would allow plain-text traffic.
 

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { attempt, db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/permissions';
+import { currentMentorSql } from '@/lib/auth/roles';
 import { logAudit } from '@/lib/audit/log';
 
 export interface RoutingQueueRow {
@@ -84,7 +85,8 @@ export async function fetchRoutingQueue(programId: string): Promise<RoutingQueue
   }));
 }
 
-/** Mentor capacity snapshot ("7 of 10") for the assignment picker. Admin-only. */
+/** Mentor capacity snapshot ("7 of 10") for the assignment picker: current
+ * mentors only. Admin-only. */
 export async function fetchMentorCapacities(programId: string): Promise<MentorCapacityRow[]> {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return [];
@@ -92,13 +94,15 @@ export async function fetchMentorCapacities(programId: string): Promise<MentorCa
   // Active = pending assignments on this program's ideas.
   return db.query<MentorCapacityRow>(
     `SELECT mp.id AS mentor_profile_id,
-            ISNULL(p.full_name, 'Mentor') AS full_name,
+            p.full_name,
             mp.max_capacity,
             (SELECT COUNT(*) FROM review_assignments ra
                JOIN ideas i ON i.id = ra.idea_id
               WHERE ra.mentor_profile_id = mp.id AND ra.status = 'pending' AND i.program_id = @programId) AS active_count
        FROM mentor_profiles mp
-       LEFT JOIN profiles p ON p.id = mp.profile_id`,
+       JOIN profiles p ON p.id = mp.profile_id
+      WHERE ${currentMentorSql('p')}
+      ORDER BY p.full_name`,
     { programId }
   );
 }
