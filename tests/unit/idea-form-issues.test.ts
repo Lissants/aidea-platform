@@ -41,24 +41,24 @@ describe('collectIdeaIssues', () => {
     };
     const issues = collectIdeaIssues(empty);
     expect(issues.map((i) => i.field)).toEqual([
+      'team_name',
+      'team_leader',
       'idea_title',
       'problem_opportunity',
       'proposed_solution',
       'target_users',
-      'team_name',
-      'team_leader',
       'impacts.0.impact_type',
       'impacts.0.explanation',
       'impacts.0.measurable_result',
       'mentor_preferences',
     ]);
     expect(issues.map((i) => i.section)).toEqual([
-      'Your idea',
-      'Your idea',
-      'Your idea',
-      'Your idea',
       'Team',
       'Team',
+      'Your Idea',
+      'Your Idea',
+      'Your Idea',
+      'Your Idea',
       'Business Impact',
       'Business Impact',
       'Business Impact',

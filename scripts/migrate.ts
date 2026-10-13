@@ -7,6 +7,9 @@
  *
  * Usage:
  *   npm run db:migrate            apply pending migrations
+ *   ... -- --pending              list pending migrations, apply nothing
+ *   ... -- --backup-first [--backup-dir=<folder>]
+ *                                 COPY_ONLY backup first when any are pending
  *   npm run db:reset              drop every object in the database, re-apply
  *                                 all migrations, then seed (dev only)
  */
@@ -49,8 +52,8 @@ export async function resetDatabase() {
   `);
 }
 
-/** Applies pending migrations; returns how many were applied. */
-export async function runMigrations({ log = console.log }: { log?: (msg: string) => void } = {}) {
+/** Migration files not yet recorded in dbo.schema_migrations, in apply order. */
+export async function pendingMigrations() {
   await db.execute(`
     IF OBJECT_ID('dbo.schema_migrations', 'U') IS NULL
       CREATE TABLE dbo.schema_migrations (
@@ -62,11 +65,40 @@ export async function runMigrations({ log = console.log }: { log?: (msg: string)
   const applied = new Set(
     (await db.query<{ name: string }>('SELECT name FROM dbo.schema_migrations')).map((r) => r.name)
   );
-  const files = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
+  return readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql') && !applied.has(f))
+    .sort();
+}
 
+/**
+ * Full COPY_ONLY backup of the current database, into `dir` or else the
+ * instance's default backup folder (SQL Server 2019+). Returns the file path,
+ * which is on the SQL Server host. Needs db_owner or db_backupoperator.
+ */
+export async function backupDatabase(dir?: string) {
+  const row = await db.queryOne<{ path: string | null }>(
+    `DECLARE @folder NVARCHAR(4000) =
+       COALESCE(@dir, CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(4000)));
+     SELECT CASE WHEN @folder IS NULL THEN NULL ELSE
+       @folder + CASE WHEN RIGHT(@folder, 1) = '\\' THEN '' ELSE '\\' END
+       + DB_NAME() + '-predeploy-' + FORMAT(SYSDATETIME(), 'yyyyMMdd-HHmmss') + '.bak' END AS path`,
+    { dir: dir || null }
+  );
+  if (!row?.path) {
+    throw new Error('SQL Server has no default backup folder; pass --backup-dir=<folder on the SQL Server host>.');
+  }
+  await db.execute(
+    `DECLARE @db SYSNAME = DB_NAME();
+     BACKUP DATABASE @db TO DISK = @path WITH COPY_ONLY, CHECKSUM, INIT;`,
+    { path: row.path }
+  );
+  return row.path;
+}
+
+/** Applies pending migrations; returns how many were applied. */
+export async function runMigrations({ log = console.log }: { log?: (msg: string) => void } = {}) {
   let count = 0;
-  for (const file of files) {
-    if (applied.has(file)) continue;
+  for (const file of await pendingMigrations()) {
     const batches = splitBatches(readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8'));
     await db.transaction(async (tx) => {
       for (const batch of batches) await tx.execute(batch);
@@ -80,7 +112,18 @@ export async function runMigrations({ log = console.log }: { log?: (msg: string)
 }
 
 async function main() {
-  if (process.argv.includes('--reset')) await resetDatabase();
+  const args = process.argv.slice(2);
+  if (args.includes('--pending')) {
+    // One file name per line, for deploy/iis/deploy-production.ps1.
+    for (const file of await pendingMigrations()) console.log(file);
+    return;
+  }
+  if (args.includes('--reset')) await resetDatabase();
+  if (args.includes('--backup-first') && (await pendingMigrations()).length > 0) {
+    const dir = args.find((a) => a.startsWith('--backup-dir='))?.slice('--backup-dir='.length);
+    console.log('Backing up the database before migrating...');
+    console.log(`Backup written to ${await backupDatabase(dir)} (on the SQL Server host)`);
+  }
   await runMigrations();
 }
 

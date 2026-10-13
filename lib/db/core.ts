@@ -39,6 +39,15 @@ function envBool(name: string, fallback: boolean) {
   return v === 'true' || v === '1';
 }
 
+/**
+ * Accept the SQL Server certificate without validating it? Off by default in
+ * production so the encrypted connection can't be intercepted; the server
+ * then needs a certificate for its FQDN from a CA this machine trusts.
+ */
+function trustServerCertificate() {
+  return envBool('MSSQL_TRUST_CERT', process.env.NODE_ENV !== 'production');
+}
+
 function driverName(): 'msnodesqlv8' | 'tedious' {
   const d = process.env.MSSQL_DRIVER;
   if (d === 'msnodesqlv8' || d === 'tedious') return d;
@@ -49,6 +58,8 @@ async function connect(): Promise<{ driver: Driver; pool: MSSQL.ConnectionPool }
   const name = driverName();
   const database = process.env.MSSQL_DATABASE || 'aidea';
   const pool = { max: Number(process.env.MSSQL_POOL_MAX || 10), min: 0, idleTimeoutMillis: 30_000 };
+  // Per-statement limit; the production deploy raises it for backups and migrations.
+  const requestTimeout = Number(process.env.MSSQL_REQUEST_TIMEOUT_MS || 15_000);
 
   if (name === 'msnodesqlv8') {
     const driver = ((await import('mssql/msnodesqlv8')) as any).default as Driver;
@@ -62,9 +73,9 @@ async function connect(): Promise<{ driver: Driver; pool: MSSQL.ConnectionPool }
           ? `Uid=${process.env.MSSQL_USER};Pwd=${process.env.MSSQL_PASSWORD ?? ''}`
           : 'Trusted_Connection=yes',
         `Encrypt=${envBool('MSSQL_ENCRYPT', true) ? 'yes' : 'no'}`,
-        `TrustServerCertificate=${envBool('MSSQL_TRUST_CERT', true) ? 'yes' : 'no'}`,
+        `TrustServerCertificate=${trustServerCertificate() ? 'yes' : 'no'}`,
       ].join(';') + ';';
-    const p = new driver.ConnectionPool({ connectionString, pool } as any);
+    const p = new driver.ConnectionPool({ connectionString, pool, requestTimeout } as any);
     await p.connect();
     return { driver, pool: p };
   }
@@ -77,9 +88,10 @@ async function connect(): Promise<{ driver: Driver; pool: MSSQL.ConnectionPool }
     user: process.env.MSSQL_USER,
     password: process.env.MSSQL_PASSWORD,
     pool,
+    requestTimeout,
     options: {
       encrypt: envBool('MSSQL_ENCRYPT', true),
-      trustServerCertificate: envBool('MSSQL_TRUST_CERT', true),
+      trustServerCertificate: trustServerCertificate(),
     },
   });
   await p.connect();

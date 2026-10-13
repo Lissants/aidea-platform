@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:iis": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/iis/build-package.ps1",
+    "publish:prod": "powershell -NoProfile -ExecutionPolicy Bypass -File deploy/iis/publish-to-server.ps1",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -41,6 +43,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "jose": "^6.2.12",
+    "ldapts": "^8.2.0",
     "lucide-react": "^0.577.0",
     "mssql": "^12.7.2",
     "next": "16.3.7",

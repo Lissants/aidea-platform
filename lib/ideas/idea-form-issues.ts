@@ -9,8 +9,8 @@ import {
 
 /** The five sections of the submit form, in page order. */
 export const IDEA_FORM_SECTIONS = [
-  { id: 'idea-section-basics', label: 'Your idea' },
   { id: 'idea-section-team', label: 'Team' },
+  { id: 'idea-section-basics', label: 'Your Idea' },
   { id: 'idea-section-impact', label: 'Business Impact' },
   { id: 'idea-section-support', label: 'Support Needed' },
   { id: 'idea-section-mentors', label: 'Preferred Mentors' },
@@ -77,7 +77,7 @@ export function collectIdeaIssues(values: IdeaFormValues): IdeaFormIssue[] {
   const issues: IdeaFormIssue[] = [];
 
   const basics = ideaBasicsSchema.safeParse(values.basics);
-  push(issues, basics.success ? undefined : basics.error, 'Your idea', (p) => String(p[0] ?? 'idea_title'));
+  push(issues, basics.success ? undefined : basics.error, 'Your Idea', (p) => String(p[0] ?? 'idea_title'));
 
   const team = ideaTeamSchema.safeParse({ team_leader_id: values.team_leader_id, team_members: values.team_members });
   push(issues, team.success ? undefined : team.error, 'Team', (p) =>

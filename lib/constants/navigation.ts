@@ -137,3 +137,18 @@ export function getDefaultRole(roles: AppRole[]): AppRole | null {
   }
   return roles[0] ?? null;
 }
+
+/** Landing page for each role after sign-in and on `/`. */
+const ROLE_HOME: Record<AppRole, string> = {
+  developer: '/overview',
+  admin: '/overview',
+  mentor: '/overview',
+  participant: '/overview',
+  employee_voter: '/voting',
+};
+
+/** Home page for the user's highest-privilege role, or null when they hold none. */
+export function roleHomePath(roles: AppRole[]): string | null {
+  const role = getDefaultRole(roles);
+  return role ? ROLE_HOME[role] : null;
+}

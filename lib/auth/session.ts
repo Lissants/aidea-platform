@@ -7,6 +7,7 @@ import {
   createSessionToken,
   sessionCookieOptions,
   verifySessionToken,
+  type SignInMethod,
 } from '@/lib/auth/session-cookie';
 import type { Profile } from '@/types/database';
 
@@ -15,8 +16,8 @@ export interface SessionUser {
   email: string;
   profile: Profile | null;
   roles: AppRole[];
-  /** Set when an admin created the account or reset its password. */
-  mustChangePassword: boolean;
+  /** How this session was started. */
+  signInMethod: SignInMethod;
 }
 
 /**
@@ -33,41 +34,50 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const claims = await verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
   if (!claims) return null;
 
-  const account = await db.queryOne<{ id: string; email: string; must_change_password: boolean }>(
-    'SELECT id, email, must_change_password FROM users WHERE id = @id',
-    { id: claims.sub }
-  );
+  const account = await db.queryOne<{ id: string; email: string }>('SELECT id, email FROM users WHERE id = @id', {
+    id: claims.sub,
+  });
   if (!account) return null;
 
   const profile = await db.queryOne<Profile>('SELECT * FROM profiles WHERE id = @id', { id: account.id });
   if (profile && profile.active === false) return null;
 
-  const roleRows = await db.query<{ name: string }>(
-    `SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = @id`,
-    { id: account.id }
-  );
-
   return {
     id: account.id,
     email: account.email,
     profile: profile ?? null,
-    roles: roleRows.map((r) => r.name as AppRole),
-    mustChangePassword: account.must_change_password === true,
+    roles: await getUserRoles(account.id),
+    signInMethod: claims.amr,
   };
 });
 
+/** Role names held by a user, read from SQL (works before the session cookie is readable). */
+export async function getUserRoles(userId: string): Promise<AppRole[]> {
+  const roleRows = await db.query<{ name: string }>(
+    `SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = @id`,
+    { id: userId }
+  );
+  return roleRows.map((r) => r.name as AppRole);
+}
+
 /** Issues the session cookie for a verified user (Server Actions / Route Handlers only). */
-export async function startSession(userId: string, email: string) {
-  const token = await createSessionToken(userId, email);
+export async function startSession(userId: string, email: string, method: SignInMethod) {
+  const token = await createSessionToken(userId, email, method);
   (await cookies()).set(SESSION_COOKIE, token, sessionCookieOptions());
   await db.execute('UPDATE users SET last_sign_in_at = SYSDATETIMEOFFSET() WHERE id = @id', { id: userId });
 }
 
-/** Clears the session and the "acting as" role cookie. */
-export async function endSession() {
+/**
+ * Clears the session and the "acting as" role cookie. Returns how the ended
+ * session was started (null if there was none) so sign-out can also end the
+ * Microsoft session.
+ */
+export async function endSession(): Promise<SignInMethod | null> {
   const jar = await cookies();
+  const claims = await verifySessionToken(jar.get(SESSION_COOKIE)?.value);
   jar.delete(SESSION_COOKIE);
   jar.delete(ACTIVE_ROLE_COOKIE);
+  return claims?.amr ?? null;
 }
 
 const ACTIVE_ROLE_COOKIE = 'aidea_active_role';

@@ -2,7 +2,7 @@
 
 All tables and their key relationships in the SQL Server 2019 `aidea` database, as defined in `db/migrations/0001_schema.sql` (triggers in `0002_triggers.sql`, stored procedures in `0003_procedures.sql`). Types are SQL Server types: ids are `UNIQUEIDENTIFIER`, timestamps `DATETIMEOFFSET(3)`, flags `BIT`, text `NVARCHAR`. The former Postgres enums are `NVARCHAR` columns with a `CHECK` constraint (marked `"CHECK"` below) — see `0001_schema.sql` for the exact allowed values. Only key columns are listed. `supabase/migrations/` is kept only as historical reference.
 
-Later migrations (`0004`–`0013`) change the schema as follows. The diagram shows the base schema from `0001`.
+Later migrations (`0004`–`0015`) change the schema as follows. The diagram shows the base schema from `0001`.
 
 | Migration | Schema change |
 | --- | --- |
@@ -17,6 +17,8 @@ Later migrations (`0004`–`0013`) change the schema as follows. The diagram sho
 | `0012_reviews_business_impact.sql` | `reviews.business_impact`. |
 | `0012_timeline_tba.sql` | `programs.timeline_tba` (per-stage TBA masking on the participant timeline). |
 | `0013_remove_showcase.sql` | Drops `showcase_projects`, `programs.showcase_open_at` and the `showcase` stage. `v_vote_candidates` becomes every idea with a published Pass and a published Build. |
+| `0014_ad_object_guid.sql` | `users.ad_object_guid` (filtered unique index) links an account to its on-prem AD `objectGUID`. |
+| `0015_remove_seeded_developers.sql` | Data only: the three formerly seeded Developers (Janice Ong, Jose Siahaan, Yudha Bhakti Nugraha) become Users. Developers and Admins now come from `AD_DEVELOPER_EMAILS` / `AD_ADMIN_EMAILS`. `users.must_change_password` is no longer used. |
 
 ```mermaid
 erDiagram
@@ -75,6 +77,7 @@ erDiagram
         nvarchar email UK
         nvarchar password_hash "bcrypt, NULL for SSO-only"
         nvarchar entra_oid UK "Entra ID object id, NULL unless linked"
+        nvarchar ad_object_guid UK "on-prem AD objectGUID, NULL unless linked"
         datetimeoffset last_sign_in_at
     }
 
@@ -291,10 +294,10 @@ erDiagram
 
 ## Notes
 
-- `users` holds sign-in credentials and replaces Supabase's `auth.users`: `password_hash` (bcrypt) for email + password sign-in, `entra_oid` for a linked Microsoft Entra ID identity. `profiles.id` is both its primary key and a foreign key to `users.id` (one-to-one, `ON DELETE CASCADE`). Everything else references `profiles`, never `users`.
+- `users` holds sign-in credentials and replaces Supabase's `auth.users`: `password_hash` (bcrypt) for the demo accounts' local password sign-in (development only; removed from any account at its first directory sign-in), `entra_oid` for a linked Microsoft Entra ID identity, `ad_object_guid` for a linked on-premises Active Directory account (LDAPS sign-in, migration 0014). `profiles.id` is both its primary key and a foreign key to `users.id` (one-to-one, `ON DELETE CASCADE`). Everything else references `profiles`, never `users`.
 - `ideas.team_leader_id` is chosen explicitly in the submission wizard (a required Team Leader picker) and can differ from `ideas.created_by`. It is nullable since migration `0009`, and `NULL` means the leader slot is vacant. The leader is not stored in `idea_team_members`, which holds up to 5 further members (limit enforced by the app, not the schema). Both creator and leader may submit the idea, but only the leader and members count as being on the team: `dbo.fn_is_idea_team_member` uses them for the own-team voting guard.
 - `audit_logs.prior_value` / `new_value` are JSON stored as `NVARCHAR(MAX)` with an `ISJSON` check constraint.
-- Nullable unique columns (`users.entra_oid`, `profiles.employee_id`) use filtered unique indexes, because a SQL Server `UNIQUE` constraint allows only one `NULL`. The one-grand-winner / one-runner-up-per-program rules are also filtered unique indexes on `final_presentation_assessments.program_id`, which `trg_final_presentation_program_id` keeps in sync with the idea's program.
+- Nullable unique columns (`users.entra_oid`, `users.ad_object_guid`, `profiles.employee_id`) use filtered unique indexes, because a SQL Server `UNIQUE` constraint allows only one `NULL`. The one-grand-winner / one-runner-up-per-program rules are also filtered unique indexes on `final_presentation_assessments.program_id`, which `trg_final_presentation_program_id` keeps in sync with the idea's program.
 - SQL Server rejects multiple cascade paths into one table, so two foreign keys are `NO ACTION` instead of `ON DELETE CASCADE`: `reviews.idea_id` and `final_presentation_assessments.program_id`. Those rows are still deleted with their idea or program, through the other cascade path (via `review_assignments` or `ideas`).
 - The Supabase-era views `ideas_participant_view` and `reviews_participant_safe` no longer exist. The participant-safe column selection lives in the service-layer SQL instead.
 - `entity_id` on `PUBLICATIONS` and `AUDIT_LOGS` is a polymorphic reference (no single FK target) — `entity_type` says which table it points into. This is why the Audit Log viewer's "jump to entity" links are built from `entity_type` + `entity_id` rather than a real foreign key.

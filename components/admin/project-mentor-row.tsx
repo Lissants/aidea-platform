@@ -53,6 +53,9 @@ export function ProjectMentorRow({ row, mentors }: { row: ProjectMentorQueueRow;
           className="h-11 min-w-[14rem] rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:h-9"
         >
           <option value="">Select a mentor…</option>
+          {row.assigned_mentor_id && !mentors.some((m) => m.mentor_profile_id === row.assigned_mentor_id) && (
+            <option value={row.assigned_mentor_id}>{row.assigned_mentor_name ?? 'Mentor'} (no longer a mentor)</option>
+          )}
           {mentors.map((m) => (
             <option key={m.mentor_profile_id} value={m.mentor_profile_id}>
               {m.full_name}

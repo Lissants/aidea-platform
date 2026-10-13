@@ -43,7 +43,7 @@ interface MentorOption {
 
 const MAX_TEAM_MEMBERS = 5;
 const MAX_SUPPORT_REQUESTS = 5;
-const [SECTION_BASICS, SECTION_TEAM, SECTION_IMPACT, SECTION_SUPPORT, SECTION_MENTORS] = IDEA_FORM_SECTIONS;
+const [SECTION_TEAM, SECTION_BASICS, SECTION_IMPACT, SECTION_SUPPORT, SECTION_MENTORS] = IDEA_FORM_SECTIONS;
 
 export function IdeaWizard({
   programId,
@@ -171,63 +171,6 @@ export function IdeaWizard({
 
         {issues.length > 0 && <ErrorSummary issues={issues} summaryRef={summaryRef} />}
 
-        <FormSection section={SECTION_BASICS} description="Describe the opportunity, your solution and who benefits.">
-          <FormField id={title.id} label="Idea Title" required error={title.error}>
-            <Input
-              {...title.a11y}
-              aria-required
-              placeholder="A short, specific title"
-              value={basics.idea_title}
-              onChange={(e) => setBasics({ ...basics, idea_title: e.target.value })}
-            />
-          </FormField>
-          <FormField
-            id={problem.id}
-            label="Problem / Opportunity"
-            required
-            hint="What problem or opportunity does the idea address, and why does it matter?"
-            error={problem.error}
-          >
-            <Textarea
-              {...problem.a11y}
-              aria-required
-              rows={4}
-              value={basics.problem_opportunity}
-              onChange={(e) => setBasics({ ...basics, problem_opportunity: e.target.value })}
-            />
-          </FormField>
-          <FormField
-            id={solution.id}
-            label="Proposed Solution & AI Use"
-            required
-            hint="Describe the solution and how AI will be used."
-            error={solution.error}
-          >
-            <Textarea
-              {...solution.a11y}
-              aria-required
-              rows={4}
-              value={basics.proposed_solution}
-              onChange={(e) => setBasics({ ...basics, proposed_solution: e.target.value })}
-            />
-          </FormField>
-          <FormField
-            id={targetUsers.id}
-            label="Target Users / Beneficiaries"
-            required
-            hint="Who will use or benefit from the solution?"
-            error={targetUsers.error}
-          >
-            <Textarea
-              {...targetUsers.a11y}
-              aria-required
-              rows={2}
-              value={basics.target_users}
-              onChange={(e) => setBasics({ ...basics, target_users: e.target.value })}
-            />
-          </FormField>
-        </FormSection>
-
         <FormSection
           section={SECTION_TEAM}
           description={`Name your team and choose a leader. You can add up to ${MAX_TEAM_MEMBERS} members.`}
@@ -298,6 +241,63 @@ export function IdeaWizard({
                 ))}
               </ul>
             )}
+          </FormField>
+        </FormSection>
+
+        <FormSection section={SECTION_BASICS} description="Describe the opportunity, your solution and who benefits.">
+          <FormField id={title.id} label="Idea Title" required error={title.error}>
+            <Input
+              {...title.a11y}
+              aria-required
+              placeholder="A short, specific title"
+              value={basics.idea_title}
+              onChange={(e) => setBasics({ ...basics, idea_title: e.target.value })}
+            />
+          </FormField>
+          <FormField
+            id={problem.id}
+            label="Problem / Opportunity"
+            required
+            hint="What problem or opportunity does the idea address, and why does it matter?"
+            error={problem.error}
+          >
+            <Textarea
+              {...problem.a11y}
+              aria-required
+              rows={4}
+              value={basics.problem_opportunity}
+              onChange={(e) => setBasics({ ...basics, problem_opportunity: e.target.value })}
+            />
+          </FormField>
+          <FormField
+            id={solution.id}
+            label="Proposed Solution & AI Use"
+            required
+            hint="Describe the solution and how AI will be used."
+            error={solution.error}
+          >
+            <Textarea
+              {...solution.a11y}
+              aria-required
+              rows={4}
+              value={basics.proposed_solution}
+              onChange={(e) => setBasics({ ...basics, proposed_solution: e.target.value })}
+            />
+          </FormField>
+          <FormField
+            id={targetUsers.id}
+            label="Target Users / Beneficiaries"
+            required
+            hint="Who will use or benefit from the solution?"
+            error={targetUsers.error}
+          >
+            <Textarea
+              {...targetUsers.a11y}
+              aria-required
+              rows={2}
+              value={basics.target_users}
+              onChange={(e) => setBasics({ ...basics, target_users: e.target.value })}
+            />
           </FormField>
         </FormSection>
 

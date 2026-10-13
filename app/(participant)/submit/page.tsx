@@ -7,6 +7,7 @@ import { NoActiveProgram } from '@/components/layout/no-active-program';
 import { IdeaWizard } from '@/components/forms/idea-wizard';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
+import { currentMentorSql } from '@/lib/auth/roles';
 import { profileReadFilter } from '@/lib/permissions/scopes';
 import { fetchEditableDraft } from '@/lib/ideas/idea-draft';
 import { stageDateMask } from '@/lib/program/timeline';
@@ -54,16 +55,19 @@ export default async function SubmitIdeaPage(props: { searchParams: Promise<{ dr
   }
 
   const profileScope = user ? profileReadFilter(user, 'p') : { sql: '1 = 0', params: {} };
-  const mentorRows = await db.query<{ id: string; expertise: string | null; full_name: string | null; job_title: string | null }>(
+  // Only current mentors: someone moved off the Mentor tier keeps their card.
+  const mentorRows = await db.query<{ id: string; expertise: string | null; full_name: string; job_title: string | null }>(
     `SELECT mp.id, mp.expertise, p.full_name, p.job_title
        FROM mentor_profiles mp
-       LEFT JOIN profiles p ON p.id = mp.profile_id AND ${profileScope.sql}`,
+       JOIN profiles p ON p.id = mp.profile_id AND ${profileScope.sql}
+      WHERE ${currentMentorSql('p')}
+      ORDER BY p.full_name`,
     profileScope.params
   );
 
   const mentors = mentorRows.map((m) => ({
     mentor_profile_id: m.id,
-    full_name: m.full_name ?? 'Mentor',
+    full_name: m.full_name,
     job_title: m.job_title,
     expertise: m.expertise,
   }));

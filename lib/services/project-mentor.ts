@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { attempt, db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/permissions';
+import { currentMentorSql } from '@/lib/auth/roles';
 
 export interface ProjectMentorQueueRow {
   idea_id: string;
@@ -40,17 +41,19 @@ export async function fetchProjectMentorQueue(programId: string): Promise<Projec
   );
 }
 
-/** Mentor picker options for the admin assignment screen. Admin-only. */
+/** Mentor picker options for the admin assignment screen: current mentors
+ * only (an existing assignment to a former mentor still shows in the queue). Admin-only. */
 export async function fetchAllMentorOptions(): Promise<MentorOption[]> {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user.roles)) return [];
 
-  const rows = await db.query<{ mentor_profile_id: string; full_name: string | null }>(
+  return db.query<MentorOption>(
     `SELECT mp.id AS mentor_profile_id, p.full_name
        FROM mentor_profiles mp
-       LEFT JOIN profiles p ON p.id = mp.profile_id`
+       JOIN profiles p ON p.id = mp.profile_id
+      WHERE ${currentMentorSql('p')}
+      ORDER BY p.full_name`
   );
-  return rows.map((m) => ({ mentor_profile_id: m.mentor_profile_id, full_name: m.full_name ?? 'Mentor' }));
 }
 
 /**

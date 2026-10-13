@@ -10,7 +10,7 @@ Self-hosting the Next.js app on a company-managed server via Docker, behind an N
 
 - [ ] A Linux server (or VM) with **Docker Engine** and the **Compose plugin** (`docker compose version` works), plus Git.
 - [ ] A reachable **SQL Server 2019** instance and someone who can create logins on it.
-- [ ] A DNS name (for example `aidea.yourcompany.com`) and a TLS certificate, or a decision to run plain HTTP on the intranet.
+- [ ] A DNS record for `aidea.godrejindonesia.com` and a TLS certificate, or a decision to run plain HTTP on the intranet.
 - [ ] Optional: an Entra ID app registration for Microsoft sign-in.
 
 **First deploy at a glance:** prepare SQL Server (§1) → clone the repo and fill in `.env` (§3) → `docker compose up -d --build` → `docker compose run --rm migrate` with the `db_owner` login → check `/api/health` (§5) → put Nginx and TLS in front (§6–7) → schedule the voting cron (§4) → set up backups (§8).
@@ -53,7 +53,7 @@ The container uses the `tedious` driver (TCP + SQL login); Windows authenticatio
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_APP_URL="https://aidea.yourcompany.com" \
+  --build-arg NEXT_PUBLIC_APP_URL="https://aidea.godrejindonesia.com" \
   -t aidea-platform:latest .
 ```
 
@@ -78,8 +78,10 @@ Required values in `.env`:
 | `MSSQL_USER`, `MSSQL_PASSWORD` | The `aidea_app` login for `web`. |
 | `MSSQL_ENCRYPT`, `MSSQL_TRUST_CERT` | Both default `true`. Set `MSSQL_TRUST_CERT=false` once SQL Server has a certificate the container trusts. |
 | `SESSION_SECRET` | 32+ random characters. The app refuses to start in production without it. Rotating it signs everyone out. |
-| `ALLOWED_EMAIL_DOMAIN` | e.g. `godrejcp.com` — applies to password and SSO sign-in. |
-| `MICROSOFT_TENANT_ID` / `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Optional Entra ID SSO (all three, or none). `SSO_DEFAULT_ROLES` sets the roles for first-time SSO users (default `participant,employee_voter`). |
+| `ALLOWED_EMAIL_DOMAIN` | e.g. `godrejcp.com` — applies to AD and SSO sign-in. |
+| `LDAP_URL`, `LDAP_DOMAIN`, `LDAP_CA_CERT_PATH` (+ optional `LDAP_BASE_DN`, `LDAP_BIND_DN`, `LDAP_BIND_PASSWORD`) | Active Directory sign-in over LDAPS, the only sign-in in production. Without `LDAP_URL` nobody can sign in. See IIS_DEPLOYMENT.md. |
+| `AD_DEVELOPER_EMAILS`, `AD_ADMIN_EMAILS` | Emails put on Developer / Admin at every sign-in. Everyone else starts as User. |
+| `MICROSOFT_TENANT_ID` / `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Optional Entra ID SSO (all three, or none). First-time SSO users start as User. `PASSWORD_SIGNIN_ENABLED=false` hides the password form once SSO works. |
 | `CRON_SECRET` | Required if you schedule `app/api/cron/voting-notifications`. |
 | `EMAIL_PROVIDER`, `EMAIL_FROM` | Email-outbox adapter settings. |
 
@@ -96,7 +98,7 @@ Or without compose:
 ```bash
 docker run -d --name aidea-platform -p 3000:3000 \
   -v aidea-uploads:/app/uploads \
-  -e NEXT_PUBLIC_APP_URL="https://aidea.yourcompany.com" \
+  -e NEXT_PUBLIC_APP_URL="https://aidea.godrejindonesia.com" \
   -e MSSQL_SERVER="db.yourcompany.local" \
   -e MSSQL_DATABASE="aidea" \
   -e MSSQL_USER="aidea_app" \
@@ -126,10 +128,10 @@ Overlapping or repeated runs are safe: each notification is claimed once in the 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name aidea.yourcompany.com;
+    server_name aidea.godrejindonesia.com;
 
-    ssl_certificate     /etc/letsencrypt/live/aidea.yourcompany.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/aidea.yourcompany.com/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/aidea.godrejindonesia.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/aidea.godrejindonesia.com/privkey.pem;
 
     # Final presentation decks can be up to 25 MB (program resources 10 MB).
     client_max_body_size 30m;
@@ -149,17 +151,18 @@ server {
 
 server {
     listen 80;
-    server_name aidea.yourcompany.com;
+    server_name aidea.godrejindonesia.com;
     return 301 https://$host$request_uri;
 }
 ```
 
 ## 7. TLS / domain / DNS / auth-callback checklist
 
-- [ ] DNS `A`/`CNAME` record for `aidea.yourcompany.com` points at the server.
+- [ ] DNS `A`/`CNAME` record for `aidea.godrejindonesia.com` points at the server.
 - [ ] TLS certificate issued (Let's Encrypt via certbot, or your company's internal CA) and auto-renewal scheduled (`certbot renew` cron, or your CA's equivalent).
 - [ ] `NEXT_PUBLIC_APP_URL` set to the final `https://` domain — used to build the Microsoft SSO redirect URI and email links.
-- [ ] If SSO is enabled: the Entra ID app registration has `https://aidea.yourcompany.com/auth/callback/microsoft` as a **Web** redirect URI. Without it, Microsoft rejects the sign-in with a redirect-URI mismatch.
+- [ ] If SSO is enabled: the Entra ID app registration has `https://aidea.godrejindonesia.com/auth/callback/microsoft` as a **Web** redirect URI and `https://aidea.godrejindonesia.com/sign-in` as the front-channel logout URL. Without the redirect URI, Microsoft rejects the sign-in with a redirect-URI mismatch. Full IT checklist: LOCAL_SETUP.md → "Optional: Microsoft sign-in".
+- [ ] If SSO is enabled: the client secret's expiry date is recorded and someone owns rotating it.
 - [ ] The `aidea_session` cookie is `Secure` in production, so the site must be served over HTTPS. Only for a plain-HTTP intranet deployment set `SESSION_COOKIE_SECURE=false`.
 - [ ] Firewall allows inbound 443 (and 80 for the redirect + ACME challenge) only; the app container itself is never exposed directly to the internet, only via Nginx. SQL Server's 1433 is reachable from the app server only.
 
