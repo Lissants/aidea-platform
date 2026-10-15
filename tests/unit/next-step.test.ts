@@ -16,6 +16,7 @@ describe('participantNextStep', () => {
     const step = participantNextStep({ ...base, conflictCount: 2, ideas: [{ status: 'submitted', screening: 'pass_to_qualifier', qualifier: null }] });
     expect(step.title).toBe('Pick the one idea you will continue with');
     expect(step.title).not.toBe('Choose the idea you will commit to');
+    expect(step.body).toBe('One of your ideas was selected to Build. Make your choice in the panel below.');
   });
 
   it('asks a new participant to submit before the close date', () => {

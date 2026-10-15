@@ -1,9 +1,10 @@
 /**
- * Team membership rules (db/migrations/0009_team_membership.sql) against the
- * real aidea_test database:
- *  - before approval a person may lead / be a member of several ideas;
- *  - once 2+ of their ideas pass screening (published) they commit to one
- *    and are dropped from the others (leaving as leader vacates the slot);
+ * Team membership rules (db/migrations/0009_team_membership.sql,
+ * 0012_commit_on_build.sql) against the real aidea_test database:
+ *  - until an idea is marked Build a person may lead / be a member of several ideas;
+ *  - once 1+ of their ideas is marked Build (published) while they are on
+ *    other in-progress ideas, they commit to a Build idea and are dropped
+ *    from the others (leaving as leader vacates the slot);
  *  - admins remove members from submitted ideas and assign replacements /
  *    new leaders, with an eligibility check that can be overridden.
  *
@@ -87,6 +88,26 @@ async function screen(ideaIds: string[], decision: 'pass_to_qualifier' | 'not_pa
   }
 }
 
+/** Passes screening (if not yet screened), then records and publishes qualifier decisions (default: Build). */
+async function qualify(ideaIds: string[], decision: 'build' | 'no_build' = 'build', publish = true) {
+  const unscreened = [];
+  for (const idea_id of ideaIds) {
+    const sd = await db.queryOne('SELECT id FROM screening_decisions WHERE idea_id = @idea_id', { idea_id });
+    if (!sd) unscreened.push(idea_id);
+  }
+  if (unscreened.length) await screen(unscreened);
+  for (const idea_id of ideaIds) {
+    await db.execute(
+      `INSERT INTO qualifier_assessments (idea_id, final_score, build_decision, status, finalized_at, decided_by)
+       VALUES (@idea_id, 80, @decision, 'finalized', SYSDATETIMEOFFSET(), @admin)`,
+      { idea_id, decision, admin: SEED.admin1 }
+    );
+  }
+  if (publish) {
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'qualifier_assessment', actor_id: SEED.admin1 });
+  }
+}
+
 const team = async (ideaId: string) => {
   const idea = await db.queryOne<{ team_leader_id: string | null }>('SELECT team_leader_id FROM ideas WHERE id = @ideaId', {
     ideaId,
@@ -110,25 +131,27 @@ beforeEach(() => {
 });
 
 describe('S1: Team Leader A submits 1 idea with members B, C, D, E', () => {
-  it('submits, and after passing screening nobody has a conflict', async () => {
+  it('submits, and after being marked Build nobody has a conflict (nothing else to leave)', async () => {
     const p = await people('A', 'B', 'C', 'D', 'E');
     const idea = await submit('S1 idea', p.A, [p.B, p.C, p.D, p.E]);
     expect(await team(idea)).toEqual({ leader: p.A, members: [p.B, p.C, p.D, p.E] });
-    await screen([idea]);
+    await qualify([idea]);
     for (const id of Object.values(p)) expect(await conflictsOf(id)).toEqual([]);
   });
 });
 
 describe('S2: Team Leader A submits 2 ideas, both with members B, C, D, E', () => {
-  it('both submit; once both pass everyone must choose; commits drop people from the other idea', async () => {
+  it('passing screening is not enough; once both are Build everyone must choose; commits drop people from the other idea', async () => {
     const p = await people('A', 'B', 'C', 'D', 'E');
     const idea1 = await submit('S2 idea one', p.A, [p.B, p.C, p.D, p.E]);
     const idea2 = await submit('S2 idea two', p.A, [p.B, p.C, p.D, p.E]);
 
-    // Before approval: no conflict for anyone.
+    // Before any Build: no conflict for anyone, even after both pass screening.
     expect(await conflictsOf(p.A)).toEqual([]);
-
     await screen([idea1, idea2]);
+    for (const id of Object.values(p)) expect(await conflictsOf(id)).toEqual([]);
+
+    await qualify([idea1, idea2]);
     for (const id of Object.values(p)) expect(await conflictsOf(id)).toEqual([idea1, idea2].sort());
 
     as(p.A);
@@ -162,7 +185,9 @@ describe('S3: Team Leader A submits 2 ideas: B, C, D, E and V, W, X, Y', () => {
     const p = await people('A', 'B', 'C', 'D', 'E', 'V', 'W', 'X', 'Y');
     const idea1 = await submit('S3 idea one', p.A, [p.B, p.C, p.D, p.E]);
     const idea2 = await submit('S3 idea two', p.A, [p.V, p.W, p.X, p.Y]);
-    await screen([idea1, idea2]);
+    // Only idea 1 is Build; idea 2 is still waiting on the qualifier.
+    await screen([idea2]);
+    await qualify([idea1]);
 
     expect(await conflictsOf(p.A)).toEqual([idea1, idea2].sort());
     for (const id of [p.B, p.V, p.Y]) expect(await conflictsOf(id)).toEqual([]);
@@ -205,10 +230,13 @@ describe('edge cases: idea submission', () => {
     expect('error' in result && result.error).toMatch(/at most 5/i);
   });
 
-  it('E8: a person committed to an approved idea cannot be put on a new idea (leader, member or draft)', async () => {
+  it('E8: a person on a Build idea cannot be put on a new idea (leader, member or draft)', async () => {
     const p = await people('A', 'B', 'C');
-    const idea = await submit('E8 approved', p.A, [p.B]);
+    const idea = await submit('E8 build', p.A, [p.B]);
     await screen([idea]);
+    // A screening Pass alone does not lock the team.
+    expect('ok' in (await trySubmit('E8 before build', p.C, [p.B]))).toBe(true);
+    await qualify([idea]);
 
     const asMember = await trySubmit('E8 new', p.C, [p.B]);
     expect('error' in asMember && asMember.error).toMatch(/already committed/i);
@@ -222,12 +250,12 @@ describe('edge cases: idea submission', () => {
 });
 
 describe('edge cases: committing', () => {
-  it('E3: on 3 approved ideas, one commit drops the person from the other 2', async () => {
+  it('E3: on 3 Build ideas, one commit drops the person from the other 2', async () => {
     const p = await people('A', 'B', 'C', 'D');
     const i1 = await submit('E3 one', p.A, [p.B]);
     const i2 = await submit('E3 two', p.C, [p.A]);
     const i3 = await submit('E3 three', p.D, [p.A]);
-    await screen([i1, i2, i3]);
+    await qualify([i1, i2, i3]);
     as(p.A);
     expect(await commitToIdea(i2)).toMatchObject({ ok: true, leftCount: 2 });
     expect((await team(i1)).leader).toBeNull();
@@ -235,43 +263,67 @@ describe('edge cases: committing', () => {
     expect((await team(i2)).members).toEqual([p.A]);
   });
 
-  it('E4: only one idea passes (the other Not Pass) -> no conflict, nobody dropped', async () => {
-    const p = await people('A', 'B');
-    const pass = await submit('E4 pass', p.A, [p.B]);
-    const fail = await submit('E4 fail', p.A, [p.B]);
-    await screen([pass]);
-    await screen([fail], 'not_pass');
+  it('E3b: one Build idea and one still under review -> must commit, and leaves the one under review', async () => {
+    const p = await people('A', 'B', 'C');
+    const build = await submit('E3b build', p.A, [p.B]);
+    const pending = await submit('E3b pending', p.C, [p.A]);
+    await qualify([build]);
+    expect(await conflictsOf(p.A)).toEqual([build, pending].sort());
+    expect(await conflictsOf(p.C)).toEqual([]);
+
+    as(p.A);
+    const rows = await fetchMyMembershipConflicts();
+    expect(rows.find((r) => r.idea_id === build)?.is_build).toBe(true);
+    expect(rows.find((r) => r.idea_id === pending)?.is_build).toBe(false);
+    // The idea that is not Build cannot be the one kept.
+    expect(await commitToIdea(pending)).toMatchObject({ error: expect.stringMatching(/marked Build/i) });
+
+    expect(await commitToIdea(build)).toMatchObject({ ok: true, leftCount: 1 });
+    expect((await team(pending)).members).toEqual([]);
     expect(await conflictsOf(p.A)).toEqual([]);
-    expect(await team(fail)).toEqual({ leader: p.A, members: [p.B] });
   });
 
-  it('E5: decided but unpublished screening is not an approval yet', async () => {
+  it('E4: Build plus an idea that already ended (Not Pass / No Build) -> no conflict, nobody dropped', async () => {
+    const p = await people('A', 'B');
+    const build = await submit('E4 build', p.A, [p.B]);
+    const fail = await submit('E4 fail', p.A, [p.B]);
+    const noBuild = await submit('E4 no build', p.A, [p.B]);
+    await screen([fail], 'not_pass');
+    await qualify([build]);
+    await qualify([noBuild], 'no_build');
+    expect(await conflictsOf(p.A)).toEqual([]);
+    expect(await team(fail)).toEqual({ leader: p.A, members: [p.B] });
+    expect(await team(noBuild)).toEqual({ leader: p.A, members: [p.B] });
+  });
+
+  it('E5: a finalized but unpublished Build is not a trigger yet', async () => {
     const p = await people('A', 'B');
     const i1 = await submit('E5 one', p.A, [p.B]);
     const i2 = await submit('E5 two', p.A, [p.B]);
-    await screen([i1, i2], 'pass_to_qualifier', false);
+    await qualify([i1], 'build', false);
     expect(await conflictsOf(p.A)).toEqual([]);
     // Publish so later tests' publishes don't sweep these in unexpectedly.
-    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'screening_decision', actor_id: SEED.admin1 });
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'qualifier_assessment', actor_id: SEED.admin1 });
     expect(await conflictsOf(p.A)).toEqual([i1, i2].sort());
   });
 
-  it("E6: can't commit to an idea you are not on, or one that hasn't passed", async () => {
+  it("E6: can't commit to an idea you are not on, or one that isn't marked Build", async () => {
     const p = await people('A', 'B', 'C');
     const mine = await submit('E6 mine', p.A, [p.B]);
     const other = await submit('E6 other', p.C, []);
-    const notPassed = await submit('E6 not passed', p.A, []);
-    await screen([mine, other]);
+    const passedOnly = await submit('E6 passed only', p.A, []);
+    await screen([passedOnly]);
+    await qualify([mine, other]);
     as(p.A);
     expect(await commitToIdea(other)).toMatchObject({ error: expect.stringMatching(/not on this idea/i) });
-    expect(await commitToIdea(notPassed)).toMatchObject({ error: expect.stringMatching(/passed screening/i) });
+    expect(await commitToIdea(passedOnly)).toMatchObject({ error: expect.stringMatching(/marked Build/i) });
   });
 
   it('E7: committing again is a no-op; two concurrent commits leave a consistent state', async () => {
     const p = await people('A', 'B');
     const i1 = await submit('E7 one', p.A, [p.B]);
     const i2 = await submit('E7 two', p.A, [p.B]);
-    await screen([i1, i2]);
+    await qualify([i1, i2]);
 
     as(p.B);
     const results = await Promise.all([commitToIdea(i1), commitToIdea(i2)]);

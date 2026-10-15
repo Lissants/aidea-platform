@@ -76,8 +76,8 @@ async function writeDraft(user: SessionUser, programId: string, ideaId: string |
     db.transaction(async (tx) => {
       let currentIdeaId: string;
 
-      // Before approval anyone may be on several ideas; once an idea of this
-      // program has passed screening its team is committed to it alone.
+      // Anyone may be on several ideas until one of this program's ideas is
+      // marked Build; from then its team is committed to it alone.
       const teamIds = [
         ...(data.team_leader_id ? [data.team_leader_id] : []),
         ...(data.team_members ?? []).map((m) => m.profile_id),
@@ -85,7 +85,7 @@ async function writeDraft(user: SessionUser, programId: string, ideaId: string |
       const committed = await tx.queryOne<{ full_name: string; idea_title: string }>(
         `SELECT TOP (1) pr.full_name, i.idea_title
            FROM dbo.v_idea_participants p
-           JOIN dbo.v_approved_ideas a ON a.idea_id = p.idea_id
+           JOIN dbo.v_build_ideas a ON a.idea_id = p.idea_id
            JOIN ideas i ON i.id = p.idea_id
            JOIN profiles pr ON pr.id = p.profile_id
           WHERE p.program_id = @programId AND p.profile_id IN (@teamIds)
@@ -93,7 +93,7 @@ async function writeDraft(user: SessionUser, programId: string, ideaId: string |
         { programId, teamIds, ideaId }
       );
       if (committed) {
-        throw new DbError(`${committed.full_name} is already committed to the approved idea "${committed.idea_title}"`);
+        throw new DbError(`${committed.full_name} is already committed to the Build idea "${committed.idea_title}"`);
       }
 
       if (ideaId) {

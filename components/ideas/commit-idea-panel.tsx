@@ -10,9 +10,10 @@ import { ConfirmDialog } from '@/components/layout/confirm-dialog';
 import { commitToIdea, type ConflictIdea } from '@/lib/services/team-membership';
 
 /**
- * Shown when the participant is on 2+ ideas that passed screening in the same
- * program. They must pick one; committing drops them from the others, so the
- * confirmation spells out exactly what they leave and needs the team name typed.
+ * Shown once one of the participant's ideas is marked Build while they are
+ * still on other in-progress ideas in the same program. They commit to a Build
+ * idea; committing drops them from the others, so the confirmation spells out
+ * exactly what they leave and needs the team name typed.
  */
 export function CommitIdeaPanel({ conflicts }: { conflicts: ConflictIdea[] }) {
   const router = useRouter();
@@ -24,6 +25,7 @@ export function CommitIdeaPanel({ conflicts }: { conflicts: ConflictIdea[] }) {
     ? conflicts.filter((c) => c.program_id === chosen.program_id && c.idea_id !== chosen.idea_id)
     : [];
   const leavingAsLeader = leaving.filter((c) => c.my_role === 'leader');
+  const buildCount = conflicts.filter((c) => c.is_build).length;
 
   async function handleConfirm() {
     if (!chosen) return;
@@ -42,8 +44,9 @@ export function CommitIdeaPanel({ conflicts }: { conflicts: ConflictIdea[] }) {
       <AlertTitle>Choose the idea you will commit to</AlertTitle>
       <AlertDescription>
         <p className="mb-3">
-          You are on {conflicts.length} ideas that passed screening. From this stage each person can be on only one
-          team. Pick the idea you will continue with; you will be removed from the others.
+          {buildCount === 1 ? 'Your idea was' : `${buildCount} of your ideas were`} selected to Build. From this stage
+          each person can be on only one team. Commit to the Build idea you will continue with; you will be removed from
+          your other ideas still in progress.
         </p>
         <div className="space-y-2">
           {conflicts.map((c) => (
@@ -58,9 +61,13 @@ export function CommitIdeaPanel({ conflicts }: { conflicts: ConflictIdea[] }) {
                 </p>
                 {c.team.length > 0 && <p className="text-xs text-muted-foreground">Team: {c.team.join(', ')}</p>}
               </div>
-              <Button size="sm" variant="outline" onClick={() => setChosen(c)}>
-                Commit to this idea
-              </Button>
+              {c.is_build ? (
+                <Button size="sm" variant="outline" onClick={() => setChosen(c)}>
+                  Commit to this idea
+                </Button>
+              ) : (
+                <span className="text-xs text-muted-foreground">Not Build · still in progress</span>
+              )}
             </div>
           ))}
         </div>
