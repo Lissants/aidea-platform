@@ -39,9 +39,12 @@ export const ideaTeamMemberSchema = z.object({
   member_order: z.number().int().min(1),
 });
 
+const ideaTeamMembersArray = z.array(ideaTeamMemberSchema).max(5, 'A team can have at most 5 members');
+
+/** Submit-time team: a leader plus 1–5 members. Drafts may have no members yet. */
 const ideaTeamObject = z.object({
   team_leader_id: z.string().uuid('Team leader is required'),
-  team_members: z.array(ideaTeamMemberSchema).max(5, 'A team can have at most 5 members'),
+  team_members: ideaTeamMembersArray.min(1, 'Add at least one team member'),
 });
 
 /**
@@ -157,7 +160,7 @@ export const ideaDraftSaveSchema = z.object({
   proposed_solution: z.string().max(4000).optional(),
   target_users: z.string().max(2000).optional().nullable(),
   team_leader_id: z.string().uuid().optional(),
-  team_members: ideaTeamObject.shape.team_members.optional(),
+  team_members: ideaTeamMembersArray.optional(),
   impacts: z
     .array(
       ideaImpactSchema.extend({

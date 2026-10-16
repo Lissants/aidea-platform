@@ -257,10 +257,10 @@ describe('edge cases: committing', () => {
   });
 
   it("E6: can't commit to an idea you are not on, or one that hasn't passed", async () => {
-    const p = await people('A', 'B', 'C');
+    const p = await people('A', 'B', 'C', 'D');
     const mine = await submit('E6 mine', p.A, [p.B]);
-    const other = await submit('E6 other', p.C, []);
-    const notPassed = await submit('E6 not passed', p.A, []);
+    const other = await submit('E6 other', p.C, [p.D]);
+    const notPassed = await submit('E6 not passed', p.A, [p.B]);
     await screen([mine, other]);
     as(p.A);
     expect(await commitToIdea(other)).toMatchObject({ error: expect.stringMatching(/not on this idea/i) });

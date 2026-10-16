@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ideaBasicsSchema,
   ideaTeamSchema,
+  ideaDraftSaveSchema,
   ideaImpactsSchema,
   ideaMentorPreferencesSchema,
   ideaMentorPreferencesRequiredSchema,
@@ -73,6 +74,16 @@ describe('ideaTeamSchema', () => {
 
   it('requires a team leader', () => {
     expect(ideaTeamSchema.safeParse({ team_members: [] }).success).toBe(false);
+  });
+
+  it('requires at least one team member', () => {
+    const result = ideaTeamSchema.safeParse({ team_leader_id: leader, team_members: [] });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toMatch(/at least one team member/);
+  });
+
+  it('still lets a draft be saved with no team members', () => {
+    expect(ideaDraftSaveSchema.safeParse({ team_leader_id: leader, team_members: [] }).success).toBe(true);
   });
 
   it('rejects the same person listed twice', () => {

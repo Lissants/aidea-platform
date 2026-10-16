@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { collectIdeaIssues, ideaFieldId, type IdeaFormValues } from '@/lib/ideas/idea-form-issues';
 
 const LEADER = '11111111-1111-4111-8111-111111111111';
+const MEMBER = '44444444-4444-4444-8444-444444444444';
 const MENTOR_A = '22222222-2222-4222-8222-222222222222';
 const MENTOR_B = '33333333-3333-4333-8333-333333333333';
 
@@ -15,7 +16,7 @@ function valid(): IdeaFormValues {
       target_users: 'Demand planners',
     },
     team_leader_id: LEADER,
-    team_members: [],
+    team_members: [{ profile_id: MEMBER, member_order: 1 }],
     impacts: [{ impact_kind: 'primary', impact_type: 'time_efficiency', explanation: 'Saves a day per week of planner time.', measurable_result: '1 day/week saved' }],
     support_requests: [],
     mentor_preferences: [
@@ -43,6 +44,7 @@ describe('collectIdeaIssues', () => {
     expect(issues.map((i) => i.field)).toEqual([
       'team_name',
       'team_leader',
+      'team_members',
       'idea_title',
       'problem_opportunity',
       'proposed_solution',
@@ -53,6 +55,7 @@ describe('collectIdeaIssues', () => {
       'mentor_preferences',
     ]);
     expect(issues.map((i) => i.section)).toEqual([
+      'Team',
       'Team',
       'Team',
       'Your Idea',

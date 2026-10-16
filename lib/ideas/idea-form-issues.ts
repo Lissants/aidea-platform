@@ -48,6 +48,7 @@ export function ideaFieldId(field: string) {
 /** Zod reports a missing value as a bare "Required"; say which field instead. */
 const REQUIRED_COPY: Record<string, string> = {
   team_leader: 'Choose a team leader',
+  team_members: 'Add at least one team member',
   team_name: 'Team name is required',
   idea_title: 'Idea title is required',
 };

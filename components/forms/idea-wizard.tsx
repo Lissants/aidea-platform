@@ -173,7 +173,7 @@ export function IdeaWizard({
 
         <FormSection
           section={SECTION_TEAM}
-          description={`Name your team and choose a leader. You can add up to ${MAX_TEAM_MEMBERS} members.`}
+          description={`Name your team, choose a leader and add 1 to ${MAX_TEAM_MEMBERS} members.`}
         >
           <FormField id={teamName.id} label="Team Name" required error={teamName.error}>
             <Input
@@ -203,12 +203,13 @@ export function IdeaWizard({
           <FormField
             id={members.id}
             label="Team Members"
-            hint={`Optional. Up to ${MAX_TEAM_MEMBERS} colleagues, searched by name or email.`}
+            required
+            hint={`Up to ${MAX_TEAM_MEMBERS} colleagues, searched by name or email.`}
             error={members.error}
           >
             <ProfilePicker
               programId={programId}
-              inputProps={members.a11y}
+              inputProps={{ ...members.a11y, 'aria-required': true }}
               disabled={teamMembers.length >= MAX_TEAM_MEMBERS}
               excludeIds={[...teamMembers.map((m) => m.profile_id), ...(teamLeader ? [teamLeader.profile_id] : [])]}
               placeholder={
