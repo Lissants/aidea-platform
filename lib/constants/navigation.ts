@@ -19,6 +19,7 @@ import {
   User,
   Home,
   Contact,
+  BookOpen,
 } from 'lucide-react';
 
 export type AppRole = 'participant' | 'mentor' | 'admin' | 'employee_voter' | 'developer';
@@ -94,6 +95,7 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
     { label: 'Submit New Idea', href: '/submit', icon: PlusCircle, mobilePrimary: true, mobileLabel: 'Submit idea' },
     { label: 'Voting', href: '/voting', icon: Vote, mobileMore: true },
     { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
+    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
   mentor: [
@@ -101,6 +103,7 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
     { label: 'Idea Dashboard', href: '/dashboard', icon: LayoutDashboard, mobilePrimary: true, mobileLabel: 'Ideas' },
     { label: 'My Reviews', href: '/reviews', icon: ClipboardCheck, mobilePrimary: true },
     { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
+    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
   admin: ADMIN_NAV,
@@ -109,6 +112,7 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
   employee_voter: [
     { label: 'Voting', href: '/voting', icon: Vote, mobilePrimary: true },
     { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobilePrimary: true },
+    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobilePrimary: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobilePrimary: true },
   ],
 };

@@ -80,6 +80,7 @@ export async function saveProgramConfig(
   });
 
   revalidatePath('/program');
+  revalidatePath('/guide');
   revalidatePath('/overview');
   revalidatePath('/submit');
   return { ok: true } as const;
@@ -111,6 +112,7 @@ export async function setStageTimestampNow(programId: string, field: DateField) 
   });
 
   revalidatePath('/program');
+  revalidatePath('/guide');
   return { ok: true } as const;
 }
 
@@ -147,6 +149,7 @@ export async function saveProgramContent(programId: string, key: string, title: 
 
   if (error) return { error } as const;
   revalidatePath('/program');
+  revalidatePath('/guide');
   return { ok: true } as const;
 }
 
@@ -157,6 +160,7 @@ export async function deleteProgramContent(contentId: string) {
   const { error } = await attempt(() => db.execute('DELETE FROM program_content WHERE id = @contentId', { contentId }));
   if (error) return { error } as const;
   revalidatePath('/program');
+  revalidatePath('/guide');
   return { ok: true } as const;
 }
 
@@ -195,6 +199,7 @@ export async function addProgramResource(programId: string, title: string, fileU
   );
   if (error) return { error } as const;
   revalidatePath('/program');
+  revalidatePath('/guide');
   return { ok: true } as const;
 }
 
@@ -214,5 +219,6 @@ export async function deleteProgramResource(resourceId: string) {
   if (existing?.file_url) await removeByUrl(existing.file_url);
 
   revalidatePath('/program');
+  revalidatePath('/guide');
   return { ok: true } as const;
 }

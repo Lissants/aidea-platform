@@ -90,6 +90,11 @@ export async function MentorOverview({ user }: { user: SessionUser }) {
           Browse every idea in the Idea Dashboard
         </Link>
       </p>
+      <p className="text-sm">
+        <Link href="/guide" className="focus-ring font-semibold underline underline-offset-4">
+          Read the eligibility rules, FAQ and program files
+        </Link>
+      </p>
     </div>
   );
 }

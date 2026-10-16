@@ -68,6 +68,11 @@ export async function ParticipantOverview({ user }: { user: SessionUser }) {
             Program timeline
           </h2>
           <ProgramTimeline program={program} now={now} />
+          <p className="text-sm">
+            <Link href="/guide" className="focus-ring font-semibold underline underline-offset-4">
+              Read the eligibility rules, FAQ and program files
+            </Link>
+          </p>
         </section>
       )}
 
