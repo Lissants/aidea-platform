@@ -1,0 +1,312 @@
+[
+  {
+    "route": "/overview",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 2,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".hover\\:underline",
+          ".text-primary.gap-1.text-xs"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 2,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          ".hover\\:underline"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/dashboard",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/dashboard",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 16,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".rounded-xl.text-card-foreground.overflow-hidden:nth-child(1) > .p-4 > dl > .justify-between.gap-3.text-sm:nth-child(4) > dd > .bg-warning.text-warning-foreground.px-2\\.5 > span",
+          ".rounded-xl.text-card-foreground.overflow-hidden:nth-child(1) > .p-4 > dl > .justify-between.gap-3.text-sm:nth-child(5) > dd > .bg-success.text-success-foreground.px-2\\.5 > span",
+          ".rounded-xl.text-card-foreground.overflow-hidden:nth-child(2) > .p-4 > dl > .justify-between.gap-3.text-sm:nth-child(4) > dd > .bg-warning.text-warning-foreground.px-2\\.5 > span"
+        ]
+      },
+      {
+        "id": "select-name",
+        "impact": "critical",
+        "nodes": 2,
+        "help": "Select element must have an accessible name",
+        "targets": [
+          "select[name=\"impact\"]",
+          "select[name=\"status\"]"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/dashboard",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/dashboard",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 16,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          "tr:nth-child(1) > td:nth-child(4) > .bg-warning.text-warning-foreground.px-2\\.5 > span",
+          "tr:nth-child(1) > td:nth-child(5) > .bg-success.text-success-foreground.px-2\\.5 > span"
+        ]
+      },
+      {
+        "id": "select-name",
+        "impact": "critical",
+        "nodes": 2,
+        "help": "Select element must have an accessible name",
+        "targets": [
+          "select[name=\"impact\"]",
+          "select[name=\"status\"]"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/dashboard",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/reviews",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/reviews",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 10,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".rounded-xl.text-card-foreground.shadow-sm:nth-child(1) > .p-4 > dl > .justify-between.gap-3.flex:nth-child(4) > dd > .bg-success.text-success-foreground.px-2\\.5",
+          ".rounded-xl.text-card-foreground.shadow-sm:nth-child(1) > .p-4 > dl > .justify-between.gap-3.flex:nth-child(8) > dd > .hover\\:underline.text-primary",
+          ".rounded-xl.text-card-foreground.shadow-sm:nth-child(2) > .p-4 > dl > .justify-between.gap-3.flex:nth-child(4) > dd > .bg-success.text-success-foreground.px-2\\.5"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/reviews",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/reviews",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 10,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          "tr:nth-child(1) > td:nth-child(4) > .bg-success.text-success-foreground.px-2\\.5",
+          "tr:nth-child(1) > td:nth-child(8) > .hover\\:underline.text-primary"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/reviews",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 3,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".space-y-1:nth-child(2) > .gap-2.items-center.flex > .px-2\\.5.py-0\\.5.border-transparent",
+          ".bg-success > span",
+          ".flex-1.gap-1[href$=\"reviews\"]"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 3,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          ".space-y-1:nth-child(2) > .gap-2.items-center.flex > .px-2\\.5.py-0\\.5.border-transparent",
+          ".bg-success > span"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/reviews/e1f0d65c-8992-49ed-a4f9-8b9dd3880b96",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  }
+]

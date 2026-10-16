@@ -1,0 +1,175 @@
+
+> aidea-platform@0.1.0 build
+> next build
+
+▲ Next.js 16.3.7 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.mjs took 19ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 14.5s
+  Running TypeScript ...
+  Finished TypeScript in 7.4s ...
+  Collecting page data using 13 workers ...
+  Generating static pages using 13 workers (0/36) ...
+  Generating static pages using 13 workers (9/36) 
+  Generating static pages using 13 workers (18/36) 
+  Generating static pages using 13 workers (27/36) 
+✓ Generating static pages using 13 workers (36/36) in 1865ms
+Turbopack build encountered 3 warnings:
+./lib/storage/local.ts:61:16
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m59 |[0m [36mfunction[0m resolveKey(bucket: [33mBucket[0m, key: string) {
+  [90m60 |[0m   [36mif[0m (![33mKEY_RE[0m.test(key)) [36mthrow[0m [36mnew[0m [33mError[0m([32m'Invalid file key'[0m);
+[33m[1m>[0m [90m61 |[0m   [36mconst[0m root = path.join(uploadRoot(), bucket);
+  [90m   |[0m                [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m62 |[0m   [36mconst[0m full = path.join(root, ...key.split([32m'/'[0m));
+  [90m63 |[0m   [36mif[0m (!full.startsWith(root + path.sep)) [36mthrow[0m [36mnew[0m [33mError[0m([32m'Invalid file key'[0m);
+  [90m64 |[0m   [36mreturn[0m full;
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: path.join(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import traces:
+  #1 [App Route]:
+    ./lib/storage/local.ts
+    ./app/api/files/[bucket]/[...key]/route.ts
+
+  #2 [App Route]:
+    ./lib/storage/local.ts
+    ./lib/storage/local.ts
+    ./app/api/files/[bucket]/route.ts
+
+  #3 [Server Component]:
+    ./lib/storage/local.ts
+    ./lib/services/mentors.ts
+    ./app/(admin)/mentors/page.tsx
+
+
+./lib/storage/local.ts:62:16
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m60 |[0m   [36mif[0m (![33mKEY_RE[0m.test(key)) [36mthrow[0m [36mnew[0m [33mError[0m([32m'Invalid file key'[0m);
+  [90m61 |[0m   [36mconst[0m root = path.join(uploadRoot(), bucket);
+[33m[1m>[0m [90m62 |[0m   [36mconst[0m full = path.join(root, ...key.split([32m'/'[0m));
+  [90m   |[0m                [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m63 |[0m   [36mif[0m (!full.startsWith(root + path.sep)) [36mthrow[0m [36mnew[0m [33mError[0m([32m'Invalid file key'[0m);
+  [90m64 |[0m   [36mreturn[0m full;
+  [90m65 |[0m }
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: path.join(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import traces:
+  #1 [App Route]:
+    ./lib/storage/local.ts
+    ./app/api/files/[bucket]/[...key]/route.ts
+
+  #2 [App Route]:
+    ./lib/storage/local.ts
+    ./lib/storage/local.ts
+    ./app/api/files/[bucket]/route.ts
+
+  #3 [Server Component]:
+    ./lib/storage/local.ts
+    ./lib/services/mentors.ts
+    ./app/(admin)/mentors/page.tsx
+
+
+./lib/storage/local.ts:56:10
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m54 |[0m
+  [90m55 |[0m [36mexport[0m [36mfunction[0m uploadRoot() {
+[33m[1m>[0m [90m56 |[0m   [36mreturn[0m path.resolve(process.env.[33mUPLOAD_DIR[0m || path.join(process.cwd(), [32m'uploads'[0m));
+  [90m   |[0m          [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m57 |[0m }
+  [90m58 |[0m
+  [90m59 |[0m [36mfunction[0m resolveKey(bucket: [33mBucket[0m, key: string) {
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: path.resolve(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import traces:
+  #1 [App Route]:
+    ./lib/storage/local.ts
+    ./app/api/files/[bucket]/[...key]/route.ts
+
+  #2 [App Route]:
+    ./lib/storage/local.ts
+    ./lib/storage/local.ts
+    ./app/api/files/[bucket]/route.ts
+
+  #3 [Server Component]:
+    ./lib/storage/local.ts
+    ./lib/services/mentors.ts
+    ./app/(admin)/mentors/page.tsx
+
+
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ○ /access-denied
+├ ƒ /api/admin/exports/[type]
+├ ƒ /api/cron/voting-notifications
+├ ƒ /api/files/[bucket]
+├ ƒ /api/files/[bucket]/[...key]
+├ ƒ /api/health
+├ ƒ /api/profiles/search
+├ ƒ /api/session/active-role
+├ ƒ /audit
+├ ƒ /auth/callback/microsoft
+├ ƒ /auth/microsoft
+├ ƒ /dashboard
+├ ƒ /final-presentation
+├ ƒ /ideas
+├ ƒ /ideas/[ideaId]
+├ ƒ /mentor-profile
+├ ƒ /mentors
+├ ƒ /my-ideas
+├ ƒ /notifications
+├ ƒ /overview
+├ ƒ /profile
+├ ƒ /profile/password
+├ ƒ /program
+├ ƒ /project-mentor
+├ ƒ /qualifier
+├ ƒ /reports
+├ ƒ /review-assignment
+├ ƒ /reviews
+├ ƒ /reviews/[assignmentId]
+├ ƒ /roles
+├ ƒ /screening
+├ ○ /session-error
+├ ƒ /settings
+├ ƒ /showcase-content
+├ ƒ /sign-in
+├ ƒ /submit
+├ ƒ /voting
+└ ƒ /voting-management
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+EXIT 0

@@ -1,0 +1,14 @@
+
+> aidea-platform@0.1.0 audit:design
+> tsx scripts/validate-design-audit.ts
+
+Design audit: 88 checklist items, 27 recommendations, 41 findings, 20 critical components
+Status counts: {
+  pass: 21,
+  partial: 16,
+  fail: 43,
+  not_applicable: 6,
+  unable_to_verify: 2
+}
+Coverage check passed.
+EXIT 0

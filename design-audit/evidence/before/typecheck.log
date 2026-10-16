@@ -1,0 +1,29 @@
+
+> aidea-platform@0.1.0 typecheck
+> tsc --noEmit
+
+agent-skills/packages/react-best-practices-build/src/build.ts(215,79): error TS1501: This regular expression flag is only available when targeting 'es2018' or later.
+ui-ux-pro-max-skill/cli/src/commands/init.ts(5,17): error TS2307: Cannot find module 'ora' or its corresponding type declarations.
+ui-ux-pro-max-skill/cli/src/commands/init.ts(6,21): error TS2307: Cannot find module 'prompts' or its corresponding type declarations.
+ui-ux-pro-max-skill/cli/src/commands/uninstall.ts(5,17): error TS2307: Cannot find module 'ora' or its corresponding type declarations.
+ui-ux-pro-max-skill/cli/src/commands/uninstall.ts(6,21): error TS2307: Cannot find module 'prompts' or its corresponding type declarations.
+ui-ux-pro-max-skill/cli/src/commands/update.ts(7,17): error TS2307: Cannot find module 'ora' or its corresponding type declarations.
+ui-ux-pro-max-skill/cli/src/commands/versions.ts(2,17): error TS2307: Cannot find module 'ora' or its corresponding type declarations.
+ui-ux-pro-max-skill/cli/src/index.ts(92,9): error TS2554: Expected 1 arguments, but got 0.
+ui-ux-pro-max-skill/gallery/app/page.tsx(3,32): error TS2307: Cannot find module '@/lib/parseStyles' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/app/page.tsx(4,29): error TS2307: Cannot find module '@/components/GalleryGrid' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/GalleryGrid.tsx(4,27): error TS2307: Cannot find module '@/lib/types' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/GalleryGrid.tsx(10,8): error TS2307: Cannot find module '@/lib/filterStyles' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/GalleryGrid.tsx(73,45): error TS7006: Parameter 'f' implicitly has an 'any' type.
+ui-ux-pro-max-skill/gallery/components/GalleryGrid.tsx(93,26): error TS7006: Parameter 'style' implicitly has an 'any' type.
+ui-ux-pro-max-skill/gallery/components/MetadataBadges.tsx(1,32): error TS2307: Cannot find module '@/lib/types' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/StyleCard.tsx(3,27): error TS2307: Cannot find module '@/lib/types' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/StyleCard.tsx(111,25): error TS7006: Parameter 'kw' implicitly has an 'any' type.
+ui-ux-pro-max-skill/gallery/components/StyleCard.tsx(111,29): error TS7006: Parameter 'i' implicitly has an 'any' type.
+ui-ux-pro-max-skill/gallery/components/StyleDetailModal.tsx(5,27): error TS2307: Cannot find module '@/lib/types' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/StyleDetailModal.tsx(9,8): error TS2307: Cannot find module '@/lib/cssGenerator' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/StyleDetailModal.tsx(201,33): error TS7006: Parameter 'kw' implicitly has an 'any' type.
+ui-ux-pro-max-skill/gallery/components/StyleDetailModal.tsx(201,37): error TS7006: Parameter 'i' implicitly has an 'any' type.
+ui-ux-pro-max-skill/gallery/components/StylePreview.tsx(3,27): error TS2307: Cannot find module '@/lib/types' or its corresponding type declarations.
+ui-ux-pro-max-skill/gallery/components/StylePreview.tsx(7,8): error TS2307: Cannot find module '@/lib/cssGenerator' or its corresponding type declarations.
+EXIT 2

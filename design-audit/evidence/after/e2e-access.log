@@ -1,0 +1,11 @@
+
+Running 5 tests using 1 worker
+
+  ok 1 tests\e2e\zz-tmp-access.spec.ts:10:5 › dark mode toggles and persists across a reload (7.3s)
+  ok 2 tests\e2e\zz-tmp-access.spec.ts:26:5 › an unauthenticated visitor is redirected away from a protected route (desktop) (442ms)
+  ok 3 tests\e2e\zz-tmp-access.spec.ts:31:5 › a participant cannot reach an admin-only route (5.2s)
+  ok 4 tests\e2e\zz-tmp-access.spec.ts:40:7 › mobile viewport › an unauthenticated visitor is redirected away from a protected route (mobile) (438ms)
+  ok 5 tests\e2e\zz-tmp-access.spec.ts:45:7 › mobile viewport › a participant cannot reach an admin-only route on mobile (2.3s)
+
+  5 passed (17.1s)
+EXIT 0

@@ -1,0 +1,12 @@
+
+Running 6 tests using 1 worker
+
+  ok 1 tests\e2e\ui-baseline.spec.ts:137:5 › anonymous: sign-in (5.0s)
+  ok 2 tests\e2e\ui-baseline.spec.ts:142:5 › participant routes (29.3s)
+  ok 3 tests\e2e\ui-baseline.spec.ts:152:5 › participant submit form: validation summary and mobile action bar (3.3s)
+  ok 4 tests\e2e\ui-baseline.spec.ts:195:5 › participant dark mode (4.9s)
+  ok 5 tests\e2e\ui-baseline.spec.ts:215:5 › mentor routes (37.4s)
+  ok 6 tests\e2e\ui-baseline.spec.ts:222:5 › admin routes (1.1m)
+
+  6 passed (2.4m)
+EXIT 0

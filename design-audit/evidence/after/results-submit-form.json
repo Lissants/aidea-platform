@@ -1,0 +1,13 @@
+{
+  "summaryVisible": true,
+  "summaryLinks": 7,
+  "summaryFocused": true,
+  "invalidFields": 8,
+  "dialogOpened": false,
+  "mobileActionBar": {
+    "barBottom": 748,
+    "navTop": 748,
+    "overlaps": false,
+    "submitHitIsSubmit": true
+  }
+}

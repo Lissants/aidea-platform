@@ -1,0 +1,337 @@
+[
+  {
+    "route": "/overview",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 3,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".shadow",
+          ".hover\\:underline",
+          ".text-primary.gap-1[href$=\"overview\"]"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 3,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          ".shadow",
+          ".hover\\:underline"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/overview",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/overview",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/my-ideas",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/my-ideas",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/my-ideas",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/my-ideas",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 11,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".shadow",
+          ".rounded-xl.text-card-foreground.overflow-hidden:nth-child(1) > .p-4 > dl > .justify-between.gap-3.text-sm:nth-child(4) > dd > .gap-1\\.5.flex-wrap.items-center > .bg-information.text-information-foreground.px-2\\.5 > span",
+          ".rounded-xl.text-card-foreground.overflow-hidden:nth-child(1) > .p-4 > dl > .justify-between.gap-3.text-sm:nth-child(5) > dd > .bg-success.text-success-foreground.px-2\\.5 > span"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/my-ideas",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/my-ideas",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/my-ideas",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/my-ideas",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 11,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          ".shadow",
+          "tr:nth-child(1) > td:nth-child(4) > .gap-1\\.5.flex-wrap.items-center > .bg-information.text-information-foreground.px-2\\.5 > span"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/my-ideas",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/my-ideas",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/submit",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/submit",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/submit",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/submit",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "nodes": 3,
+        "help": "Buttons must have discernible text",
+        "targets": [
+          ".space-y-3 > .focus\\:outline-none.focus\\:ring-1.focus\\:ring-ring",
+          ".space-y-1\\.5:nth-child(15) > .\\[\\&\\>span\\:first-child\\]\\:truncate.\\[\\&\\>span\\:first-child\\]\\:text-left[data-placeholder=\"\"]",
+          ".space-y-1\\.5:nth-child(16) > .\\[\\&\\>span\\:first-child\\]\\:truncate.\\[\\&\\>span\\:first-child\\]\\:text-left[data-placeholder=\"\"]"
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 2,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".shadow",
+          ".text-primary.gap-1[href$=\"submit\"]"
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "nodes": 1,
+        "help": "Form elements must have labels",
+        "targets": [
+          ".space-y-1\\.5:nth-child(1) > input"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/submit",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/submit",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/submit",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/submit",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "nodes": 3,
+        "help": "Buttons must have discernible text",
+        "targets": [
+          ".space-y-3 > .focus\\:outline-none.focus\\:ring-1.focus\\:ring-ring",
+          ".space-y-1\\.5:nth-child(15) > .\\[\\&\\>span\\:first-child\\]\\:truncate.\\[\\&\\>span\\:first-child\\]\\:text-left[data-placeholder=\"\"]",
+          ".space-y-1\\.5:nth-child(16) > .\\[\\&\\>span\\:first-child\\]\\:truncate.\\[\\&\\>span\\:first-child\\]\\:text-left[data-placeholder=\"\"]"
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 2,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate",
+          ".shadow"
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "nodes": 1,
+        "help": "Form elements must have labels",
+        "targets": [
+          ".space-y-1\\.5:nth-child(1) > input"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/submit",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/submit",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/notifications",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/notifications",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/notifications",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/notifications",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "aria-valid-attr-value",
+        "impact": "critical",
+        "nodes": 1,
+        "help": "ARIA attributes must conform to valid values",
+        "targets": [
+          "#radix-_R_b9bnaitmlb_-trigger-all"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/notifications",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/notifications",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/notifications",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/notifications",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [
+      {
+        "id": "aria-valid-attr-value",
+        "impact": "critical",
+        "nodes": 1,
+        "help": "ARIA attributes must conform to valid values",
+        "targets": [
+          "#radix-_R_b9bnaitmlb_-trigger-all"
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 1,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "targets": [
+          ".bg-primary\\/10 > .truncate"
+        ]
+      }
+    ],
+    "firstTabFocus": "a[href=/overview] \"AIdea\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/notifications",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/notifications",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  }
+]

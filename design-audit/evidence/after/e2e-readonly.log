@@ -1,0 +1,26 @@
+Cannot use({ defaultBrowserType }) in a describe group, because it forces a new worker.
+Make it top-level in the test file or put in the configuration file.
+
+   at ui-and-access-control.spec.ts:38
+
+  36 |
+  37 | test.describe('mobile viewport', () => {
+> 38 |   test.use({ ...devices['iPhone 13'] });
+     |        ^
+  39 |
+  40 |   test('an unauthenticated visitor is redirected away from a protected route (mobile)', async ({ page }) => {
+  41 |     await page.goto('/my-ideas');
+Cannot use({ defaultBrowserType }) in a describe group, because it forces a new worker.
+Make it top-level in the test file or put in the configuration file.
+
+   at ui-and-access-control.spec.ts:38
+
+  36 |
+  37 | test.describe('mobile viewport', () => {
+> 38 |   test.use({ ...devices['iPhone 13'] });
+     |        ^
+  39 |
+  40 |   test('an unauthenticated visitor is redirected away from a protected route (mobile)', async ({ page }) => {
+  41 |     await page.goto('/my-ideas');
+
+EXIT 1

@@ -74,6 +74,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
   { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   { label: 'Program', href: '/program', icon: Settings2, mobileMore: true },
+  { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
   { label: 'Idea Management', href: '/ideas', icon: Lightbulb, mobilePrimary: true, mobileLabel: 'Ideas', group: 'Idea pipeline' },
   { label: 'Review Assignment', href: '/review-assignment', icon: ClipboardList, mobileMore: true, group: 'Idea pipeline' },
   { label: 'Screening Decision', href: '/screening', icon: Gavel, mobilePrimary: true, mobileLabel: 'Screening', group: 'Idea pipeline' },
@@ -91,19 +92,19 @@ const ADMIN_NAV: NavItem[] = [
 export const NAVIGATION: Record<AppRole, NavItem[]> = {
   participant: [
     { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
+    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'My Ideas', href: '/my-ideas', icon: Lightbulb, mobilePrimary: true },
     { label: 'Submit New Idea', href: '/submit', icon: PlusCircle, mobilePrimary: true, mobileLabel: 'Submit idea' },
     { label: 'Voting', href: '/voting', icon: Vote, mobileMore: true },
     { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
-    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
   mentor: [
     { label: 'Overview', href: '/overview', icon: Home, mobilePrimary: true },
+    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'Idea Dashboard', href: '/dashboard', icon: LayoutDashboard, mobilePrimary: true, mobileLabel: 'Ideas' },
     { label: 'My Reviews', href: '/reviews', icon: ClipboardCheck, mobilePrimary: true },
     { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobileMore: true },
-    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobileMore: true },
   ],
   admin: ADMIN_NAV,
@@ -111,8 +112,8 @@ export const NAVIGATION: Record<AppRole, NavItem[]> = {
   developer: ADMIN_NAV,
   employee_voter: [
     { label: 'Voting', href: '/voting', icon: Vote, mobilePrimary: true },
+    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobileMore: true },
     { label: 'Mentor Profile', href: '/mentor-profile', icon: Contact, mobilePrimary: true },
-    { label: 'Program Guide', href: '/guide', icon: BookOpen, mobilePrimary: true },
     { label: 'Notifications', href: '/notifications', icon: Bell, mobilePrimary: true },
   ],
 };

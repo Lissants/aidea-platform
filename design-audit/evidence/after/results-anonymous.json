@@ -1,0 +1,51 @@
+[
+  {
+    "route": "/sign-in",
+    "viewport": "narrow-360",
+    "status": "ok",
+    "finalUrl": "/sign-in",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/sign-in",
+    "viewport": "mobile-390",
+    "status": "ok",
+    "finalUrl": "/sign-in",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [],
+    "firstTabFocus": "input \"\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/sign-in",
+    "viewport": "tablet-768",
+    "status": "ok",
+    "finalUrl": "/sign-in",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  },
+  {
+    "route": "/sign-in",
+    "viewport": "laptop-1280",
+    "status": "ok",
+    "finalUrl": "/sign-in",
+    "overflowPx": 0,
+    "overflowing": [],
+    "axe": [],
+    "firstTabFocus": "input \"\"",
+    "consoleErrors": []
+  },
+  {
+    "route": "/sign-in",
+    "viewport": "wide-1536",
+    "status": "ok",
+    "finalUrl": "/sign-in",
+    "overflowPx": 0,
+    "overflowing": [],
+    "consoleErrors": []
+  }
+]
