@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/layout/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { giSansDisplay, giSansText } from './fonts';
 import './globals.css';
 
-// Uses the system font stack (see app/globals.css) rather than next/font's
-// Google Fonts loader, so builds never depend on fetching fonts.google.com —
-// important for offline CI and for company networks that block it.
+// GI Sans is bundled locally (app/fonts) rather than fetched from Google Fonts,
+// so builds work offline and on company networks that block external fonts.
 
 export const metadata: Metadata = {
   title: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${giSansText.variable} ${giSansDisplay.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
           {children}

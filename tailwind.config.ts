@@ -15,11 +15,19 @@ const config: Config = {
       screens: { '2xl': '1400px' },
     },
     extend: {
-      // GIG brand type: GI Sans where installed, Arial otherwise. No web font is
-      // downloaded, so there is no font-swap layout shift.
+      // GIG brand type: bundled GI Sans (app/fonts.ts), then an installed copy,
+      // then Arial. next/font adds size-matched fallbacks to limit layout shift.
       fontFamily: {
-        sans: ['"GI Sans Text"', 'Arial', '"Helvetica Neue"', 'Helvetica', 'sans-serif'],
-        display: ['"GI Sans Display"', '"GI Sans Text"', 'Arial', '"Helvetica Neue"', 'Helvetica', 'sans-serif'],
+        sans: ['var(--font-gi-sans-text)', '"GI Sans Text"', 'Arial', '"Helvetica Neue"', 'Helvetica', 'sans-serif'],
+        display: [
+          'var(--font-gi-sans-display)',
+          '"GI Sans Display"',
+          'var(--font-gi-sans-text)',
+          'Arial',
+          '"Helvetica Neue"',
+          'Helvetica',
+          'sans-serif',
+        ],
       },
       colors: {
         border: 'hsl(var(--border))',
