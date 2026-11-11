@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FileX } from 'lucide-react';
+import { CalendarX, Clock, FileX } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/layout/empty-state';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { currentMentorSql } from '@/lib/auth/roles';
 import { profileReadFilter } from '@/lib/permissions/scopes';
 import { fetchEditableDraft } from '@/lib/ideas/idea-draft';
 import { stageDateMask } from '@/lib/program/timeline';
+import { submissionWindowMessage, submissionWindowState } from '@/lib/program/submission-window';
 import type { Program } from '@/types/database';
 
 export const metadata = { title: 'Submit New Idea' };
@@ -26,6 +27,28 @@ export default async function SubmitIdeaPage(props: { searchParams: Promise<{ dr
       <div>
         <PageHeader title="Submit New Idea" />
         <NoActiveProgram audience="participant" />
+      </div>
+    );
+  }
+
+  // Outside the submission window nothing can be started, continued or
+  // submitted; the server actions and usp_submit_idea enforce the same rule.
+  const windowState = submissionWindowState(program);
+  if (windowState !== 'open') {
+    const { title, description } = submissionWindowMessage(program, windowState);
+    return (
+      <div>
+        <PageHeader title="Submit New Idea" />
+        <EmptyState
+          icon={windowState === 'closed' ? CalendarX : Clock}
+          title={title}
+          description={description}
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/my-ideas">Go to My Ideas</Link>
+            </Button>
+          }
+        />
       </div>
     );
   }

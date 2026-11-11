@@ -14,7 +14,9 @@ import { PresentationUpload } from '@/components/ideas/presentation-upload';
 import { PresentationLink } from '@/components/ideas/presentation-link';
 import { AttentionFlag } from '@/components/ui/attention-flag';
 import { fetchMyMembershipConflicts } from '@/lib/services/team-membership';
-import type { MyIdeaRow } from '@/types/database';
+import { db } from '@/lib/db';
+import { submissionWindowState } from '@/lib/program/submission-window';
+import type { MyIdeaRow, Program } from '@/types/database';
 
 const ROLE_LABEL: Record<MyIdeaRow['my_role'], string> = {
   leader: 'Team leader',
@@ -28,10 +30,22 @@ export default async function MyIdeasPage() {
   const user = await getCurrentUser();
   // Visible to the creator, team leader and team members. Results are
   // published-only (see lib/ideas/published-results.ts).
-  const [ideas, conflicts] = await Promise.all([user ? fetchMyIdeas(user.id) : [], fetchMyMembershipConflicts()]);
+  const [ideas, conflicts, program] = await Promise.all([
+    user ? fetchMyIdeas(user.id) : [],
+    fetchMyMembershipConflicts(),
+    db.queryOne<Program>(`SELECT TOP (1) * FROM programs WHERE status = 'active' ORDER BY created_at DESC`),
+  ]);
+
+  // Outside the submission window nothing can be started or continued
+  // (same rule as /submit and saveIdeaDraft). No active program: no window.
+  const windowState = program ? submissionWindowState(program) : 'closed';
+  const submissionOpen = windowState === 'open';
 
   // Only the creator can keep editing a draft (same rule as saveIdeaDraft).
-  const canContinue = (row: MyIdeaRow) => row.status === 'draft' && !!user && row.created_by === user.id;
+  const isOwnDraft = (row: MyIdeaRow) => row.status === 'draft' && !!user && row.created_by === user.id;
+  const canContinue = (row: MyIdeaRow) => submissionOpen && isOwnDraft(row);
+  // Drafts the deadline caught; "not open yet" never shows this note.
+  const missedDeadline = (row: MyIdeaRow) => !!program && windowState === 'closed' && row.status === 'draft';
 
   const columns: ResponsiveTableColumn<MyIdeaRow>[] = [
     {
@@ -40,16 +54,24 @@ export default async function MyIdeasPage() {
       mobile: 'title',
       cell: (row) => {
         const title = row.idea_title || <span className="text-muted-foreground">Untitled draft</span>;
+        if (missedDeadline(row)) {
+          return (
+            <span className="flex flex-col items-start gap-1">
+              <span>{title}</span>
+              <span className="text-sm font-normal text-muted-foreground">Not submitted before the deadline</span>
+            </span>
+          );
+        }
         if (!canContinue(row)) return title;
         return (
-          <div className="flex flex-col items-start gap-2">
+          <span className="flex flex-col items-start gap-2">
             <span>{title}</span>
             <Button asChild size="sm" variant="outline">
               <Link href={`/submit?draft=${row.id}`} aria-label={`Continue editing ${row.idea_title || 'untitled draft'}`}>
                 <Pencil className="h-4 w-4" aria-hidden="true" /> Continue editing
               </Link>
             </Button>
-          </div>
+          </span>
         );
       },
     },
@@ -98,11 +120,13 @@ export default async function MyIdeasPage() {
         title="My Ideas"
         description="Drafts and submitted ideas you own, lead or are a team member of."
         action={
-          <Button asChild>
-            <Link href="/submit">
-              <PlusCircle className="h-4 w-4" /> Submit New Idea
-            </Link>
-          </Button>
+          submissionOpen ? (
+            <Button asChild>
+              <Link href="/submit">
+                <PlusCircle className="h-4 w-4" /> Submit New Idea
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
       <CommitIdeaPanel conflicts={conflicts} />
@@ -113,12 +137,14 @@ export default async function MyIdeasPage() {
         emptyState={
           <EmptyState
             icon={Lightbulb}
-            title="You have no ideas yet"
+            title={windowState === 'closed' && program ? 'Submissions are closed' : 'You have no ideas yet'}
             description="Ideas you create, lead or are added to as a team member appear here."
             action={
-              <Button asChild>
-                <Link href="/submit">Submit a new idea</Link>
-              </Button>
+              submissionOpen ? (
+                <Button asChild>
+                  <Link href="/submit">Submit a new idea</Link>
+                </Button>
+              ) : undefined
             }
           />
         }

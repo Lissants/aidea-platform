@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { attempt, db, DbError, newId } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/session';
 import { currentMentorSql } from '@/lib/auth/roles';
+import { submissionWindowError, type SubmissionWindowState } from '@/lib/program/submission-window';
 import {
   ideaDraftSaveSchema,
   ideaDraftSchema,
@@ -76,6 +77,29 @@ async function writeDraft(user: SessionUser, programId: string, ideaId: string |
   return attempt(() =>
     db.transaction(async (tx) => {
       let currentIdeaId: string;
+
+      // Nothing is written outside the submission window. The database clock
+      // decides, same as usp_submit_idea (migration 0016).
+      const program = await tx.queryOne<{
+        title: string;
+        submission_open_at: string | Date | null;
+        submission_close_at: string | Date | null;
+        timeline_tba: string | null;
+        window_state: SubmissionWindowState;
+      }>(
+        `SELECT title, submission_open_at, submission_close_at, timeline_tba,
+                CASE
+                  WHEN submission_open_at IS NOT NULL AND submission_open_at > SYSDATETIMEOFFSET() THEN 'not_yet_open'
+                  WHEN submission_close_at IS NOT NULL AND submission_close_at <= SYSDATETIMEOFFSET() THEN 'closed'
+                  ELSE 'open'
+                END AS window_state
+           FROM programs WHERE id = @programId`,
+        { programId }
+      );
+      if (!program) throw new DbError('Program not found');
+      if (program.window_state !== 'open') {
+        throw new DbError(submissionWindowError(program, program.window_state));
+      }
 
       // Before approval anyone may be on several ideas; once an idea of this
       // program has passed screening its team is committed to it alone.

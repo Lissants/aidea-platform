@@ -10,6 +10,7 @@ import { fetchMyMembershipConflicts } from '@/lib/services/team-membership';
 import { fetchMyIdeas } from '@/lib/ideas/my-ideas';
 import { participantIdeaStatusKey, participantNextStep } from '@/lib/overview/next-step';
 import { stageDateMask } from '@/lib/program/timeline';
+import { submissionWindowState } from '@/lib/program/submission-window';
 import type { Program } from '@/types/database';
 
 const RECENT_IDEAS = 5;
@@ -28,10 +29,7 @@ export async function ParticipantOverview({ user }: { user: SessionUser }) {
   ]);
 
   const now = new Date();
-  const submissionOpen =
-    !!program &&
-    (!program.submission_open_at || new Date(program.submission_open_at) <= now) &&
-    (!program.submission_close_at || new Date(program.submission_close_at) > now);
+  const submissionOpen = !!program && submissionWindowState(program, now) === 'open';
   const votingOpen = !!votingPeriod && new Date(votingPeriod.opens_at) <= now && new Date(votingPeriod.closes_at) > now;
 
   const next = participantNextStep({
