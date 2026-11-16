@@ -22,6 +22,7 @@ import {
   Circle,
   PencilLine,
   RotateCcw,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /**
@@ -59,6 +60,7 @@ export const STATUS_KEYS = [
   'review_draft',
   'reopened',
   // Derived idea stage (lib/ideas/stage.ts)
+  'mentor_reviewed',
   'screened_pass',
   'screened_fail',
   'qualified_build',
@@ -102,6 +104,7 @@ export const STATUS_META: Record<StatusKey, StatusMeta> = {
   not_started: { label: 'Not started', icon: Circle, tone: 'neutral' },
   review_draft: { label: 'In progress', icon: PencilLine, tone: 'information' },
   reopened: { label: 'Reopened', icon: RotateCcw, tone: 'warning' },
+  mentor_reviewed: { label: 'Reviewed by mentor', icon: ClipboardCheck, tone: 'information' },
   screened_pass: { label: 'Passed screening', icon: CheckCircle2, tone: 'success' },
   screened_fail: { label: 'Not passed screening', icon: XCircle, tone: 'destructive' },
   qualified_build: { label: 'Qualified to build', icon: Hammer, tone: 'success' },
@@ -120,8 +123,9 @@ export function reviewRowStatusKey(status: string): StatusKey {
 
 /** Derived idea stage (lib/ideas/stage.ts) -> display key. */
 export function stageStatusKey(
-  stage: 'draft' | 'submitted' | 'screened_pass' | 'screened_fail' | 'build' | 'no_build'
+  stage: 'draft' | 'submitted' | 'reviewed' | 'screened_pass' | 'screened_fail' | 'build' | 'no_build'
 ): StatusKey {
   // build / no_build here are idea stages, not the bare qualifier result.
+  if (stage === 'reviewed') return 'mentor_reviewed';
   return stage === 'build' ? 'qualified_build' : stage === 'no_build' ? 'qualified_no_build' : stage;
 }

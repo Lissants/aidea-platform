@@ -36,4 +36,11 @@ describe('status vocabulary', () => {
       expect(STATUS_META[key].label).toBe(STAGE_LABEL[stage]);
     }
   });
+
+  it('places the mentor-reviewed stage between submitted and passed screening', () => {
+    expect(stageStatusKey('reviewed')).toBe('mentor_reviewed');
+    const order = Object.keys(STAGE_LABEL);
+    expect(order.indexOf('reviewed')).toBe(order.indexOf('submitted') + 1);
+    expect(order.indexOf('screened_pass')).toBe(order.indexOf('reviewed') + 1);
+  });
 });

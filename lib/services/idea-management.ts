@@ -38,12 +38,14 @@ interface StageSource {
   build_decision: string | null;
   screening_published: boolean | null;
   screening_decision: string | null;
+  /** reviews.status of the assigned mentor's review; only 'submitted' counts as reviewed (draft/reopened do not). */
+  review_status: string | null;
 }
 
 function deriveStage(idea: StageSource): DerivedStage {
   if (idea.qualifier_published) return idea.build_decision === 'build' ? 'build' : 'no_build';
   if (idea.screening_published) return idea.screening_decision === 'pass_to_qualifier' ? 'screened_pass' : 'screened_fail';
-  if (idea.status === 'submitted') return 'submitted';
+  if (idea.status === 'submitted') return idea.review_status === 'submitted' ? 'reviewed' : 'submitted';
   return 'draft';
 }
 
@@ -60,7 +62,8 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
   if (!user || !isAdmin(user.roles)) return { rows: [], total: 0 };
 
   // review_assignments / screening_decisions / qualifier_assessments are
-  // each unique per idea, so plain LEFT JOINs are 1:1.
+  // each unique per idea, and reviews is unique per assignment, so plain
+  // LEFT JOINs are 1:1.
   const ideas = await db.query<
     StageSource & {
       id: string;
@@ -83,9 +86,11 @@ export async function fetchIdeaList(programId: string, filters: IdeaListFilters)
             ) THEN 1 ELSE 0 END AS BIT) AS membership_conflict,
             p.full_name AS reviewer_name,
             sd.decision AS screening_decision, sd.published AS screening_published,
-            qa.build_decision, qa.published AS qualifier_published
+            qa.build_decision, qa.published AS qualifier_published,
+            r.status AS review_status
        FROM ideas i
        LEFT JOIN review_assignments ra ON ra.idea_id = i.id
+       LEFT JOIN reviews r ON r.review_assignment_id = ra.id
        LEFT JOIN mentor_profiles mp ON mp.id = ra.mentor_profile_id
        LEFT JOIN profiles p ON p.id = mp.profile_id
        LEFT JOIN screening_decisions sd ON sd.idea_id = i.id
