@@ -167,6 +167,7 @@ export interface IdeaFullDetail {
   support_requests: { support_area: string; details: string | null; reason: string | null; estimate: string | null }[];
   mentor_preferences: { priority: number; mentor_name: string }[];
   review: { id: string; status: string; reviewer_name: string | null } | null;
+  screening_presentation: { url: string; name: string | null; uploaded_at: string | null } | null;
   presentation: { url: string; name: string | null; uploaded_at: string | null } | null;
 }
 
@@ -193,10 +194,14 @@ export async function fetchIdeaDetail(ideaId: string): Promise<IdeaFullDetail | 
     presentation_url: string | null;
     presentation_name: string | null;
     presentation_uploaded_at: string | null;
+    screening_presentation_url: string | null;
+    screening_presentation_name: string | null;
+    screening_presentation_uploaded_at: string | null;
   }>(
     `SELECT i.id, i.idea_title, i.team_name, i.problem_opportunity, i.proposed_solution, i.target_users, i.status,
             i.program_id, i.team_leader_id, lp.full_name AS team_leader_name,
             i.presentation_url, i.presentation_name, i.presentation_uploaded_at,
+            i.screening_presentation_url, i.screening_presentation_name, i.screening_presentation_uploaded_at,
             CAST(CASE WHEN EXISTS (SELECT 1 FROM dbo.v_approved_ideas a WHERE a.idea_id = i.id) THEN 1 ELSE 0 END AS BIT) AS approved
        FROM ideas i LEFT JOIN profiles lp ON lp.id = i.team_leader_id
       WHERE i.id = @ideaId`,
@@ -254,6 +259,13 @@ export async function fetchIdeaDetail(ideaId: string): Promise<IdeaFullDetail | 
     support_requests: supportRequests,
     mentor_preferences: mentorPrefs.map((p) => ({ priority: p.priority, mentor_name: p.full_name ?? 'Unknown' })),
     review: review ? { id: review.id, status: review.status, reviewer_name: review.reviewer_name ?? null } : null,
+    screening_presentation: idea.screening_presentation_url
+      ? {
+          url: idea.screening_presentation_url,
+          name: idea.screening_presentation_name,
+          uploaded_at: idea.screening_presentation_uploaded_at,
+        }
+      : null,
     presentation: idea.presentation_url
       ? { url: idea.presentation_url, name: idea.presentation_name, uploaded_at: idea.presentation_uploaded_at }
       : null,

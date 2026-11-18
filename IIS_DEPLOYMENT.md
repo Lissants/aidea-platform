@@ -60,7 +60,7 @@ This is password sign-in against AD, not silent single sign-on, and AD itself pr
    LDAP_URL=ldaps://dc01.corp.godrej.com:636,ldaps://dc02.corp.godrej.com:636
    LDAP_DOMAIN=CORP
    LDAP_CA_CERT_PATH=C:\aidea\certs\corp-root-ca.pem
-   ALLOWED_EMAIL_DOMAIN=godrejcp.com
+   ALLOWED_EMAIL_DOMAIN=godrejcp.com,godrejinds.com
    AD_DEVELOPER_EMAILS=christopher.gerard@godrejcp.com
    AD_ADMIN_EMAILS=setyarini@godrejcp.com,pahru.rozi@godrejcp.com,fitri.damayanti@godrejcp.com
    # Optional, once IT provides them:

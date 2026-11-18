@@ -136,7 +136,7 @@ Set these values (leave the rest as they are):
 | `MSSQL_SERVER` | `.` (already set) | The default instance on this PC. Use `.\SQLEXPRESS` if you installed a named Express instance. |
 | `MSSQL_DATABASE` | `aidea` (already set) | |
 | `SESSION_SECRET` | A random string of 48+ characters (command below) | Signs the sign-in cookie. Production mode refuses to start without it. |
-| `ALLOWED_EMAIL_DOMAIN` | `godrejcp.com` | Only emails on this domain can sign in. The demo accounts use it. Leave it empty to allow any domain. |
+| `ALLOWED_EMAIL_DOMAIN` | `godrejcp.com,godrejinds.com` | Only emails on these domains (comma-separated) can sign in. The demo accounts use godrejcp.com. Leave it empty to allow any domain. |
 | `UPLOAD_DIR` | `./uploads` (already set) | Where uploaded files are stored, relative to the project folder. |
 
 Generate the secret and paste the output into `SESSION_SECRET=`:

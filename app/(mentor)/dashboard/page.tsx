@@ -17,6 +17,7 @@ import {
 import { db } from '@/lib/db';
 import { resultColumns } from '@/components/ideas/result-columns';
 import { PresentationLink } from '@/components/ideas/presentation-link';
+import { PRESENTATION_STAGE_META } from '@/lib/ideas/presentation-stage';
 import { fetchMentorDashboard, type DashboardIdeaRow } from '@/lib/services/mentor-dashboard';
 import { formatDate } from '@/lib/utils';
 import { STATUS_META, type StatusKey } from '@/lib/constants/status';
@@ -82,11 +83,25 @@ export default async function MentorDashboardPage(props: {
     { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.workflow_status} /> },
     ...resultColumns<DashboardIdeaRow>(),
     {
+      key: 'screening_presentation',
+      header: PRESENTATION_STAGE_META.screening.label,
+      cell: (r) =>
+        r.screening_presentation_url ? (
+          <PresentationLink
+            url={r.screening_presentation_url}
+            name={r.screening_presentation_name}
+            fallback={PRESENTATION_STAGE_META.screening.label}
+          />
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
+    },
+    {
       key: 'presentation',
-      header: 'Presentation',
+      header: PRESENTATION_STAGE_META.final.label,
       cell: (r) =>
         r.presentation_url ? (
-          <PresentationLink url={r.presentation_url} name={r.presentation_name} />
+          <PresentationLink url={r.presentation_url} name={r.presentation_name} fallback={PRESENTATION_STAGE_META.final.label} />
         ) : (
           <span className="text-muted-foreground">-</span>
         ),

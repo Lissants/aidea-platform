@@ -12,6 +12,7 @@ import { resultColumns } from '@/components/ideas/result-columns';
 import { CommitIdeaPanel } from '@/components/ideas/commit-idea-panel';
 import { PresentationUpload } from '@/components/ideas/presentation-upload';
 import { PresentationLink } from '@/components/ideas/presentation-link';
+import { PRESENTATION_STAGE_META, type PresentationStage } from '@/lib/ideas/presentation-stage';
 import { AttentionFlag } from '@/components/ui/attention-flag';
 import { fetchMyMembershipConflicts } from '@/lib/services/team-membership';
 import { db } from '@/lib/db';
@@ -46,6 +47,33 @@ export default async function MyIdeasPage() {
   const canContinue = (row: MyIdeaRow) => submissionOpen && isOwnDraft(row);
   // Drafts the deadline caught; "not open yet" never shows this note.
   const missedDeadline = (row: MyIdeaRow) => !!program && windowState === 'closed' && row.status === 'draft';
+
+  // Screening deck opens at a published screening Pass, final deck at Build.
+  // Only the team can upload (a creator who left the team just sees the file).
+  function presentationColumn(stage: PresentationStage): ResponsiveTableColumn<MyIdeaRow> {
+    const meta = PRESENTATION_STAGE_META[stage];
+    return {
+      key: `${stage}_presentation`,
+      header: meta.label,
+      cell: (row) => {
+        const url = stage === 'screening' ? row.screening_presentation_url : row.presentation_url;
+        const name = stage === 'screening' ? row.screening_presentation_name : row.presentation_name;
+        if (row.my_role === 'creator') {
+          return url ? <PresentationLink url={url} name={name} fallback={meta.label} /> : <span className="text-muted-foreground">-</span>;
+        }
+        return (
+          <PresentationUpload
+            ideaId={row.id}
+            ideaTitle={row.idea_title}
+            stage={stage}
+            enabled={stage === 'screening' ? row.screening === 'pass_to_qualifier' : row.qualifier === 'build'}
+            url={url}
+            name={name}
+          />
+        );
+      },
+    };
+  }
 
   const columns: ResponsiveTableColumn<MyIdeaRow>[] = [
     {
@@ -90,27 +118,8 @@ export default async function MyIdeasPage() {
       ),
     },
     ...resultColumns<MyIdeaRow>((row) => row.status !== 'submitted'),
-    {
-      key: 'presentation',
-      header: 'Presentation',
-      // Only the team can upload (a creator who left the team just sees the file).
-      cell: (row) =>
-        row.my_role === 'creator' ? (
-          row.presentation_url ? (
-            <PresentationLink url={row.presentation_url} name={row.presentation_name} />
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )
-        ) : (
-          <PresentationUpload
-            ideaId={row.id}
-            ideaTitle={row.idea_title}
-            enabled={row.qualifier === 'build'}
-            url={row.presentation_url}
-            name={row.presentation_name}
-          />
-        ),
-    },
+    presentationColumn('screening'),
+    presentationColumn('final'),
     { key: 'updated_at', header: 'Last updated', mobile: 'hidden', cell: (row) => formatDate(row.updated_at) },
   ];
 

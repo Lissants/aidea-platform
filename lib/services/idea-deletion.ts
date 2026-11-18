@@ -37,8 +37,9 @@ export async function deleteIdeas(ideaIds: string[]) {
         team_name: string;
         status: string;
         presentation_url: string | null;
+        screening_presentation_url: string | null;
       }>(
-        `SELECT i.id, i.program_id, i.idea_title, i.team_name, i.status, i.presentation_url
+        `SELECT i.id, i.program_id, i.idea_title, i.team_name, i.status, i.presentation_url, i.screening_presentation_url
            FROM ideas i
           WHERE i.id IN (${inList})`,
         params
@@ -55,6 +56,7 @@ export async function deleteIdeas(ideaIds: string[]) {
 
   for (const idea of ideas) {
     await removeByUrl(idea.presentation_url);
+    await removeByUrl(idea.screening_presentation_url);
     await logAudit({
       programId: idea.program_id,
       entityType: 'idea',

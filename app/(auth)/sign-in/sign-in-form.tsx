@@ -81,7 +81,7 @@ export function SignInForm({
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
-          placeholder="you@godrejcp.com"
+          placeholder="you@godrejcp.com or you@godrejinds.com"
           {...passwordForm.register('email')}
         />
       </div>

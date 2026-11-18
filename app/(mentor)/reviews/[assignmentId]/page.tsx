@@ -114,6 +114,13 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ a
                 priority: p.priority,
                 mentor_name: p.full_name ?? 'Unknown',
               })),
+              screening_presentation: idea.screening_presentation_url
+                ? {
+                    url: idea.screening_presentation_url,
+                    name: idea.screening_presentation_name,
+                    uploaded_at: idea.screening_presentation_uploaded_at,
+                  }
+                : null,
               presentation: idea.presentation_url
                 ? { url: idea.presentation_url, name: idea.presentation_name, uploaded_at: idea.presentation_uploaded_at }
                 : null,

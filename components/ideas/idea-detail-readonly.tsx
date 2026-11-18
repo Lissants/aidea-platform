@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { PresentationLink } from '@/components/ideas/presentation-link';
 import { impactTypeLabel } from '@/lib/constants/impact';
 import { formatDate } from '@/lib/utils';
+import { PRESENTATION_STAGE_META } from '@/lib/ideas/presentation-stage';
 
 interface IdeaDetailData {
   idea_title: string;
@@ -16,8 +17,26 @@ interface IdeaDetailData {
   impacts: { impact_kind: string; impact_type: string; explanation: string | null; measurable_result: string | null }[];
   support_requests: { support_area: string; details: string | null; reason?: string | null; estimate: string | null }[];
   mentor_preferences: { priority: number; mentor_name: string }[];
-  /** Team-uploaded deck (Build ideas); omitted or null = none yet. */
-  presentation?: { url: string; name: string | null; uploaded_at: string | null } | null;
+  /** Team-uploaded deck after screening Pass; omitted or null = none yet. */
+  screening_presentation?: UploadedPresentation | null;
+  /** Team-uploaded final deck (Build ideas); omitted or null = none yet. */
+  presentation?: UploadedPresentation | null;
+}
+
+type UploadedPresentation = { url: string; name: string | null; uploaded_at: string | null };
+
+function PresentationCard({ title, file }: { title: string; file: UploadedPresentation }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-1 text-sm">
+        <PresentationLink url={file.url} name={file.name} fallback={title} />
+        {file.uploaded_at && <p className="text-xs text-muted-foreground">Uploaded {formatDate(file.uploaded_at)}</p>}
+      </CardContent>
+    </Card>
+  );
 }
 
 const SUPPORT_AREA_LABEL: Record<string, string> = {
@@ -66,19 +85,10 @@ export function IdeaDetailReadonly({ idea }: { idea: IdeaDetailData }) {
         </CardContent>
       </Card>
 
-      {idea.presentation && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Presentation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            <PresentationLink url={idea.presentation.url} name={idea.presentation.name} />
-            {idea.presentation.uploaded_at && (
-              <p className="text-xs text-muted-foreground">Uploaded {formatDate(idea.presentation.uploaded_at)}</p>
-            )}
-          </CardContent>
-        </Card>
+      {idea.screening_presentation && (
+        <PresentationCard title={PRESENTATION_STAGE_META.screening.label} file={idea.screening_presentation} />
       )}
+      {idea.presentation && <PresentationCard title={PRESENTATION_STAGE_META.final.label} file={idea.presentation} />}
 
       <Card>
         <CardHeader>

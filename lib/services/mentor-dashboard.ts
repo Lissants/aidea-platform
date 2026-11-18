@@ -17,6 +17,8 @@ export interface DashboardIdeaRow extends PublishedResults {
   reviewer_name: string | null;
   presentation_url: string | null;
   presentation_name: string | null;
+  screening_presentation_url: string | null;
+  screening_presentation_name: string | null;
 }
 
 interface DashboardFilters {
@@ -80,8 +82,11 @@ export async function fetchMentorDashboard(programId: string, filters: Dashboard
       qualifier_published: boolean | null;
       presentation_url: string | null;
       presentation_name: string | null;
+      screening_presentation_url: string | null;
+      screening_presentation_name: string | null;
     } & PublishedResults>(
       `SELECT i.id, i.idea_title, i.team_name, i.submitted_at, i.presentation_url, i.presentation_name,
+              i.screening_presentation_url, i.screening_presentation_name,
               ra.id AS assignment_id, ra.status AS assignment_status,
               rv.status AS review_status,
               sd.id AS screening_id, sd.published AS screening_published,
@@ -156,6 +161,8 @@ export async function fetchMentorDashboard(programId: string, filters: Dashboard
       mentor_name: idea.mentor_name ?? null,
       presentation_url: idea.presentation_url,
       presentation_name: idea.presentation_name,
+      screening_presentation_url: idea.screening_presentation_url,
+      screening_presentation_name: idea.screening_presentation_name,
     };
   });
 

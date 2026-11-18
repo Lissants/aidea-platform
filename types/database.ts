@@ -155,11 +155,16 @@ export interface Idea {
   created_at: string;
   updated_at: string;
   created_by: string;
-  /** Uploaded presentation (Build ideas only) — /api/files/idea-presentations/... */
+  /** Uploaded final presentation (Build ideas only) — /api/files/idea-presentations/... */
   presentation_url: string | null;
   presentation_name: string | null;
   presentation_uploaded_at: string | null;
   presentation_uploaded_by: string | null;
+  /** Uploaded screening presentation (screening Pass ideas only) — /api/files/idea-presentations/... */
+  screening_presentation_url: string | null;
+  screening_presentation_name: string | null;
+  screening_presentation_uploaded_at: string | null;
+  screening_presentation_uploaded_by: string | null;
 }
 
 /** My Ideas row: published-only results; null means N/A (or not yet published). */

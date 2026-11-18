@@ -78,7 +78,7 @@ Required values in `.env`:
 | `MSSQL_USER`, `MSSQL_PASSWORD` | The `aidea_app` login for `web`. |
 | `MSSQL_ENCRYPT`, `MSSQL_TRUST_CERT` | Both default `true`. Set `MSSQL_TRUST_CERT=false` once SQL Server has a certificate the container trusts. |
 | `SESSION_SECRET` | 32+ random characters. The app refuses to start in production without it. Rotating it signs everyone out. |
-| `ALLOWED_EMAIL_DOMAIN` | e.g. `godrejcp.com` — applies to AD and SSO sign-in. |
+| `ALLOWED_EMAIL_DOMAIN` | e.g. `godrejcp.com,godrejinds.com` (comma-separated) — applies to AD and SSO sign-in. |
 | `LDAP_URL`, `LDAP_DOMAIN`, `LDAP_CA_CERT_PATH` (+ optional `LDAP_BASE_DN`, `LDAP_BIND_DN`, `LDAP_BIND_PASSWORD`) | Active Directory sign-in over LDAPS, the only sign-in in production. Without `LDAP_URL` nobody can sign in. See IIS_DEPLOYMENT.md. |
 | `AD_DEVELOPER_EMAILS`, `AD_ADMIN_EMAILS` | Emails put on Developer / Admin at every sign-in. Everyone else starts as User. |
 | `MICROSOFT_TENANT_ID` / `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Optional Entra ID SSO (all three, or none). First-time SSO users start as User. `PASSWORD_SIGNIN_ENABLED=false` hides the password form once SSO works. |
@@ -104,7 +104,7 @@ docker run -d --name aidea-platform -p 3000:3000 \
   -e MSSQL_USER="aidea_app" \
   -e MSSQL_PASSWORD="..." \
   -e SESSION_SECRET="..." \
-  -e ALLOWED_EMAIL_DOMAIN="godrejcp.com" \
+  -e ALLOWED_EMAIL_DOMAIN="godrejcp.com,godrejinds.com" \
   -e CRON_SECRET="..." \
   aidea-platform:latest
 ```

@@ -1,7 +1,7 @@
 import { FileText } from 'lucide-react';
 
 /** Link to an idea's uploaded presentation (PDF opens inline, .pptx downloads). */
-export function PresentationLink({ url, name }: { url: string; name: string | null }) {
+export function PresentationLink({ url, name, fallback = 'Presentation' }: { url: string; name: string | null; fallback?: string }) {
   return (
     <a
       href={url}
@@ -10,7 +10,7 @@ export function PresentationLink({ url, name }: { url: string; name: string | nu
       className="focus-ring inline-flex max-w-full items-center gap-1.5 text-sm underline underline-offset-4 hover:text-foreground"
     >
       <FileText className="h-4 w-4 shrink-0" aria-hidden />
-      <span className="truncate">{name || 'Presentation'}</span>
+      <span className="truncate">{name || fallback}</span>
     </a>
   );
 }

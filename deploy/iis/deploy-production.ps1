@@ -276,7 +276,10 @@ if ($settings['LDAP_CA_CERT_PATH']) {
 } else {
   Add-Note 'LDAP_CA_CERT_PATH is empty: domain controller certificates from the corporate CA will not be trusted.'
 }
-if (-not $settings['ALLOWED_EMAIL_DOMAIN']) { $errors.Add('ALLOWED_EMAIL_DOMAIN is empty (e.g. godrejcp.com).') }
+if (-not $settings['ALLOWED_EMAIL_DOMAIN']) { $errors.Add('ALLOWED_EMAIL_DOMAIN is empty (e.g. godrejcp.com,godrejinds.com).') }
+elseif (@("$($settings['ALLOWED_EMAIL_DOMAIN'])" -split ',' | ForEach-Object { $_.Trim().TrimStart('@').ToLower() }) -notcontains 'godrejinds.com') {
+  Add-Note "ALLOWED_EMAIL_DOMAIN is '$($settings['ALLOWED_EMAIL_DOMAIN'])': @godrejinds.com staff cannot sign in. Use godrejcp.com,godrejinds.com to let them in."
+}
 if (-not $settings['AD_ADMIN_EMAILS']) { Add-Note 'AD_ADMIN_EMAILS is empty: nobody will be an Admin.' }
 if ($settings['SESSION_COOKIE_SECURE'] -eq 'false') { $errors.Add('Remove SESSION_COOKIE_SECURE=false: production cookies must be Secure.') }
 foreach ($devOnly in 'DEMO_PASSWORD', 'DEV_ALLOWED_ORIGINS') {
