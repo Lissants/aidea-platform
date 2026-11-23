@@ -2,8 +2,9 @@
  * Team membership rules (db/migrations/0009_team_membership.sql) against the
  * real aidea_test database:
  *  - before approval a person may lead / be a member of several ideas;
- *  - once 2+ of their ideas pass screening (published) they commit to one
- *    and are dropped from the others (leaving as leader vacates the slot);
+ *  - once 2+ of their ideas are marked Build (screening Pass and qualifier
+ *    Build both published, migration 0018) they commit to one and are
+ *    dropped from the others (leaving as leader vacates the slot);
  *  - admins remove members from submitted ideas and assign replacements /
  *    new leaders, with an eligibility check that can be overridden.
  *
@@ -87,6 +88,26 @@ async function screen(ideaIds: string[], decision: 'pass_to_qualifier' | 'not_pa
   }
 }
 
+/** Records finalized qualifier Build assessments and (by default) publishes them. */
+async function build(ideaIds: string[], publish = true) {
+  for (const idea_id of ideaIds) {
+    await db.execute(
+      `INSERT INTO qualifier_assessments (idea_id, final_score, overall_comment, build_decision, status, finalized_at)
+       VALUES (@idea_id, 80, N'Strong business case.', 'build', 'finalized', SYSDATETIMEOFFSET())`,
+      { idea_id }
+    );
+  }
+  if (publish) {
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'qualifier_assessment', actor_id: SEED.admin1 });
+  }
+}
+
+/** Approved = screening Pass and qualifier Build, both published: the point where commits start. */
+async function approve(ideaIds: string[]) {
+  await screen(ideaIds);
+  await build(ideaIds);
+}
+
 const team = async (ideaId: string) => {
   const idea = await db.queryOne<{ team_leader_id: string | null }>('SELECT team_leader_id FROM ideas WHERE id = @ideaId', {
     ideaId,
@@ -110,17 +131,17 @@ beforeEach(() => {
 });
 
 describe('S1: Team Leader A submits 1 idea with members B, C, D, E', () => {
-  it('submits, and after passing screening nobody has a conflict', async () => {
+  it('submits, and after Build nobody has a conflict', async () => {
     const p = await people('A', 'B', 'C', 'D', 'E');
     const idea = await submit('S1 idea', p.A, [p.B, p.C, p.D, p.E]);
     expect(await team(idea)).toEqual({ leader: p.A, members: [p.B, p.C, p.D, p.E] });
-    await screen([idea]);
+    await approve([idea]);
     for (const id of Object.values(p)) expect(await conflictsOf(id)).toEqual([]);
   });
 });
 
 describe('S2: Team Leader A submits 2 ideas, both with members B, C, D, E', () => {
-  it('both submit; once both pass everyone must choose; commits drop people from the other idea', async () => {
+  it('both submit; once both are marked Build everyone must choose; commits drop people from the other idea', async () => {
     const p = await people('A', 'B', 'C', 'D', 'E');
     const idea1 = await submit('S2 idea one', p.A, [p.B, p.C, p.D, p.E]);
     const idea2 = await submit('S2 idea two', p.A, [p.B, p.C, p.D, p.E]);
@@ -128,7 +149,11 @@ describe('S2: Team Leader A submits 2 ideas, both with members B, C, D, E', () =
     // Before approval: no conflict for anyone.
     expect(await conflictsOf(p.A)).toEqual([]);
 
+    // Passing screening alone is not enough.
     await screen([idea1, idea2]);
+    expect(await conflictsOf(p.A)).toEqual([]);
+
+    await build([idea1, idea2]);
     for (const id of Object.values(p)) expect(await conflictsOf(id)).toEqual([idea1, idea2].sort());
 
     as(p.A);
@@ -162,7 +187,7 @@ describe('S3: Team Leader A submits 2 ideas: B, C, D, E and V, W, X, Y', () => {
     const p = await people('A', 'B', 'C', 'D', 'E', 'V', 'W', 'X', 'Y');
     const idea1 = await submit('S3 idea one', p.A, [p.B, p.C, p.D, p.E]);
     const idea2 = await submit('S3 idea two', p.A, [p.V, p.W, p.X, p.Y]);
-    await screen([idea1, idea2]);
+    await approve([idea1, idea2]);
 
     expect(await conflictsOf(p.A)).toEqual([idea1, idea2].sort());
     for (const id of [p.B, p.V, p.Y]) expect(await conflictsOf(id)).toEqual([]);
@@ -208,7 +233,7 @@ describe('edge cases: idea submission', () => {
   it('E8: a person committed to an approved idea cannot be put on a new idea (leader, member or draft)', async () => {
     const p = await people('A', 'B', 'C');
     const idea = await submit('E8 approved', p.A, [p.B]);
-    await screen([idea]);
+    await approve([idea]);
 
     const asMember = await trySubmit('E8 new', p.C, [p.B]);
     expect('error' in asMember && asMember.error).toMatch(/already committed/i);
@@ -227,7 +252,7 @@ describe('edge cases: committing', () => {
     const i1 = await submit('E3 one', p.A, [p.B]);
     const i2 = await submit('E3 two', p.C, [p.A]);
     const i3 = await submit('E3 three', p.D, [p.A]);
-    await screen([i1, i2, i3]);
+    await approve([i1, i2, i3]);
     as(p.A);
     expect(await commitToIdea(i2)).toMatchObject({ ok: true, leftCount: 2 });
     expect((await team(i1)).leader).toBeNull();
@@ -235,43 +260,50 @@ describe('edge cases: committing', () => {
     expect((await team(i2)).members).toEqual([p.A]);
   });
 
-  it('E4: only one idea passes (the other Not Pass) -> no conflict, nobody dropped', async () => {
+  it('E4: only one idea is Build (the other Not Pass) -> no conflict, nobody dropped', async () => {
     const p = await people('A', 'B');
     const pass = await submit('E4 pass', p.A, [p.B]);
     const fail = await submit('E4 fail', p.A, [p.B]);
-    await screen([pass]);
+    await approve([pass]);
     await screen([fail], 'not_pass');
     expect(await conflictsOf(p.A)).toEqual([]);
     expect(await team(fail)).toEqual({ leader: p.A, members: [p.B] });
   });
 
-  it('E5: decided but unpublished screening is not an approval yet', async () => {
+  it('E5: a published Pass, or an unpublished Build, is not an approval yet', async () => {
     const p = await people('A', 'B');
     const i1 = await submit('E5 one', p.A, [p.B]);
     const i2 = await submit('E5 two', p.A, [p.B]);
     await screen([i1, i2], 'pass_to_qualifier', false);
     expect(await conflictsOf(p.A)).toEqual([]);
-    // Publish so later tests' publishes don't sweep these in unexpectedly.
     await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'screening_decision', actor_id: SEED.admin1 });
+    expect(await conflictsOf(p.A)).toEqual([]);
+    as(p.A);
+    expect(await commitToIdea(i1)).toMatchObject({ error: expect.stringMatching(/marked Build/i) });
+    await build([i1, i2], false);
+    expect(await conflictsOf(p.A)).toEqual([]);
+    // Publish so later tests' publishes don't sweep these in unexpectedly.
+    await db.callProc('usp_publish_batch', { program_id: SEED.program, entity_type: 'qualifier_assessment', actor_id: SEED.admin1 });
     expect(await conflictsOf(p.A)).toEqual([i1, i2].sort());
   });
 
-  it("E6: can't commit to an idea you are not on, or one that hasn't passed", async () => {
+  it("E6: can't commit to an idea you are not on, or one that isn't Build yet", async () => {
     const p = await people('A', 'B', 'C', 'D');
     const mine = await submit('E6 mine', p.A, [p.B]);
     const other = await submit('E6 other', p.C, [p.D]);
     const notPassed = await submit('E6 not passed', p.A, [p.B]);
-    await screen([mine, other]);
+    await approve([mine, other]);
+    await screen([notPassed]); // Pass only, no Build yet
     as(p.A);
     expect(await commitToIdea(other)).toMatchObject({ error: expect.stringMatching(/not on this idea/i) });
-    expect(await commitToIdea(notPassed)).toMatchObject({ error: expect.stringMatching(/passed screening/i) });
+    expect(await commitToIdea(notPassed)).toMatchObject({ error: expect.stringMatching(/marked Build/i) });
   });
 
   it('E7: committing again is a no-op; two concurrent commits leave a consistent state', async () => {
     const p = await people('A', 'B');
     const i1 = await submit('E7 one', p.A, [p.B]);
     const i2 = await submit('E7 two', p.A, [p.B]);
-    await screen([i1, i2]);
+    await approve([i1, i2]);
 
     as(p.B);
     const results = await Promise.all([commitToIdea(i1), commitToIdea(i2)]);

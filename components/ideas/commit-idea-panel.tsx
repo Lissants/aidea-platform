@@ -10,8 +10,8 @@ import { ConfirmDialog } from '@/components/layout/confirm-dialog';
 import { commitToIdea, type ConflictIdea } from '@/lib/services/team-membership';
 
 /**
- * Shown when the participant is on 2+ ideas that passed screening in the same
- * program. They must pick one; committing drops them from the others, so the
+ * Shown when the participant is on 2+ ideas marked Build (screening Pass and
+ * qualifier Build both published) in the same program. They must pick one; committing drops them from the others, so the
  * confirmation spells out exactly what they leave and needs the team name typed.
  */
 export function CommitIdeaPanel({ conflicts }: { conflicts: ConflictIdea[] }) {
@@ -42,7 +42,7 @@ export function CommitIdeaPanel({ conflicts }: { conflicts: ConflictIdea[] }) {
       <AlertTitle>Choose the idea you will commit to</AlertTitle>
       <AlertDescription>
         <p className="mb-3">
-          You are on {conflicts.length} ideas that passed screening. From this stage each person can be on only one
+          You are on {conflicts.length} ideas that were marked Build. From this stage each person can be on only one
           team. Pick the idea you will continue with; you will be removed from the others.
         </p>
         <div className="space-y-2">

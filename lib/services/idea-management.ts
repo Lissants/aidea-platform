@@ -17,7 +17,7 @@ export interface IdeaListRow {
   created_at: string;
   /** Submitted idea whose team leader slot is empty (leader left or was removed). */
   leader_vacant: boolean;
-  /** Approved idea with someone on the team still on another approved idea (hasn't committed yet). */
+  /** Build idea (v_approved_ideas) with someone on the team still on another approved idea (hasn't committed yet). */
   membership_conflict: boolean;
 }
 

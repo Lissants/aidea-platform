@@ -7,10 +7,10 @@ import { isAdmin } from '@/lib/permissions';
 import { adminAddTeamMemberSchema, adminRemoveTeamMemberSchema } from '@/lib/validation/schemas';
 
 /**
- * Team membership after approval (db/migrations/0009_team_membership.sql).
- * Before screening is published a person may be on any number of ideas;
- * once 2+ of their ideas in a program pass screening they must commit to
- * one. Admins handle later team changes (resignations, leave) by removing a
+ * Team membership after approval (db/migrations/0009_team_membership.sql,
+ * 0018_commit_at_build.sql). Until the qualifier Build is published a person
+ * may be on any number of ideas; once 2+ of their ideas in a program are
+ * marked Build they must commit to one. Admins handle later team changes (resignations, leave) by removing a
  * member and, after agreeing it offline with the team, assigning a
  * replacement. The procedures re-check every rule and write the audit rows.
  */

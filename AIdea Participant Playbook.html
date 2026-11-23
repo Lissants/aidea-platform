@@ -252,8 +252,8 @@ footer { border-top: 1px solid var(--rule); padding-top: 20px; display: grid; ga
       <ol class="strip">
         <li class="is-you"><a href="#s1"><span class="n">1</span><span class="t stack"><span class="en">Submit idea</span><span class="id">Kirim ide</span></span><span class="role you"><svg><use href="#i-user"/></svg><span class="en">You</span><span class="id">Anda</span></span></a></li>
         <li><a href="#s2"><span class="n">2</span><span class="t stack"><span class="en">Mentor review</span><span class="id">Review mentor</span></span><span class="role"><svg><use href="#i-mentor"/></svg>Mentor</span></a></li>
-        <li class="is-you"><a href="#s3"><span class="n">3</span><span class="t stack"><span class="en">Screening result</span><span class="id">Hasil seleksi</span></span><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program</span><span class="id">Program</span></span></a></li>
-        <li><a href="#s4"><span class="n">4</span><span class="t stack"><span class="en">Qualifier result</span><span class="id">Hasil kualifikasi</span></span><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program</span><span class="id">Program</span></span></a></li>
+        <li><a href="#s3"><span class="n">3</span><span class="t stack"><span class="en">Screening result</span><span class="id">Hasil seleksi</span></span><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program</span><span class="id">Program</span></span></a></li>
+        <li class="is-you"><a href="#s4"><span class="n">4</span><span class="t stack"><span class="en">Qualifier result</span><span class="id">Hasil kualifikasi</span></span><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program</span><span class="id">Program</span></span></a></li>
         <li><a href="#s5"><span class="n">5</span><span class="t stack"><span class="en">Project mentor</span><span class="id">Mentor proyek</span></span><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program</span><span class="id">Program</span></span></a></li>
         <li class="is-you"><a href="#s6"><span class="n">6</span><span class="t stack"><span class="en">Final presentation</span><span class="id">Presentasi final</span></span><span class="role you"><svg><use href="#i-user"/></svg><span class="en">You</span><span class="id">Anda</span></span></a></li>
         <li class="is-you"><a href="#s7"><span class="n">7</span><span class="t">Voting</span><span class="role"><svg><use href="#i-all"/></svg><span class="en">Everyone</span><span class="id">Semua</span></span></a></li>
@@ -342,11 +342,11 @@ footer { border-top: 1px solid var(--rule); padding-top: 20px; display: grid; ga
       </li>
 
       <!-- 3 -->
-      <li class="stage is-you" id="s3">
+      <li class="stage" id="s3">
         <div class="stage-head">
           <span class="stage-num">3</span>
           <div class="stage-title"><h3 class="stack"><span class="en">Screening result</span><span class="id">Hasil seleksi awal (Screening)</span></h3></div>
-          <div class="roles"><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program team</span><span class="id">Tim program</span></span><span class="role you"><svg><use href="#i-user"/></svg><span class="en">You, if on 2+ ideas</span><span class="id">Anda, jika di 2+ ide</span></span></div>
+          <div class="roles"><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program team</span><span class="id">Tim program</span></span></div>
         </div>
         <p class="where"><span class="en">Where:</span><span class="id">Menu:</span> <code>My Ideas › Screening</code> · <code>Notifications</code></p>
         <div class="cols">
@@ -354,25 +354,20 @@ footer { border-top: 1px solid var(--rule); padding-top: 20px; display: grid; ga
             <p class="label"><span class="en">What happens</span><span class="id">Yang terjadi</span></p>
             <ol class="steps">
               <li class="by-other stack"><span class="en"><span class="who">Program team</span>Decides Pass or Not pass for every reviewed idea, then publishes all results together.</span><span class="id"><span class="who">Tim program</span>Memutuskan Pass atau Not pass untuk semua ide yang sudah direview, lalu mempublikasikan semua hasilnya bersamaan.</span></li>
-              <li class="stack"><span class="en"><span class="who">You</span>If two or more of your ideas pass, choose the one you will continue with. On My Ideas, click <span class="ui">Commit to this idea</span>, type the team name and confirm with <span class="ui">Commit and leave the other ideas</span>.</span><span class="id"><span class="who">Anda</span>Jika dua ide atau lebih yang Anda ikuti lolos, pilih satu yang akan dilanjutkan. Di My Ideas, klik <span class="ui">Commit to this idea</span>, ketik nama tim, lalu konfirmasi dengan <span class="ui">Commit and leave the other ideas</span>.</span></li>
             </ol>
           </div>
           <div>
             <div class="box sees"><p class="label"><svg><use href="#i-eye"/></svg><span class="en">You see, after publishing</span><span class="id">Yang Anda lihat, setelah publish</span></p><p class="stack"><span class="en">Pass or Not pass in the Screening column. A Pass also sends "Your idea passed screening". Not pass sends no notification.</span><span class="id">Pass atau Not pass di kolom Screening. Jika Pass, Anda juga menerima "Your idea passed screening". Not pass tidak mengirim notifikasi.</span></p></div>
-            <div class="box warn"><p class="label"><svg><use href="#i-warn"/></svg><span class="en">Watch out</span><span class="id">Perhatikan</span></p><ul>
-              <li class="stack"><span class="en">Committing removes you from your other ideas and cannot be undone by you. Only an admin can add you back.</span><span class="id">Commit mengeluarkan Anda dari ide lain dan tidak bisa Anda batalkan sendiri. Hanya admin yang bisa menambahkan Anda kembali.</span></li>
-              <li class="stack"><span class="en">The teams you leave get "A team member left your idea".</span><span class="id">Tim yang Anda tinggalkan menerima "A team member left your idea".</span></li>
-            </ul></div>
           </div>
         </div>
       </li>
 
       <!-- 4 -->
-      <li class="stage" id="s4">
+      <li class="stage is-you" id="s4">
         <div class="stage-head">
           <span class="stage-num">4</span>
           <div class="stage-title"><h3 class="stack"><span class="en">Qualifier result</span><span class="id">Hasil kualifikasi (Qualifier)</span></h3></div>
-          <div class="roles"><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program team</span><span class="id">Tim program</span></span></div>
+          <div class="roles"><span class="role"><svg><use href="#i-admin"/></svg><span class="en">Program team</span><span class="id">Tim program</span></span><span class="role you"><svg><use href="#i-user"/></svg><span class="en">You, if on 2+ ideas</span><span class="id">Anda, jika di 2+ ide</span></span></div>
         </div>
         <p class="where"><span class="en">Where:</span><span class="id">Menu:</span> <code>My Ideas › Qualifier</code> · <code>Notifications</code></p>
         <p class="callout stack"><span class="en">A published Build is the big step: it unlocks your presentation upload and puts your idea on the Favorite Project ballot.</span><span class="id">Build yang sudah dipublikasikan adalah langkah besar: unggah presentasi terbuka dan ide Anda masuk daftar voting Favorite Project.</span></p>
@@ -381,11 +376,15 @@ footer { border-top: 1px solid var(--rule); padding-top: 20px; display: grid; ga
             <p class="label"><span class="en">What happens</span><span class="id">Yang terjadi</span></p>
             <ol class="steps">
               <li class="by-other stack"><span class="en"><span class="who">Program team</span>Assesses each idea that passed screening, decides Build or No Build, and publishes the results together.</span><span class="id"><span class="who">Tim program</span>Menilai setiap ide yang lolos screening, memutuskan Build atau No Build, lalu mempublikasikan hasilnya bersamaan.</span></li>
-              <li class="stack"><span class="en"><span class="who">You</span>Nothing to do until the result is published.</span><span class="id"><span class="who">Anda</span>Tidak ada yang perlu dilakukan sampai hasilnya dipublikasikan.</span></li>
+              <li class="stack"><span class="en"><span class="who">You</span>If two or more of your ideas are marked Build, choose the one you will continue with. On My Ideas, click <span class="ui">Commit to this idea</span>, type the team name and confirm with <span class="ui">Commit and leave the other ideas</span>.</span><span class="id"><span class="who">Anda</span>Jika dua ide atau lebih yang Anda ikuti mendapat Build, pilih satu yang akan dilanjutkan. Di My Ideas, klik <span class="ui">Commit to this idea</span>, ketik nama tim, lalu konfirmasi dengan <span class="ui">Commit and leave the other ideas</span>.</span></li>
             </ol>
           </div>
           <div>
             <div class="box sees"><p class="label"><svg><use href="#i-eye"/></svg><span class="en">You see, after publishing</span><span class="id">Yang Anda lihat, setelah publish</span></p><p class="stack"><span class="en">Build or Not build in the Qualifier column. Build also sends "Your idea was selected to Build". Not build sends no notification.</span><span class="id">Build atau Not build di kolom Qualifier. Jika Build, Anda juga menerima "Your idea was selected to Build". Not build tidak mengirim notifikasi.</span></p></div>
+            <div class="box warn"><p class="label"><svg><use href="#i-warn"/></svg><span class="en">Watch out</span><span class="id">Perhatikan</span></p><ul>
+              <li class="stack"><span class="en">Committing removes you from your other ideas and cannot be undone by you. Only an admin can add you back.</span><span class="id">Commit mengeluarkan Anda dari ide lain dan tidak bisa Anda batalkan sendiri. Hanya admin yang bisa menambahkan Anda kembali.</span></li>
+              <li class="stack"><span class="en">The teams you leave get "A team member left your idea".</span><span class="id">Tim yang Anda tinggalkan menerima "A team member left your idea".</span></li>
+            </ul></div>
           </div>
         </div>
       </li>
@@ -501,8 +500,8 @@ footer { border-top: 1px solid var(--rule); padding-top: 20px; display: grid; ga
           <tr><td><strong>Submitted</strong></td><td>Status</td><td class="stack"><span class="en">Locked and with the mentor or program team.</span><span class="id">Terkunci dan sedang di mentor atau tim program.</span></td><td class="stack"><span class="en">Wait for results.</span><span class="id">Tunggu hasilnya.</span></td></tr>
           <tr><td><strong>Leader vacant</strong></td><td>Status</td><td class="stack"><span class="en">The team leader has left the idea.</span><span class="id">Ketua tim sudah keluar dari ide ini.</span></td><td class="stack"><span class="en">Ask an admin to set a new leader.</span><span class="id">Minta admin menunjuk ketua baru.</span></td></tr>
           <tr><td><strong>N/A</strong></td><td><span class="en">Any result</span><span class="id">Semua hasil</span></td><td class="stack"><span class="en">No published result for this stage yet, or the stage doesn't apply.</span><span class="id">Belum ada hasil yang dipublikasikan untuk tahap ini, atau tahap ini tidak berlaku.</span></td><td class="stack"><span class="en">Nothing.</span><span class="id">Tidak ada.</span></td></tr>
-          <tr><td><strong>Pass</strong> / <strong>Not pass</strong></td><td>Screening</td><td class="stack"><span class="en">Published screening outcome.</span><span class="id">Hasil screening yang sudah dipublikasikan.</span></td><td class="stack"><span class="en">If on 2+ passed ideas, commit to one.</span><span class="id">Jika ada di 2+ ide yang lolos, pilih satu.</span></td></tr>
-          <tr><td><strong>Build</strong> / <strong>Not build</strong></td><td>Qualifier</td><td class="stack"><span class="en">Published qualifier outcome.</span><span class="id">Hasil kualifikasi yang sudah dipublikasikan.</span></td><td class="stack"><span class="en">If Build, start your presentation.</span><span class="id">Jika Build, mulai siapkan presentasi.</span></td></tr>
+          <tr><td><strong>Pass</strong> / <strong>Not pass</strong></td><td>Screening</td><td class="stack"><span class="en">Published screening outcome.</span><span class="id">Hasil screening yang sudah dipublikasikan.</span></td><td class="stack"><span class="en">Wait for the qualifier result.</span><span class="id">Tunggu hasil kualifikasi.</span></td></tr>
+          <tr><td><strong>Build</strong> / <strong>Not build</strong></td><td>Qualifier</td><td class="stack"><span class="en">Published qualifier outcome.</span><span class="id">Hasil kualifikasi yang sudah dipublikasikan.</span></td><td class="stack"><span class="en">If Build, start your presentation. If on 2+ Build ideas, commit to one.</span><span class="id">Jika Build, mulai siapkan presentasi. Jika ada di 2+ ide Build, pilih satu.</span></td></tr>
           <tr><td><span class="en">Mentor's name</span><span class="id">Nama mentor</span></td><td>Project Mentor</td><td class="stack"><span class="en">Your project mentor for the build.</span><span class="id">Mentor proyek untuk pengembangan.</span></td><td class="stack"><span class="en">Get in touch with them.</span><span class="id">Hubungi mentor tersebut.</span></td></tr>
           <tr><td><span class="ui">Upload presentation</span></td><td>Presentation</td><td class="stack"><span class="en">Your deck can be uploaded.</span><span class="id">Deck Anda bisa diunggah.</span></td><td class="stack"><span class="en">Upload .pptx or .pdf, up to 25 MB.</span><span class="id">Unggah .pptx atau .pdf, maks. 25 MB.</span></td></tr>
         </tbody>
@@ -547,7 +546,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 20px; display: grid; ga
       </details>
       <details id="faq-several">
         <summary class="stack"><span class="en">Can I be on more than one idea?</span><span class="id">Bolehkah saya ikut di lebih dari satu ide?</span></summary>
-        <div><p class="stack"><span class="en">Yes, until screening results are published. If more than one of your ideas passes, you choose one to commit to and leave the others.</span><span class="id">Boleh, sampai hasil screening dipublikasikan. Jika lebih dari satu ide Anda lolos, Anda memilih satu dan keluar dari ide lainnya.</span></p></div>
+        <div><p class="stack"><span class="en">Yes, until qualifier results are published. If more than one of your ideas is marked Build, you choose one to commit to and leave the others.</span><span class="id">Boleh, sampai hasil kualifikasi dipublikasikan. Jika lebih dari satu ide Anda mendapat Build, Anda memilih satu dan keluar dari ide lainnya.</span></p></div>
       </details>
       <details id="faq-nothing">
         <summary class="stack"><span class="en">My idea still shows N/A. Has something gone wrong?</span><span class="id">Ide saya masih N/A. Apakah ada masalah?</span></summary>

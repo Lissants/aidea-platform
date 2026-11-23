@@ -102,7 +102,7 @@ async function writeDraft(user: SessionUser, programId: string, ideaId: string |
       }
 
       // Before approval anyone may be on several ideas; once an idea of this
-      // program has passed screening its team is committed to it alone.
+      // program is marked Build its team is committed to it alone.
       const teamIds = [
         ...(data.team_leader_id ? [data.team_leader_id] : []),
         ...(data.team_members ?? []).map((m) => m.profile_id),

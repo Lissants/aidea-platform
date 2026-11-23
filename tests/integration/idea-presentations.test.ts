@@ -158,7 +158,7 @@ describe('presentation upload slots', () => {
 
     const dup = await upload(id, pdf('renamed-deck.pdf', 'same'), 'final');
     expect(dup.status).toBe(400);
-    expect(dup.json.error).toBe('This is the same file as your screening presentation. Upload a different deck.');
+    expect(dup.json.error).toBe('This is the same file as your Qualifier Presentation. Upload a different deck.');
     expect((await slots(id))?.presentation_url).toBeNull();
 
     // Re-uploading the same file into its own slot is still allowed.

@@ -1,8 +1,9 @@
 /**
  * The two presentation slots on an idea:
- *  - screening: uploaded once the screening result is published as Pass
+ *  - screening (shown as "Qualifier Presentation"): uploaded once the
+ *    screening result is published as Pass
  *    (ideas.screening_presentation_*, db/migrations/0017)
- *  - final: uploaded once the qualifier result is published as Build
+ *  - final ("Final Presentation"): uploaded once the qualifier result is published as Build
  *    (ideas.presentation_*, db/migrations/0010)
  * Both go through app/api/ideas/[ideaId]/presentation, which refuses the
  * same file in both slots.
@@ -21,7 +22,7 @@ export const PRESENTATION_STAGE_META: Record<
   { label: string; columns: { url: string; name: string; uploadedAt: string; uploadedBy: string }; lockedHint: string; lockedError: string }
 > = {
   screening: {
-    label: 'Screening presentation',
+    label: 'Qualifier Presentation',
     columns: {
       url: 'screening_presentation_url',
       name: 'screening_presentation_name',
@@ -32,7 +33,7 @@ export const PRESENTATION_STAGE_META: Record<
     lockedError: 'Uploads open once Admin passes your idea at screening.',
   },
   final: {
-    label: 'Final presentation',
+    label: 'Final Presentation',
     columns: {
       url: 'presentation_url',
       name: 'presentation_name',
@@ -49,6 +50,6 @@ export function otherPresentationStage(stage: PresentationStage): PresentationSt
 }
 
 export function duplicatePresentationError(stage: PresentationStage) {
-  const other = PRESENTATION_STAGE_META[otherPresentationStage(stage)].label.toLowerCase();
+  const other = PRESENTATION_STAGE_META[otherPresentationStage(stage)].label;
   return `This is the same file as your ${other}. Upload a different deck.`;
 }

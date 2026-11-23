@@ -47,7 +47,7 @@ export default async function IdeaDetailPage({ params }: { params: Promise<{ ide
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge status={idea.status === 'submitted' ? 'submitted' : 'draft'} />
         {idea.approved && (
-          <StatusBadge status="screened_pass" />
+          <StatusBadge status="qualified_build" />
         )}
       </div>
 

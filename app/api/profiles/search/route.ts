@@ -11,7 +11,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * minimum columns are returned and results are capped at 10.
  *
  * With `programId`, each result also carries `committed_idea_title`: the
- * approved idea of that program the person is already on (they can't join
+ * approved (Build) idea of that program the person is already on (they can't join
  * another team), or null.
  */
 export async function GET(request: NextRequest) {

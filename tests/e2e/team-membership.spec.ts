@@ -6,7 +6,7 @@
  * and ideas directly in the database (unique emails per run), so it never
  * touches the demo accounts' ideas. Business rules themselves are covered in
  * tests/integration/team-membership.test.ts; this spec checks the screens:
- *  - participant on 2 approved ideas sees the banner; the commit dialog stays
+ *  - participant on 2 approved (Build) ideas sees the banner; the commit dialog stays
  *    disabled until the team name is typed; committing clears the banner;
  *  - admin removes a member (reason required) and adds a replacement.
  */
@@ -45,7 +45,7 @@ const createPerson = (p: Person, hash: string): SqlStep[] => [
   },
 ];
 
-/** A submitted idea led by `leader` whose screening Pass is already published. */
+/** A submitted idea led by `leader` whose screening Pass and qualifier Build are already published. */
 const createApprovedIdea = (idea: typeof ideaOne, members: Person[]): SqlStep[] => [
   {
     sql: `INSERT INTO ideas (id, program_id, team_name, team_leader_id, idea_title, problem_opportunity,
@@ -63,6 +63,12 @@ const createApprovedIdea = (idea: typeof ideaOne, members: Person[]): SqlStep[] 
           VALUES (@id, 'pass_to_qualifier', SYSDATETIMEOFFSET(), 1, SYSDATETIMEOFFSET())`,
     params: { id: idea.id },
   },
+  {
+    sql: `INSERT INTO qualifier_assessments (idea_id, final_score, overall_comment, build_decision, status, finalized_at,
+                                         published, published_at)
+          VALUES (@id, 80, N'Strong business case.', 'build', 'finalized', SYSDATETIMEOFFSET(), 1, SYSDATETIMEOFFSET())`,
+    params: { id: idea.id },
+  },
 ];
 
 test.describe.configure({ mode: 'serial' });
@@ -73,6 +79,20 @@ test.beforeAll(async () => {
     ...[leader, memberB, memberC, replacement].flatMap((p) => createPerson(p, hash)),
     ...createApprovedIdea(ideaOne, [memberB, memberC]),
     ...createApprovedIdea(ideaTwo, [memberB, memberC]),
+  ]);
+});
+
+// The ideas are Build ideas in the seeded program, so left behind they would
+// show up as voting candidates. Remove everything this run created.
+test.afterAll(() => {
+  const people = [leader, memberB, memberC, replacement].map((p) => `'${p.id}'`).join(', ');
+  const ideas = `'${ideaOne.id}', '${ideaTwo.id}'`;
+  runSql([
+    { sql: `DELETE FROM votes WHERE idea_id IN (${ideas}) OR voter_id IN (${people})` },
+    { sql: `DELETE FROM audit_logs WHERE entity_id IN (${ideas}) OR actor_id IN (${people})` },
+    { sql: `DELETE FROM notifications WHERE user_id IN (${people}) OR link IN ('/ideas/${ideaOne.id}', '/ideas/${ideaTwo.id}')` },
+    { sql: `DELETE FROM ideas WHERE id IN (${ideas})` },
+    { sql: `DELETE FROM users WHERE id IN (${people})` },
   ]);
 });
 

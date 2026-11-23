@@ -54,6 +54,7 @@ The platform moved from Supabase (Postgres + Auth + Storage) to a local Microsof
 - **Project Showcase was removed entirely.** The `/showcase` and `/results` pages went first (old notification links are retargeted to `/my-ideas`, migration `0006`), then the admin Showcase Content screen, the `showcase_projects` table, `programs.showcase_open_at` and the `showcase` program stage (migration `0013`). Voting results live at `/voting/results`.
 - **Voting candidates are the Build ideas**: an idea qualifies once its screening Pass and qualifier Build are both published, with or without a final presentation (`v_vote_candidates`, migrations `0011` and `0013`). A voting period stays hidden from voters until an admin publishes it.
 - **Stage gates are enforced server-side.** Qualifier needs a published screening Pass, and Final Presentation needs a published qualifier Build.
+- **Committing to one idea starts at Build.** A person may be on any number of ideas until the qualifier. Once 2+ of their ideas in a program have a published screening Pass and a published qualifier Build (`v_approved_ideas`, migration `0018`), they must commit to one and are dropped from the others.
 - **UI follows the GIG brand rules** (monochrome #141414 / #FFFFFF, GI Sans with an Arial fallback, left-aligned text). The reasoning and the design system are in `design-audit/`.
 - **Known follow-up:** the Project Mentor screen still lists No Build ideas.
 

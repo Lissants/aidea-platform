@@ -19,6 +19,7 @@ Later migrations (`0004`–`0015`) change the schema as follows. The diagram sho
 | `0013_remove_showcase.sql` | Drops `showcase_projects`, `programs.showcase_open_at` and the `showcase` stage. `v_vote_candidates` becomes every idea with a published Pass and a published Build. |
 | `0014_ad_object_guid.sql` | `users.ad_object_guid` (filtered unique index) links an account to its on-prem AD `objectGUID`. |
 | `0015_remove_seeded_developers.sql` | Data only: the three formerly seeded Developers (Janice Ong, Jose Siahaan, Yudha Bhakti Nugraha) become Users. Developers and Admins now come from `AD_DEVELOPER_EMAILS` / `AD_ADMIN_EMAILS`. `users.must_change_password` is no longer used. |
+| `0018_commit_at_build.sql` | `v_approved_ideas` now requires a published qualifier Build as well as the published screening Pass, so committing to one idea starts at Build. `usp_commit_to_idea` gets the matching error message. |
 
 ```mermaid
 erDiagram

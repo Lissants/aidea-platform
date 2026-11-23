@@ -25,14 +25,14 @@ describe('presentation stage metadata', () => {
   it('maps each stage to its own ideas columns', () => {
     expect(PRESENTATION_STAGE_META.screening.columns.url).toBe('screening_presentation_url');
     expect(PRESENTATION_STAGE_META.final.columns.url).toBe('presentation_url');
-    expect(PRESENTATION_STAGE_META.screening.label).toBe('Screening presentation');
-    expect(PRESENTATION_STAGE_META.final.label).toBe('Final presentation');
+    expect(PRESENTATION_STAGE_META.screening.label).toBe('Qualifier Presentation');
+    expect(PRESENTATION_STAGE_META.final.label).toBe('Final Presentation');
   });
 
   it('names the other slot in the duplicate-file error', () => {
     expect(otherPresentationStage('screening')).toBe('final');
     expect(otherPresentationStage('final')).toBe('screening');
-    expect(duplicatePresentationError('screening')).toContain('final presentation');
-    expect(duplicatePresentationError('final')).toContain('screening presentation');
+    expect(duplicatePresentationError('screening')).toContain('Final Presentation');
+    expect(duplicatePresentationError('final')).toContain('Qualifier Presentation');
   });
 });
