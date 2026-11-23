@@ -89,15 +89,21 @@ test.describe('Participant idea submission', () => {
     await expect(teamRows).toHaveCount(1);
   });
 
-  test('a submitted idea becomes read-only', async ({ page }) => {
+  test('a submitted idea opens as a read-only detail page from My Ideas', async ({ page }) => {
     // Assumes seed data (or the prior test in this run) has left at least
     // one submitted idea for this participant.
     await page.goto('/my-ideas');
-    await page.getByText('Submitted').first().click();
+    const row = page.getByRole('row').filter({ hasText: 'Submitted' }).first();
+    await row.getByRole('link').first().click();
+    await expect(page).toHaveURL(/\/my-ideas\/[0-9a-f-]{36}$/i);
+    await expect(page.getByText('Problem / opportunity')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to My Ideas' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save draft' })).toHaveCount(0);
-    await expect(page.getByRole('textbox').first()).toBeDisabled().catch(() => {
-      // Read-only may instead render as plain text rather than a disabled
-      // input, depending on the detail view used — either is acceptable.
-    });
+    await expect(page.getByRole('textbox')).toHaveCount(0);
+  });
+
+  test("another person's idea is not found", async ({ page }) => {
+    await page.goto('/my-ideas/00000000-0000-0000-0000-000000000000');
+    await expect(page.getByText('Error 404')).toBeVisible();
   });
 });

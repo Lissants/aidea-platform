@@ -7,7 +7,7 @@ import { ResponsiveTable, type ResponsiveTableColumn } from '@/components/ui/res
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDate } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth/session';
-import { fetchMyIdeas } from '@/lib/ideas/my-ideas';
+import { fetchMyIdeas, MY_ROLE_LABEL } from '@/lib/ideas/my-ideas';
 import { resultColumns } from '@/components/ideas/result-columns';
 import { CommitIdeaPanel } from '@/components/ideas/commit-idea-panel';
 import { PresentationUpload } from '@/components/ideas/presentation-upload';
@@ -18,12 +18,6 @@ import { fetchMyMembershipConflicts } from '@/lib/services/team-membership';
 import { db } from '@/lib/db';
 import { submissionWindowState } from '@/lib/program/submission-window';
 import type { MyIdeaRow, Program } from '@/types/database';
-
-const ROLE_LABEL: Record<MyIdeaRow['my_role'], string> = {
-  leader: 'Team leader',
-  member: 'Team member',
-  creator: 'Creator (not on team)',
-};
 
 export const metadata = { title: 'My Ideas' };
 
@@ -81,7 +75,15 @@ export default async function MyIdeasPage() {
       header: 'Idea',
       mobile: 'title',
       cell: (row) => {
-        const title = row.idea_title || <span className="text-muted-foreground">Untitled draft</span>;
+        // Every row opens the read-only detail page; drafts keep "Continue editing" below.
+        const title = (
+          <Link
+            href={`/my-ideas/${row.id}`}
+            className="focus-ring font-semibold underline-offset-4 hover:underline"
+          >
+            {row.idea_title || <span className="text-muted-foreground">Untitled draft</span>}
+          </Link>
+        );
         if (missedDeadline(row)) {
           return (
             <span className="flex flex-col items-start gap-1">
@@ -104,7 +106,7 @@ export default async function MyIdeasPage() {
       },
     },
     { key: 'team_name', header: 'Team', cell: (row) => row.team_name },
-    { key: 'my_role', header: 'Your role', cell: (row) => ROLE_LABEL[row.my_role] },
+    { key: 'my_role', header: 'Your role', cell: (row) => MY_ROLE_LABEL[row.my_role] },
     {
       key: 'status',
       header: 'Status',

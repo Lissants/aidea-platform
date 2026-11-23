@@ -39,6 +39,9 @@ function PresentationCard({ title, file }: { title: string; file: UploadedPresen
   );
 }
 
+// Drafts (participant view) may have empty answers.
+const NOT_PROVIDED = 'Not provided';
+
 const SUPPORT_AREA_LABEL: Record<string, string> = {
   tools: 'Tools',
   budget: 'Budget',
@@ -46,23 +49,24 @@ const SUPPORT_AREA_LABEL: Record<string, string> = {
 };
 
 /** Read-only presentation of a submitted idea's full detail — reused by
- * the mentor review page and admin decision screens. */
+ * the mentor review page, admin decision screens and the participant's
+ * My Ideas detail page. */
 export function IdeaDetailReadonly({ idea }: { idea: IdeaDetailData }) {
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>{idea.idea_title}</CardTitle>
+          <CardTitle>{idea.idea_title || 'Untitled draft'}</CardTitle>
           <p className="text-sm text-muted-foreground">{idea.team_name}</p>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div>
             <p className="font-medium">Problem / opportunity</p>
-            <p className="text-muted-foreground">{idea.problem_opportunity}</p>
+            <p className="whitespace-pre-wrap text-muted-foreground">{idea.problem_opportunity || NOT_PROVIDED}</p>
           </div>
           <div>
             <p className="font-medium">Proposed solution</p>
-            <p className="text-muted-foreground">{idea.proposed_solution}</p>
+            <p className="whitespace-pre-wrap text-muted-foreground">{idea.proposed_solution || NOT_PROVIDED}</p>
           </div>
           {idea.target_users && (
             <div>

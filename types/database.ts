@@ -178,6 +178,33 @@ export interface MyIdeaRow extends Idea {
   approved: boolean;
 }
 
+type UploadedFile = { url: string; name: string | null; uploaded_at: string | null };
+
+/** Participant read-only view of one of their ideas (/my-ideas/[ideaId]).
+ * Results are published-only, like MyIdeaRow; no review or internal data. */
+export interface MyIdeaDetail {
+  id: string;
+  idea_title: string;
+  team_name: string;
+  problem_opportunity: string;
+  proposed_solution: string;
+  target_users: string | null;
+  status: IdeaStatus;
+  created_by: string;
+  my_role: MyIdeaRow['my_role'];
+  screening: ScreeningDecisionValue | null;
+  qualifier: BuildDecision | null;
+  mentor_name: string | null;
+  /** null = leader slot vacant. */
+  team_leader: { full_name: string } | null;
+  team_members: { full_name: string }[];
+  impacts: { impact_kind: string; impact_type: string; explanation: string | null; measurable_result: string | null }[];
+  support_requests: { support_area: string; details: string | null; reason: string | null; estimate: string | null }[];
+  mentor_preferences: { priority: number; mentor_name: string }[];
+  screening_presentation: UploadedFile | null;
+  presentation: UploadedFile | null;
+}
+
 export interface IdeaTeamMember {
   id: string;
   idea_id: string;

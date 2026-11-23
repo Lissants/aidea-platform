@@ -95,7 +95,9 @@ export async function ParticipantOverview({ user }: { user: SessionUser }) {
               <li key={idea.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="break-words font-semibold">
-                    {idea.idea_title || <span className="font-normal text-muted-foreground">Untitled draft</span>}
+                    <Link href={`/my-ideas/${idea.id}`} className="focus-ring underline-offset-4 hover:underline">
+                      {idea.idea_title || <span className="font-normal text-muted-foreground">Untitled draft</span>}
+                    </Link>
                   </p>
                   <p className="text-sm text-muted-foreground">{idea.team_name || 'No team name yet'}</p>
                 </div>
